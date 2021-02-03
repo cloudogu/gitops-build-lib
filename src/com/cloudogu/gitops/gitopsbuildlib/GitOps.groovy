@@ -10,8 +10,8 @@ class GitOps implements Serializable{
   }
 
   private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
-    this.cesBuidLib = library(identifier: "ces-build-lib@${cesBuildLibVersion}",
-        retriever: modernSCM([$class: 'GitSCMSource', remote: cesBuildLibRepo])
+    this.cesBuidLib = script.library(identifier: "ces-build-lib@${cesBuildLibVersion}",
+        retriever: script.modernSCM([$class: 'GitSCMSource', remote: cesBuildLibRepo])
     ).com.cloudogu.ces.cesbuildlib
   }
 }
