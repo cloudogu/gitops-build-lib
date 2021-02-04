@@ -4,6 +4,8 @@ class GitOps implements Serializable{
   // "Constants
   String getK8sVersion() { '1.18.1 '}
   String getConfigDir() { '.config'}
+  String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1'}
+  String getYamlLintImage() { 'cytopia/yamllint:1.25' }
 
   private script
   private cesBuildLib
