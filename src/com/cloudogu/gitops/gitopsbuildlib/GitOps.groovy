@@ -1,6 +1,10 @@
 package com.cloudogu.gitops.gitopsbuildlib
 
 class GitOps implements Serializable{
+  // "Constants
+  String getK8sVersion() { '1.18.1 '}
+  String getConfigDir() { '.config'}
+
   private script
   private cesBuildLib
   private scmManagerCredentials
