@@ -1,3 +1,5 @@
+#!groovy
+
 String getK8sVersion() { '1.18.1 '}
 String getConfigDir() { '.config'}
 String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1'}
@@ -5,7 +7,7 @@ String getYamlLintImage() { 'cytopia/yamllint:1.25' }
 
 void call(Map gitopsConfig) {
   cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
-  deployViaGitops(gitopsConfig)
+  deploy(gitopsConfig)
 }
   
 private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
@@ -14,7 +16,7 @@ private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
   ).com.cloudogu.ces.cesbuildlib
 }
 
-private void deployViaGitops(Map gitopsConfig) {
+private void deploy(Map gitopsConfig) {
 
     def git = cesBuildLib.Git.new(script, gitopsconfig.scmmCredentialsId)
     def changesOnGitOpsRepo = ''
