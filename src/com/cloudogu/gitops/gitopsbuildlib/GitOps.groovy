@@ -1,7 +1,7 @@
 package com.cloudogu.gitops.gitopsbuildlib
 
 class GitOps implements Serializable{
-  // "Constants
+  // "Constants test
 
 
   private script
