@@ -18,50 +18,52 @@ private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
 
 private void deploy(Map gitopsConfig) {
 
-    def git = cesBuildLib.Git.new(script, gitopsconfig.scmmCredentialsId)
-    def changesOnGitOpsRepo = ''
+  echo "in deploy method"
 
-    // Query and store info about application repo before cloning into gitops repo
-    def applicationRepo = GitRepo.create(git)
+  def git = cesBuildLib.Git.new(script, gitopsconfig.scmmCredentialsId)
+  def changesOnGitOpsRepo = ''
 
-    // Display that Jenkins made the GitOps commits not the application repo author
-    git.committerName = 'Jenkins'
-    git.committerEmail = 'jenkins@cloudogu.com'
+  // Query and store info about application repo before cloning into gitops repo
+  def applicationRepo = GitRepo.create(git)
 
-    def configRepoTempDir = '.configRepoTempDir'
+  // Display that Jenkins made the GitOps commits not the application repo author
+  git.committerName = 'Jenkins'
+  git.committerEmail = 'jenkins@cloudogu.com'
 
-    try {
+  def configRepoTempDir = '.configRepoTempDir'
 
-      dir(configRepoTempDir) {
+  try {
 
-        git url: gitopsConfig.scmmConfigRepoUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
-        git.fetch()
+    dir(configRepoTempDir) {
 
-        def allRepoChanges = new HashSet<String>()
+      git url: gitopsConfig.scmmConfigRepoUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
+      git.fetch()
 
-        gitopsConfig.stages.each{ stage, config ->
-          //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
-          git.checkoutOrCreate(mainBranch)
+      def allRepoChanges = new HashSet<String>()
 
-          if(config.deployDirectly) {
-            allRepoChanges += createApplicationForStageAndPushToBranch stage as String, mainBranch, applicationRepo, git, gitopsConfig
-          } else {
-            String stageBranch = "${stage}_${application}"
-            git.checkoutOrCreate(stageBranch)
-            String repoChanges = createApplicationForStageAndPushToBranch stage as String, stageBranch, applicationRepo, git, gitopsConfig
-            if(repoChanges) {
-              createPullRequest(gitopsConfig, stage as String, stageBranch)
-              allRepoChanges += repoChanges
-            }
+      gitopsConfig.stages.each{ stage, config ->
+        //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
+        git.checkoutOrCreate(mainBranch)
+
+        if(config.deployDirectly) {
+          allRepoChanges += createApplicationForStageAndPushToBranch stage as String, mainBranch, applicationRepo, git, gitopsConfig
+        } else {
+          String stageBranch = "${stage}_${application}"
+          git.checkoutOrCreate(stageBranch)
+          String repoChanges = createApplicationForStageAndPushToBranch stage as String, stageBranch, applicationRepo, git, gitopsConfig
+          if(repoChanges) {
+            createPullRequest(gitopsConfig, stage as String, stageBranch)
+            allRepoChanges += repoChanges
           }
         }
-        changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(allRepoChanges)
       }
-    } finally {
-      sh "rm -rf ${configRepoTempDir}"
+      changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(allRepoChanges)
     }
+  } finally {
+    sh "rm -rf ${configRepoTempDir}"
+  }
 
-    currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.imageName)
+  currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.imageName)
   }
 
   private String createApplicationForStageAndPushToBranch(String stage, String branch, GitRepo applicationRepo, def git, Map gitopsConfig) {
