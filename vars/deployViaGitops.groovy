@@ -48,7 +48,7 @@ private void deploy(Map gitopsConfig) {
         if(config.deployDirectly) {
           allRepoChanges += createApplicationForStageAndPushToBranch stage as String, gitopsConfig.mainBranch, applicationRepo, git, gitopsConfig
         } else {
-          String stageBranch = "${stage}_${application}"
+          String stageBranch = "${stage}_${gitopsConfig.application}"
           git.checkoutOrCreate(stageBranch)
           String repoChanges = createApplicationForStageAndPushToBranch stage as String, stageBranch, applicationRepo, git, gitopsConfig
           if(repoChanges) {
@@ -126,7 +126,7 @@ private void createPullRequest(Map gitopsConfig, String stage, String sourceBran
             'curl -s -o /dev/null -w "%{http_code}" ' +
                     "-u ${GIT_USER}:${GIT_PASSWORD} " +
                     '-H "Content-Type: application/vnd.scmm-pullRequest+json;v=2" ' +
-                    '--data \'{"title": "created by service ' + application + ' for stage ' + stage + '", "source": "' + sourceBranch + '", "target": "' + gitopsConfig.mainBranch + '"}\' ' +
+                    '--data \'{"title": "created by service ' + gitopsConfig.application + ' for stage ' + stage + '", "source": "' + sourceBranch + '", "target": "' + gitopsConfig.mainBranch + '"}\' ' +
                     gitopsConfig.scmmPullRequestUrl
 
     // For debugging the quotation of the shell script, just do: echo script
