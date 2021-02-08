@@ -5,9 +5,9 @@ String getConfigDir() { '.config'}
 String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1'}
 String getYamlLintImage() { 'cytopia/yamllint:1.25' }
 
-void call(def script, Map gitopsConfig) {
+void call(Map gitopsConfig) {
   cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
-  deploy(script, gitopsConfig)
+  deploy(gitopsConfig)
 }
   
 private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
@@ -16,7 +16,7 @@ private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
   ).com.cloudogu.ces.cesbuildlib
 }
 
-private void deploy(def script, Map gitopsConfig) {
+private void deploy(Map gitopsConfig) {
 
   echo "in deploy method"
 
@@ -46,11 +46,11 @@ private void deploy(def script, Map gitopsConfig) {
         git.checkoutOrCreate(gitopsConfig.mainBranch)
 
         if(config.deployDirectly) {
-          allRepoChanges += createApplicationForStageAndPushToBranch script, stage as String, gitopsConfig.mainBranch, applicationRepo, git, gitopsConfig
+          allRepoChanges += createApplicationForStageAndPushToBranch stage as String, gitopsConfig.mainBranch, applicationRepo, git, gitopsConfig
         } else {
           String stageBranch = "${stage}_${application}"
           git.checkoutOrCreate(stageBranch)
-          String repoChanges = createApplicationForStageAndPushToBranch script, stage as String, stageBranch, applicationRepo, git, gitopsConfig
+          String repoChanges = createApplicationForStageAndPushToBranch stage as String, stageBranch, applicationRepo, git, gitopsConfig
           if(repoChanges) {
             createPullRequest(gitopsConfig, stage as String, stageBranch)
             allRepoChanges += repoChanges
@@ -67,7 +67,7 @@ private void deploy(def script, Map gitopsConfig) {
 }
 
 
-private String createApplicationForStageAndPushToBranch(def script, String stage, String branch, GitRepo applicationRepo, def git, Map gitopsConfig) {
+private String createApplicationForStageAndPushToBranch(String stage, String branch, GitRepo applicationRepo, def git, Map gitopsConfig) {
 
   String commitPrefix = "[${stage}] "
 
@@ -79,8 +79,8 @@ private String createApplicationForStageAndPushToBranch(def script, String stage
   sh "cp ${env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
 
   // TODO user decides if validation is necessary
-  validateK8sRessources(script, "${stage}/${gitopsConfig.application}/", k8sVersion)
-  validateYamlResources(script, "${configDir}/config.yamllint.yaml", "${stage}/${gitopsConfig.application}/")
+  validateK8sRessources("${stage}/${gitopsConfig.application}/", k8sVersion)
+  validateYamlResources("${configDir}/config.yamllint.yaml", "${stage}/${gitopsConfig.application}/")
 
   gitopsConfig.updateImages.each {
     updateImageVersion("${stage}/${gitopsConfig.application}/${it['deploymentFilename']}", it['containerName'], it['imageName'])
@@ -152,21 +152,21 @@ private void updateImageVersion(String deploymentFilePath, String containerName,
 }
 
 // Validates all yaml-resources within the target-directory against the specs of the given k8s version
-private void validateK8sRessources(def script, String targetDirectory, String k8sVersion) {
-  withDockerImage(script, helmImage) {
+private void validateK8sRessources(String targetDirectory, String k8sVersion) {
+  withDockerImage(helmImage) {
     sh "kubeval -d ${targetDirectory} -v ${k8sVersion} --strict"
   }
 }
 
-private void validateYamlResources(def script, String configFile, String targetDirectory) {
-  withDockerImage(script, yamlLintImage) {
+private void validateYamlResources(String configFile, String targetDirectory) {
+  withDockerImage(yamlLintImage) {
     sh "yamllint -c ${configFile} ${targetDirectory}"
   }
 }
 
-private void withDockerImage(def script, String image, Closure body) {
+private void withDockerImage(String image, Closure body) {
   echo "${cesBuildLib}"
-  def docker = cesBuildLib.Docker.new(script)
+  def docker = cesBuildLib.Docker.new(this)
   echo "${docker}"
   docker.image(image)
   // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
