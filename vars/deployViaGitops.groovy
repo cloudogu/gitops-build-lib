@@ -18,8 +18,6 @@ private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
 
 private void deploy(Map gitopsConfig) {
 
-  echo "in deploy method"
-
   def git = cesBuildLib.Git.new(this, gitopsConfig.scmmCredentialsId)
   def changesOnGitOpsRepo = ''
 
@@ -165,9 +163,7 @@ private void validateYamlResources(String configFile, String targetDirectory) {
 }
 
 private void withDockerImage(String image, Closure body) {
-  echo "${cesBuildLib}"
   def docker = cesBuildLib.Docker.new(this)
-  echo "${docker}"
   docker.image(image)
   // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
           .inside("${pwd().equals(env.WORKSPACE) ? '' : "-v ${env.WORKSPACE}:${env.WORKSPACE}"}") {
