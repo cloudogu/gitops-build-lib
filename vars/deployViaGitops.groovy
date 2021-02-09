@@ -1,6 +1,5 @@
 #!groovy
 
-String getK8sVersion() { '1.18.1 '}
 String getConfigDir() { '.config'}
 
 
@@ -8,42 +7,34 @@ void call(Map gitopsConfig) {
   cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
   deploy(gitopsConfig)
 }
-  
+
 private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
   return library(identifier: "ces-build-lib@${cesBuildLibVersion}",
-      retriever: modernSCM([$class: 'GitSCMSource', remote: cesBuildLibRepo])
+          retriever: modernSCM([$class: 'GitSCMSource', remote: cesBuildLibRepo])
   ).com.cloudogu.ces.cesbuildlib
 }
 
-private void deploy(Map gitopsConfig) {
-  prepareLocalGitRepo()
+protected void deploy(Map gitopsConfig) {
+  def git = prepareGitRepo()
+  def changesOnGitOpsRepo = ''
 
   try {
+    dir(git.configRepoTempDir) {
 
-    dir(configRepoTempDir) {
+      git.client as Git url: gitopsConfig.scmmConfigRepoUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
+      git.client.fetch()
 
-      git url: gitopsConfig.scmmConfigRepoUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
-      git.fetch()
-
-      def allRepoChanges = new HashSet<String>()
-
-      gitopsConfig.stages.each{ stage, config ->
-        //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
-        git.checkoutOrCreate(gitopsConfig.mainBranch)
-        handleMultipleStages(stage, gitopsConfig, applicationRepo, git)
-      }
-      changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(allRepoChanges)
+      changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(handleMultipleStages(gitopsConfig as Map, git as Map))
     }
   } finally {
-    sh "rm -rf ${configRepoTempDir}"
+    sh "rm -rf ${git.configRepoTempDir}"
   }
 
   currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.imageName)
 }
 
-protected Map prepareLocalGitRepo() {
+protected Map prepareGitRepo() {
   def git = cesBuildLib.Git.new(this, gitopsConfig.scmmCredentialsId)
-  def changesOnGitOpsRepo = ''
 
   // Query and store info about application repo before cloning into gitops repo
   def applicationRepo = GitRepo.new().create(git)
@@ -53,67 +44,85 @@ protected Map prepareLocalGitRepo() {
   git.committerEmail = 'jenkins@cloudogu.com'
 
   def configRepoTempDir = '.configRepoTempDir'
+
+  return [
+          client: git,
+          applicationRepo: applicationRepo as GitRepo,
+          configRepoTempDir: configRepoTempDir as String
+  ]
 }
 
-protected String handleMultipleStages(String stage, Map gitopsConfig, GitRepo applicationRepo, Git git) {
-  String allRepoChanges = ''
-  if(config.deployDirectly) {
-    allRepoChanges += createApplicationForStageAndPushToBranch stage, gitopsConfig.mainBranch, applicationRepo, git, gitopsConfig
-  } else {
-    String stageBranch = "${stage}_${gitopsConfig.application}"
-    git.checkoutOrCreate(stageBranch)
-    String repoChanges = createApplicationForStageAndPushToBranch stage, stageBranch, applicationRepo, git, gitopsConfig
-    
-    if(repoChanges) {
-      createPullRequest(gitopsConfig, stage, stageBranch)
-      allRepoChanges += repoChanges
-    }   
-  } 
+protected HashSet<String> handleMultipleStages(Map gitopsConfig, Map git) {
+
+  HashSet<String> allRepoChanges = new HashSet<String>()
+
+  gitopsConfig.stages.each{ stage, config ->
+    //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
+    git.client.checkoutOrCreate(gitopsConfig.mainBranch)
+    if(config.deployDirectly) {
+      allRepoChanges += syncGitopsRepo(stage as String, gitopsConfig.mainBranch as String, git, gitopsConfig)
+    } else {
+      String stageBranch = "${stage}_${gitopsConfig.application}"
+      git.client.checkoutOrCreate(stageBranch)
+      String repoChanges = syncGitopsRepo(stage as String, stageBranch, git, gitopsConfig)
+
+      if(repoChanges) {
+        createPullRequest(gitopsConfig, stage, stageBranch)
+        allRepoChanges += repoChanges
+      }
+    }
+  }
   return allRepoChanges
 }
 
 
-private String createApplicationForStageAndPushToBranch(String stage, String branch, GitRepo applicationRepo, def git, Map gitopsConfig) {
+protected String syncGitopsRepo(String stage, String branch, Map git, Map gitopsConfig) {
 
-  String commitPrefix = "[${stage}] "
+  createApplicationFolders(stage, gitopsConfig)
 
+  // TODO user decides if validation is necessary
+  validateResources("${stage}/${gitopsConfig.application}/", "${configDir}/config.yamllint.yaml")
+
+  gitopsConfig.updateImages.each {
+    updateImageVersion("${stage}/${gitopsConfig.application}/${it['deploymentFilename']}", it['containerName'], it['imageName'])
+  }
+
+  return commitAndPushToStage(stage, branch, git)
+}
+
+private void createApplicationFolders(String stage, Map gitopsConfig) {
   sh "mkdir -p ${stage}/${gitopsConfig.application}/"
   sh "mkdir -p ${configDir}/"
   // copy extra resources like sealed secrets
   echo "Copying k8s payload from application repo to gitOps Repo: 'k8s/${stage}/*' to '${stage}/${gitopsConfig.application}'"
   sh "cp ${env.WORKSPACE}/k8s/${stage}/* ${stage}/${gitopsConfig.application}/ || true"
   sh "cp ${env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
+}
 
-  // TODO user decides if validation is necessary
-  validateK8sRessources("${stage}/${gitopsConfig.application}/", k8sVersion)
-  validateYamlResources("${configDir}/config.yamllint.yaml", "${stage}/${gitopsConfig.application}/")
-
-  gitopsConfig.updateImages.each {
-    updateImageVersion("${stage}/${gitopsConfig.application}/${it['deploymentFilename']}", it['containerName'], it['imageName'])
-  }
-
-  git.add('.')
-  if (git.areChangesStagedForCommit()) {
-    git.commit(commitPrefix + createApplicationCommitMessage(git, applicationRepo), applicationRepo.authorName, applicationRepo.authorEmail)
+protected String commitAndPushToStage(String stage, String branch, Map git) {
+  String commitPrefix = "[${stage}] "
+  git.client.add('.')
+  if (git.client.areChangesStagedForCommit()) {
+    git.client.commit(commitPrefix + createApplicationCommitMessage(git.applicationRepo as GitRepo), git.applicationRepo.authorName, git.applicationRepo.authorEmail)
 
     // If some else pushes between the pull above and this push, the build will fail.
     // So we pull if push fails and try again
-    git.pushAndPullOnFailure("origin ${branch}")
-    return "${stage} (${git.commitHashShort})"
+    git.client.pushAndPullOnFailure("origin ${branch}")
+    return "${stage} (${git.client.commitHashShort})"
   } else {
     echo "No changes on gitOps repo for ${stage} (branch: ${branch}). Not committing or pushing."
     return ''
   }
 }
 
-private String aggregateChangesOnGitOpsRepo(changes) {
+protected String aggregateChangesOnGitOpsRepo(changes) {
   // Remove empty
   (changes - '')
   // and concat into string
           .join('; ')
 }
 
-private String createApplicationCommitMessage(def git, def applicationRepo) {
+private String createApplicationCommitMessage(GitRepo applicationRepo) {
   String issueIds =  (applicationRepo.commitMessage =~ /#\d*/).collect { "${it} " }.join('')
 
   String[] urlSplit = applicationRepo.repositoryUrl.split('/')
