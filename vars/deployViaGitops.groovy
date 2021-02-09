@@ -21,7 +21,7 @@ protected void deploy(Map gitopsConfig) {
   try {
     dir(git.configRepoTempDir) {
 
-      git.client as Git url: gitopsConfig.scmmConfigRepoUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
+      git.client url: gitopsConfig.scmmConfigRepoUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
       git.client.fetch()
 
       changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(handleMultipleStages(gitopsConfig as Map, git as Map))
