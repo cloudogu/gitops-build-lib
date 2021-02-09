@@ -2,8 +2,7 @@
 
 String getK8sVersion() { '1.18.1 '}
 String getConfigDir() { '.config'}
-String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1'}
-String getYamlLintImage() { 'cytopia/yamllint:1.25' }
+
 
 void call(Map gitopsConfig) {
   cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
@@ -17,18 +16,7 @@ private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
 }
 
 private void deploy(Map gitopsConfig) {
-
-  def git = cesBuildLib.Git.new(this, gitopsConfig.scmmCredentialsId)
-  def changesOnGitOpsRepo = ''
-
-  // Query and store info about application repo before cloning into gitops repo
-  def applicationRepo = GitRepo.create(git)
-
-  // Display that Jenkins made the GitOps commits not the application repo author
-  git.committerName = 'Jenkins'
-  git.committerEmail = 'jenkins@cloudogu.com'
-
-  def configRepoTempDir = '.configRepoTempDir'
+  prepareLocalGitRepo()
 
   try {
 
@@ -42,18 +30,7 @@ private void deploy(Map gitopsConfig) {
       gitopsConfig.stages.each{ stage, config ->
         //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
         git.checkoutOrCreate(gitopsConfig.mainBranch)
-
-        if(config.deployDirectly) {
-          allRepoChanges += createApplicationForStageAndPushToBranch stage as String, gitopsConfig.mainBranch, applicationRepo, git, gitopsConfig
-        } else {
-          String stageBranch = "${stage}_${gitopsConfig.application}"
-          git.checkoutOrCreate(stageBranch)
-          String repoChanges = createApplicationForStageAndPushToBranch stage as String, stageBranch, applicationRepo, git, gitopsConfig
-          if(repoChanges) {
-            createPullRequest(gitopsConfig, stage as String, stageBranch)
-            allRepoChanges += repoChanges
-          }
-        }
+        handleMultipleStages(stage, gitopsConfig, applicationRepo, git)
       }
       changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(allRepoChanges)
     }
@@ -62,6 +39,37 @@ private void deploy(Map gitopsConfig) {
   }
 
   currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.imageName)
+}
+
+protected Map prepareLocalGitRepo() {
+  def git = cesBuildLib.Git.new(this, gitopsConfig.scmmCredentialsId)
+  def changesOnGitOpsRepo = ''
+
+  // Query and store info about application repo before cloning into gitops repo
+  def applicationRepo = GitRepo.new().create(git)
+
+  // Display that Jenkins made the GitOps commits, not the application repo author
+  git.committerName = 'Jenkins'
+  git.committerEmail = 'jenkins@cloudogu.com'
+
+  def configRepoTempDir = '.configRepoTempDir'
+}
+
+protected String handleMultipleStages(String stage, Map gitopsConfig, GitRepo applicationRepo, Git git) {
+  String allRepoChanges = ''
+  if(config.deployDirectly) {
+    allRepoChanges += createApplicationForStageAndPushToBranch stage, gitopsConfig.mainBranch, applicationRepo, git, gitopsConfig
+  } else {
+    String stageBranch = "${stage}_${gitopsConfig.application}"
+    git.checkoutOrCreate(stageBranch)
+    String repoChanges = createApplicationForStageAndPushToBranch stage, stageBranch, applicationRepo, git, gitopsConfig
+    
+    if(repoChanges) {
+      createPullRequest(gitopsConfig, stage, stageBranch)
+      allRepoChanges += repoChanges
+    }   
+  } 
+  return allRepoChanges
 }
 
 
@@ -140,35 +148,12 @@ private void createPullRequest(Map gitopsConfig, String stage, String sourceBran
   }
 }
 
-
 private void updateImageVersion(String deploymentFilePath, String containerName, String newImageTag) {
   def data = readYaml file: deploymentFilePath
   def containers = data.spec.template.spec.containers
   def updateContainer = containers.find {it.name == containerName}
   updateContainer.image = newImageTag
   writeYaml file: deploymentFilePath, data: data, overwrite: true
-}
-
-// Validates all yaml-resources within the target-directory against the specs of the given k8s version
-private void validateK8sRessources(String targetDirectory, String k8sVersion) {
-  withDockerImage(helmImage) {
-    sh "kubeval -d ${targetDirectory} -v ${k8sVersion} --strict"
-  }
-}
-
-private void validateYamlResources(String configFile, String targetDirectory) {
-  withDockerImage(yamlLintImage) {
-    sh "yamllint -c ${configFile} ${targetDirectory}"
-  }
-}
-
-private void withDockerImage(String image, Closure body) {
-  def docker = cesBuildLib.Docker.new(this)
-  docker.image(image)
-  // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
-          .inside("${pwd().equals(env.WORKSPACE) ? '' : "-v ${env.WORKSPACE}:${env.WORKSPACE}"}") {
-            body()
-          }
 }
 
 private String createBuildDescription(String pushedChanges, String imageName) {
@@ -185,30 +170,6 @@ private String createBuildDescription(String pushedChanges, String imageName) {
   description += "\nImage: ${imageName}"
 
   return description
-}
-
-/** Queries and stores info about current repo and HEAD commit */
-class GitRepo {
-
-  static GitRepo create(git) {
-    // Constructors can't be used in Jenkins pipelines due to CPS
-    // https://www.jenkins.io/doc/book/pipeline/cps-method-mismatches/#constructors
-    return new GitRepo(git.commitAuthorName, git.commitAuthorEmail ,git.commitHashShort, git.commitMessage, git.repositoryUrl)
-  }
-
-  GitRepo(String authorName, String authorEmail, String commitHash, String commitMessage, String repositoryUrl) {
-    this.authorName = authorName
-    this.authorEmail = authorEmail
-    this.commitHash = commitHash
-    this.commitMessage = commitMessage
-    this.repositoryUrl = repositoryUrl
-  }
-
-  final String authorName
-  final String authorEmail
-  final String commitHash
-  final String commitMessage
-  final String repositoryUrl
 }
 
 def cesBuildLib
