@@ -1,5 +1,7 @@
 package com.cloudogu.gitopsbuildlib
 
+import com.cloudbees.groovy.cps.NonCPS
+
 class ValidateResources {
 
     String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1'}
@@ -7,10 +9,12 @@ class ValidateResources {
     String getK8sVersion() { '1.18.1 '}
     String targetDirectory
     String configFile
+    def cesBuildLib
 
-    ValidateResources(String targetDirectory, String configFile) {
+    ValidateResources(String targetDirectory, String configFile, def cesBuildLib) {
         this.targetDirectory = targetDirectory
         this. configFile = configFile
+        this.cesBuildLib = cesBuildLib
     }
 
     void start() {
@@ -31,6 +35,7 @@ class ValidateResources {
         }
     }
 
+    @NonCPS
     private void withDockerImage(String image, Closure body) {
         def docker = cesBuildLib.Docker.new(this)
         docker.image(image)

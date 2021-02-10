@@ -80,7 +80,7 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
   createApplicationFolders(stage, gitopsConfig)
 
   // TODO user decides if validation is necessary
-  def validate = new ValidateResources("${stage}/${gitopsConfig.application}/", "${configDir}/config.yamllint.yaml")
+  def validate = new ValidateResources("${stage}/${gitopsConfig.application}/", "${configDir}/config.yamllint.yaml", cesBuildLib)
   validate.start()
 
   gitopsConfig.updateImages.each {
