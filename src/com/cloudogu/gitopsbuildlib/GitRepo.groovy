@@ -1,3 +1,5 @@
+package com.cloudogu.gitopsbuildlib
+
 /** Queries and stores info about current repo and HEAD commit */
 class GitRepo {
 
