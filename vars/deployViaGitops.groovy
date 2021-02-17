@@ -10,7 +10,7 @@ void call(Map gitopsConfig) {
   deploy(gitopsConfig)
 }
 
-private initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
+protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
   return library(identifier: "ces-build-lib@${cesBuildLibVersion}",
           retriever: modernSCM([$class: 'GitSCMSource', remote: cesBuildLibRepo])
   ).com.cloudogu.ces.cesbuildlib
@@ -165,7 +165,7 @@ private void updateImageVersion(String deploymentFilePath, String containerName,
   writeYaml file: deploymentFilePath, data: data, overwrite: true
 }
 
-private String createBuildDescription(String pushedChanges, String imageName) {
+protected String createBuildDescription(String pushedChanges, String imageName) {
   String description = ''
 
   description += "GitOps commits: "

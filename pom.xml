@@ -12,6 +12,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jacoco.version>0.8.5</jacoco.version>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
   </properties>
 
   <dependencies>
@@ -55,9 +57,46 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.spockframework</groupId>
+      <artifactId>spock-core</artifactId>
+      <version>1.1-groovy-2.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency> <!-- enables mocking of classes (in addition to interfaces) -->
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.10.13</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency> <!-- enables mocking of classes without default constructor (together with
+        CGLIB) -->
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>2.5.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <!-- Shared Library used in Jenkins. Including this in maven provides code completion in Jenkinsfile. -->
+      <groupId>com.github.cloudogu</groupId>
+      <artifactId>ces-build-lib</artifactId>
+      <!-- Keep this version in sync with the one used in Jenkinsfile -->
+      <version>1.45.0</version>
+      <!-- Don't ship this dependency with the app -->
+      <optional>true</optional>
+      <!-- Don't inherit this dependency! -->
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
   <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+
     <repository>
       <!-- For jenkins-pipeline-unit -->
       <id>jenkins-ci-releases</id>
