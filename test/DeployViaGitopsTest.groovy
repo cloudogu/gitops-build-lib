@@ -1,30 +1,40 @@
 import com.cloudogu.ces.cesbuildlib.Docker
-import com.cloudogu.gitopsbuildlib.GitRepo
 import com.cloudogu.ces.cesbuildlib.Git
-import com.cloudogu.gitopsbuildlib.ValidateResources
+import com.cloudogu.gitopsbuildlib.GitRepo
 import com.lesfurets.jenkins.unit.BasePipelineTest
-import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.mockito.Mockito
 import groovy.yaml.YamlSlurper
-
-import static org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentCaptor
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
+import static org.assertj.core.api.Assertions.assertThat
+import static com.lesfurets.jenkins.unit.MethodCall.callArgsToString
+import static org.mockito.Mockito.times
+import static org.mockito.Mockito.when
+import static org.mockito.ArgumentMatchers.*
 import static org.mockito.Mockito.mock
+import static org.mockito.Mockito.verify
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeployViaGitopsTest extends BasePipelineTest {
 
-    class CblMock {
+    class CesBuildLibMock {
         def Git = [:]
         def Docker = [:]
     }
 
-    def cblMock
-    def script
+    //TODO naming mock?
+    def git
+    def docker
+
+    def cesBuildLibMock
+    def deployViaGitops
+    def actualShStringArgs = []
 
     static final String EXPECTED_OUTPUT = "test"
     static final String EXPECTED_APPLICATION = 'app'
@@ -32,24 +42,33 @@ class DeployViaGitopsTest extends BasePipelineTest {
             applicationRepo  : 'applicationRepo',
             configRepoTempDir: 'configRepoTempDir'
     ]
-    static final Map GITOPS_CONFIG = [
-            scmmCredentialsId : 'scmManagerCredentials',
-            scmmConfigRepoUrl : 'configRepositoryUrl',
-            scmmPullRequestUrl: 'configRepositoryPRUrl',
-            cesBuildLibRepo   : 'cesBuildLibRepo',
-            cesBuildLibVersion: 'cesBuildLibVersion',
-            application       : 'application',
-            mainBranch        : 'mainBranch',
-            updateImages      : [
-                    [deploymentFilename: "deployment.yaml",
-                     containerName     : 'application',
-                     imageName         : 'imageName']
-            ],
-            stages            : [
-                    staging   : [deployDirectly: true],
-                    production: [deployDirectly: false],
-                    qa        : []
-            ]
+    Map gitopsConfig(Map stages) {
+        return [
+                scmmCredentialsId : 'scmManagerCredentials',
+                scmmConfigRepoUrl : 'configRepositoryUrl',
+                scmmPullRequestUrl: 'configRepositoryPRUrl',
+                cesBuildLibRepo   : 'cesBuildLibRepo',
+                cesBuildLibVersion: 'cesBuildLibVersion',
+                application       : 'application',
+                mainBranch        : 'mainBranch',
+                updateImages      : [
+                        [deploymentFilename: "deployment.yaml",
+                         containerName     : 'application',
+                         imageName         : 'imageName']
+                ],
+                stages            : stages
+        ]
+    }
+
+
+    def singleStages = [
+            staging   : [deployDirectly: true]
+    ]
+
+    def multipleStages = [
+            staging   : [deployDirectly: true],
+            production: [deployDirectly: false],
+            qa        : []
     ]
 
     @BeforeAll
@@ -60,24 +79,44 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     @BeforeEach
     void init() {
-        script = loadScript('vars/deployViaGitops.groovy')
+        deployViaGitops = loadScript('vars/deployViaGitops.groovy')
         binding.getVariable('currentBuild').result = 'SUCCESS'
-        setupGlobals(script)
+        setupGlobals(deployViaGitops)
 
-        cblMock = new CblMock()
-        def git = mock(Git.class)
-        def docker = mock(Docker.class)
-        cblMock.Docker.new = {
+        cesBuildLibMock = new CesBuildLibMock()
+        git = mock(Git.class)
+        docker = mock(Docker.class)
+        Docker.Image imageMock = mock(Docker.Image.class)
+        when(docker.image(anyString())).thenReturn(imageMock)
+        when(imageMock.inside(anyString(), any())).thenAnswer(new Answer<Object>() {
+            @Override
+            Object answer(InvocationOnMock invocation) throws Throwable {
+                Closure closure = invocation.getArgument(1)
+                closure.call()
+            }
+        })
+        cesBuildLibMock.Docker.new = {
             return docker
         }
-        cblMock.Git.new = {
+        cesBuildLibMock.Git.new = { def script, String credentials ->
             return git
         }
-        script.cesBuildLib = cblMock
-    }
 
-    @Test
-    void 'test'() {
+        deployViaGitops.metaClass.initCesBuildLib = { String repo, String version ->
+            return cesBuildLibMock
+        }
+
+//        script.cesBuildLib = cblMock
+
+        deployViaGitops.metaClass.sh = { String args ->
+            actualShStringArgs += args
+
+        }
+
+        deployViaGitops.metaClass.pwd = {
+            return '/'
+        }
+
         def configYaml = '''\
 ---
 spec:
@@ -88,29 +127,53 @@ spec:
           image: 'testImage'
 '''
 
+        when(git.areChangesStagedForCommit()).thenReturn(true)
+        when(git.getRepositoryUrl()).thenReturn("repo/url/my/new/repo")
 
-        // helper.registerAllowedMethod hat hier nicht funktioniert, daher mit metaClass
-        // bei pwd scheint es auch nicht zu funktionieren, da weiss ich aber nicht, wie ich an die Validation Klasse komme um diese zu mocken
-        script.metaClass.readYaml = {
+        deployViaGitops.metaClass.readYaml = {
             return new YamlSlurper().parseText(configYaml)
-
         }
 
-        script.metaClass.writeYaml = {
+        deployViaGitops.metaClass.writeYaml = {
             return null
         }
+    }
 
-        helper.registerAllowedMethod("pwd", [], { return '/'})
+    @AfterEach
+    void tearDown() throws Exception {
+        // always reset metaClass after messing with it to prevent changes from leaking to other tests
+        deployViaGitops.metaClass = null
+    }
 
-        def git = cblMock.Git.new()
-        git.metaClass.checkoutOrCreate = {
-            return null
-        }
+    @Test
+    void 'single stage deployment via gitops'() {
 
-        def output = script.syncGitopsRepoPerStage(GITOPS_CONFIG, git, GIT_REPO)
-        println(output)
+        deployViaGitops(gitopsConfig(singleStages))
+        assertThat(helper.callStack.findAll { call ->call.methodName == "dir"}.any { call ->
+            callArgsToString(call).contains(".configRepoTempDir")
+        }).isTrue()
+
+        ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(git).call(argumentCaptor.capture())
+        assertThat(argumentCaptor.getValue().url).isEqualTo 'configRepositoryUrl'
+        assertThat(argumentCaptor.getValue().branch).isEqualTo('mainBranch')
+
+        verify(git, times(1)).fetch()
+
+        println("bla")
+        println(deployViaGitops.currentBuild.description)
+    }
+    @Test
+    void 'multi-stage deployment via GitOps'() {
+
+//        def expectedKubeShStringArgs = ["kubeval",  "-d ${targetDirectory} -v ${k8sVersion} --strict"]
+    }
+
+    @Test
+    void 'no changes in git'() {
 
     }
+
 
 //    @Test
 //    void 'preparing gitRepo returns config'() {
@@ -127,24 +190,24 @@ spec:
 //        }
 //    }
 //
-//    @Test
-//    void 'returns correct build description'() {
-//        def output = script.createBuildDescription('changes', "imageName")
-//        assert output == 'GitOps commits: changes\nImage: imageName'
-//    }
-//
-//    @Test
-//    void 'return No Changes if no changes are present'() {
-//        def output = script.createBuildDescription('', 'imageName')
-//        assert output == 'GitOps commits: No changes\nImage: imageName'
-//    }
-//
-//    @Test
-//    void 'changes are being aggregated'() {
-//        def changes = ['1', '2', '3']
-//        def output = script.aggregateChangesOnGitOpsRepo(changes)
-//        assert output == '1; 2; 3'
-//    }
+    @Test
+    void 'returns correct build description'() {
+        def output = script.createBuildDescription('changes', "imageName")
+        assert output == 'GitOps commits: changes\nImage: imageName'
+    }
+
+    @Test
+    void 'return No Changes if no changes are present'() {
+        def output = script.createBuildDescription('', 'imageName')
+        assert output == 'GitOps commits: No changes\nImage: imageName'
+    }
+
+    @Test
+    void 'changes are being aggregated'() {
+        def changes = ['1', '2', '3']
+        def output = script.aggregateChangesOnGitOpsRepo(changes)
+        assert output == '1; 2; 3'
+    }
 //
 //    @Test
 //    void 'sync gitops repo runs three times for three stages'() {

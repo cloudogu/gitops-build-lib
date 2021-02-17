@@ -9,11 +9,13 @@ class ValidateResources {
     String getK8sVersion() { '1.18.1 '}
     String targetDirectory
     String configFile
+    def script
     def cesBuildLib
 
-    ValidateResources(String targetDirectory, String configFile, def cesBuildLib) {
+    ValidateResources(def script, String targetDirectory, String configFile, def cesBuildLib) {
+        this.script = script
         this.targetDirectory = targetDirectory
-        this. configFile = configFile
+        this.configFile = configFile
         this.cesBuildLib = cesBuildLib
     }
 
@@ -25,13 +27,13 @@ class ValidateResources {
 // Validates all yaml-resources within the target-directory against the specs of the given k8s version
     private void validateK8sRessources(String targetDirectory, String k8sVersion) {
         withDockerImage(helmImage) {
-            sh "kubeval -d ${targetDirectory} -v ${k8sVersion} --strict"
+            script.sh "kubeval -d ${targetDirectory} -v ${k8sVersion} --strict"
         }
     }
 
     private void validateYamlResources(String configFile, String targetDirectory) {
         withDockerImage(yamlLintImage) {
-            sh "yamllint -c ${configFile} ${targetDirectory}"
+            script.sh "yamllint -c ${configFile} ${targetDirectory}"
         }
     }
 
@@ -40,7 +42,7 @@ class ValidateResources {
         def docker = cesBuildLib.Docker.new(this)
         docker.image(image)
         // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
-                .inside("${pwd().equals(env.WORKSPACE) ? '' : "-v ${env.WORKSPACE}:${env.WORKSPACE}"}") {
+                .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
                     body()
                 }
     }

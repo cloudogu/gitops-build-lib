@@ -80,7 +80,7 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
   createApplicationFolders(stage, gitopsConfig)
 
   // TODO user decides if validation is necessary
-  def validate = new ValidateResources("${stage}/${gitopsConfig.application}/", "${configDir}/config.yamllint.yaml", cesBuildLib)
+  def validate = new ValidateResources(this, "${stage}/${gitopsConfig.application}/", "${configDir}/config.yamllint.yaml", cesBuildLib)
   validate.start()
 
   gitopsConfig.updateImages.each {
@@ -133,6 +133,7 @@ private String createApplicationCommitMessage(GitRepo applicationRepo) {
   return message
 }
 
+// TODO use from ces-build-lib
 private void createPullRequest(Map gitopsConfig, String stage, String sourceBranch) {
 
   withCredentials([usernamePassword(credentialsId: gitopsConfig.scmmCredentialsId, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USER')]) {
