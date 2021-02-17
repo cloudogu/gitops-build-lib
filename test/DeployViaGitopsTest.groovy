@@ -1,6 +1,7 @@
 import com.cloudogu.ces.cesbuildlib.Docker
 import com.cloudogu.gitopsbuildlib.GitRepo
 import com.cloudogu.ces.cesbuildlib.Git
+import com.cloudogu.gitopsbuildlib.ValidateResources
 import com.lesfurets.jenkins.unit.BasePipelineTest
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
@@ -9,30 +10,28 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.mockito.Mockito
+import groovy.yaml.YamlSlurper
 
+import static org.mockito.ArgumentMatchers.any
 import static org.mockito.Mockito.mock
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeployViaGitopsTest extends BasePipelineTest {
 
     class CblMock {
-        class Git {
-
-        }
-        def Docker = {}
+        def Git = [:]
+        def Docker = [:]
     }
 
+    def cblMock
     def script
 
     static final String EXPECTED_OUTPUT = "test"
-
     static final String EXPECTED_APPLICATION = 'app'
-
     static final Map GIT_REPO = [
-            applicationRepo: 'applicationRepo',
+            applicationRepo  : 'applicationRepo',
             configRepoTempDir: 'configRepoTempDir'
     ]
-
     static final Map GITOPS_CONFIG = [
             scmmCredentialsId : 'scmManagerCredentials',
             scmmConfigRepoUrl : 'configRepositoryUrl',
@@ -64,28 +63,57 @@ class DeployViaGitopsTest extends BasePipelineTest {
         script = loadScript('vars/deployViaGitops.groovy')
         binding.getVariable('currentBuild').result = 'SUCCESS'
         setupGlobals(script)
+
+        cblMock = new CblMock()
+        def git = mock(Git.class)
+        def docker = mock(Docker.class)
+        cblMock.Docker.new = {
+            return docker
+        }
+        cblMock.Git.new = {
+            return git
+        }
+        script.cesBuildLib = cblMock
     }
 
     @Test
     void 'test'() {
-        def cblMock = new CblMock()
-        def gitMock = mock(Git.class)
-        def docker = mock(Docker.class)
-        cblMock.Docker.metaClass.new = {
-            return docker
-        }
-        script.cesBuildLib = cblMock
+        def configYaml = '''\
+---
+spec:
+  template:
+    spec:
+      containers:
+        - name: 'application'
+          image: 'testImage'
+'''
 
-        def output = script.syncGitopsRepoPerStage(GITOPS_CONFIG, gitMock, GIT_REPO)
+
+        // helper.registerAllowedMethod hat hier nicht funktioniert, daher mit metaClass
+        // bei pwd scheint es auch nicht zu funktionieren, da weiss ich aber nicht, wie ich an die Validation Klasse komme um diese zu mocken
+        script.metaClass.readYaml = {
+            return new YamlSlurper().parseText(configYaml)
+
+        }
+
+        script.metaClass.writeYaml = {
+            return null
+        }
+
+        helper.registerAllowedMethod("pwd", [], { return '/'})
+
+        def git = cblMock.Git.new()
+        git.metaClass.checkoutOrCreate = {
+            return null
+        }
+
+        def output = script.syncGitopsRepoPerStage(GITOPS_CONFIG, git, GIT_REPO)
         println(output)
 
-//        def test = DeployViaGitopsTest.cblMock.Git.new(this)
-//        println(test)
     }
 
 //    @Test
 //    void 'preparing gitRepo returns config'() {
-//        def git = mock(Git.class)
 //        def stub = new StubFor(GitRepo)
 //
 //        stub.demand.with {
@@ -93,7 +121,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
 //        }
 //
 //        stub.use {
-//            def output = script.prepareGitRepo(git)
+//            def output = script.prepareGitRepo(cblMock.Git.new)
 //            assert output.applicationRepo != null
 //            assert output.configRepoTempDir == '.configRepoTempDir'
 //        }
@@ -171,4 +199,5 @@ class DeployViaGitopsTest extends BasePipelineTest {
         script.skipQualityAssurance = null
         script.configRepositoryPRUrl = "scm/repo"
     }
+
 }
