@@ -1,24 +1,17 @@
 import com.cloudogu.ces.cesbuildlib.Docker
 import com.cloudogu.ces.cesbuildlib.Git
-import com.cloudogu.gitopsbuildlib.GitRepo
 import com.lesfurets.jenkins.unit.BasePipelineTest
-import groovy.mock.interceptor.StubFor
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import groovy.yaml.YamlSlurper
+import org.junit.jupiter.api.*
 import org.mockito.ArgumentCaptor
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import static org.assertj.core.api.Assertions.assertThat
+
 import static com.lesfurets.jenkins.unit.MethodCall.callArgsToString
-import static org.mockito.Mockito.times
-import static org.mockito.Mockito.when
-import static org.mockito.ArgumentMatchers.*
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.verify
+import static org.assertj.core.api.Assertions.assertThat
+import static org.mockito.ArgumentMatchers.any
+import static org.mockito.ArgumentMatchers.anyString
+import static org.mockito.Mockito.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeployViaGitopsTest extends BasePipelineTest {
@@ -42,6 +35,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
             applicationRepo  : 'applicationRepo',
             configRepoTempDir: 'configRepoTempDir'
     ]
+    
     Map gitopsConfig(Map stages) {
         return [
                 scmmCredentialsId : 'scmManagerCredentials',
@@ -85,6 +79,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
         cesBuildLibMock = new CesBuildLibMock()
         git = mock(Git.class)
+        // TODO re-use DockerMock from class
         docker = mock(Docker.class)
         Docker.Image imageMock = mock(Docker.Image.class)
         when(docker.image(anyString())).thenReturn(imageMock)
@@ -145,6 +140,65 @@ spec:
         deployViaGitops.metaClass = null
     }
 
+    @Test
+    void 'default values are set'() {
+
+        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+            assertGitOpsConfigWithoutInstances(actualGitOpsConfig, deployViaGitops.getDefaultConfig())
+        }
+        
+        deployViaGitops([:])
+    }
+    
+    @Test
+    void 'default values can be overwritten'() {
+
+        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+            assertThat(actualGitOpsConfig.cesBuildLibRepo).isEqualTo('abc')
+        }
+        
+        deployViaGitops([cesBuildLibRepo: 'abc'])
+    }
+    
+    @Test
+    void 'default validator can be disabled'() {
+
+        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+            assertThat(actualGitOpsConfig.validators.kubeval.enabled).isEqualTo(false)
+            assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
+        }
+
+        deployViaGitops([
+            validators: [
+                kubeval: [
+                    enabled: false
+                ]
+            ]
+        ])
+    }
+    
+    @Test
+    void 'custom validator can be added'() {
+
+        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+            assertThat(actualGitOpsConfig.validators.myVali.config.a).isEqualTo('b')
+            assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
+            assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
+        }
+
+        deployViaGitops([
+            validators: [
+                myVali: [
+                    validator: { },
+                    enabled: true,
+                    config: [
+                        a: 'b'
+                    ]
+                ]
+            ]
+        ])
+    }
+    
     @Test
     void 'single stage deployment via gitops'() {
 
@@ -263,4 +317,9 @@ spec:
         script.configRepositoryPRUrl = "scm/repo"
     }
 
+    void assertGitOpsConfigWithoutInstances(Map actualGitOpsConfig, Map expected) {
+        // Remove Instance IDs, e.g. Yamllint@1234567 because they are generate on each getDefaultConfig() call.
+        assertThat(actualGitOpsConfig.toString().replaceAll('@.*,', ','))
+            .isEqualTo(deployViaGitops.getDefaultConfig().toString().replaceAll('@.*,', ','))
+    }
 }

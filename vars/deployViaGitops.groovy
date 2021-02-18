@@ -7,8 +7,10 @@ Map getDefaultConfig() {
     String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
     
     return [
-        cesBuildLibVersion: 'https://github.com/cloudogu/gitops-build-lib',
-        cesBuildLibRepo: '1.45.0',
+        cesBuildLibRepo: 'https://github.com/cloudogu/ces-build-lib',
+        cesBuildLibVersion: '1.45.0',
+        mainBranch: 'main',
+        updateImages: [],
         validators: [
             kubeval: [
                 validator: new Kubeval(this),
@@ -35,10 +37,21 @@ Map getDefaultConfig() {
 
 void call(Map gitopsConfig) {
   // Merge default config with the one passed as parameter
-  gitopsConfig = defaultConfig << gitopsConfig
+  gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
     
   cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
   deploy(gitopsConfig)
+}
+
+def mergeMaps(Map a, Map b) {
+    return b.inject(a.clone()) { map, entry ->
+        if (map[entry.key] instanceof Map && entry.value instanceof Map) {
+            map[entry.key] = mergeMaps(map[entry.key], entry.value)
+        } else {
+            map[entry.key] = entry.value
+        }
+        return map
+    }
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {

@@ -17,7 +17,7 @@ class Yamllint extends Validator {
     void validate(String targetDirectory, Map config) {
         withDockerImage(config.image) {
             script.sh "yamllint " +
-                "${config.profile ? "-d ${config.profile}" : ''} " +
+                "${config.profile ? "-d ${config.profile} " : ''}" +
                 '-f standard ' + // non-colored for CI-server  
             "${targetDirectory}"
         }
