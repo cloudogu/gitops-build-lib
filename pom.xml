@@ -113,7 +113,7 @@
   </repositories>
 
   <build>
-    <sourceDirectory>src/com/cloudogu/gitopsbuildlib</sourceDirectory>
+    <sourceDirectory>src</sourceDirectory>
     <scriptSourceDirectory>vars</scriptSourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
     <resources>

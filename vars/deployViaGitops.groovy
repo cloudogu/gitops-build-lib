@@ -3,11 +3,55 @@
 import com.cloudogu.gitopsbuildlib.*
 
 String getConfigDir() { '.config' }
-
+Map getDefaultConfig() {
+    String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
+    
+    return [
+        cesBuildLibRepo: 'https://github.com/cloudogu/ces-build-lib',
+        cesBuildLibVersion: '1.45.0',
+        mainBranch: 'main',
+        updateImages: [],
+        validators: [
+            kubeval: [
+                validator: new Kubeval(this),
+                enabled: true,
+                config: [
+                    // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
+                    image: helmImage,
+                    k8sSchemaVersion: '1.18.1'
+                ]
+            ],
+            yamllint: [
+                validator: new Yamllint(this),
+                enabled: true,
+                config: [
+                    image: 'cytopia/yamllint:1.25-0.7',
+                    // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
+                    // It still fails on syntax errors.
+                    profile: 'relaxed'
+                ]
+            ]
+        ]
+    ]
+}
 
 void call(Map gitopsConfig) {
+  // Merge default config with the one passed as parameter
+  gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
+    
   cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
   deploy(gitopsConfig)
+}
+
+def mergeMaps(Map a, Map b) {
+    return b.inject(a.clone()) { map, entry ->
+        if (map[entry.key] instanceof Map && entry.value instanceof Map) {
+            map[entry.key] = mergeMaps(map[entry.key], entry.value)
+        } else {
+            map[entry.key] = entry.value
+        }
+        return map
+    }
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
@@ -79,9 +123,15 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
 
   createApplicationFolders(stage, gitopsConfig)
 
-  // TODO user decides if validation is necessary
-  def validate = new ValidateResources(this, "${stage}/${gitopsConfig.application}/", "${configDir}/config.yamllint.yaml", cesBuildLib)
-  validate.start()
+  gitopsConfig.validators.each { validatorConfig ->
+      echo "Executing validator ${validatorConfig.key}"
+      
+      validatorConfig.value.validator.validate(
+          validatorConfig.value.enabled, 
+          "${stage}/${gitopsConfig.application}/",
+          validatorConfig.value.config)
+  }
+  
 
   gitopsConfig.updateImages.each {
     updateImageVersion("${stage}/${gitopsConfig.application}/${it['deploymentFilename']}", it['containerName'], it['imageName'])
