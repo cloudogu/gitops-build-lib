@@ -3,22 +3,16 @@ import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.gitopsbuildlib.GitRepo
 import com.lesfurets.jenkins.unit.BasePipelineTest
 import groovy.mock.interceptor.StubFor
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import groovy.yaml.YamlSlurper
+import org.junit.jupiter.api.*
 import org.mockito.ArgumentCaptor
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import static org.assertj.core.api.Assertions.assertThat
+
 import static com.lesfurets.jenkins.unit.MethodCall.callArgsToString
-import static org.mockito.Mockito.times
-import static org.mockito.Mockito.when
+import static org.assertj.core.api.Assertions.assertThat
 import static org.mockito.ArgumentMatchers.*
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.verify
+import static org.mockito.Mockito.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeployViaGitopsTest extends BasePipelineTest {
@@ -32,16 +26,14 @@ class DeployViaGitopsTest extends BasePipelineTest {
     def git
     def docker
 
+    def gitRepo
+
     def cesBuildLibMock
     def deployViaGitops
     def actualShStringArgs = []
 
-    static final String EXPECTED_OUTPUT = "test"
     static final String EXPECTED_APPLICATION = 'app'
-    static final Map GIT_REPO = [
-            applicationRepo  : 'applicationRepo',
-            configRepoTempDir: 'configRepoTempDir'
-    ]
+
     Map gitopsConfig(Map stages) {
         return [
                 scmmCredentialsId : 'scmManagerCredentials',
@@ -50,11 +42,11 @@ class DeployViaGitopsTest extends BasePipelineTest {
                 cesBuildLibRepo   : 'cesBuildLibRepo',
                 cesBuildLibVersion: 'cesBuildLibVersion',
                 application       : 'application',
-                mainBranch        : 'mainBranch',
+                mainBranch        : 'main',
                 updateImages      : [
                         [deploymentFilename: "deployment.yaml",
                          containerName     : 'application',
-                         imageName         : 'imageName']
+                         imageName         : 'newImageName']
                 ],
                 stages            : stages
         ]
@@ -95,9 +87,11 @@ class DeployViaGitopsTest extends BasePipelineTest {
                 closure.call()
             }
         })
+
         cesBuildLibMock.Docker.new = {
             return docker
         }
+
         cesBuildLibMock.Git.new = { def script, String credentials ->
             return git
         }
@@ -105,8 +99,6 @@ class DeployViaGitopsTest extends BasePipelineTest {
         deployViaGitops.metaClass.initCesBuildLib = { String repo, String version ->
             return cesBuildLibMock
         }
-
-//        script.cesBuildLib = cblMock
 
         deployViaGitops.metaClass.sh = { String args ->
             actualShStringArgs += args
@@ -124,18 +116,40 @@ spec:
     spec:
       containers:
         - name: 'application'
-          image: 'testImage'
+          image: 'oldImageName'
 '''
 
-        when(git.areChangesStagedForCommit()).thenReturn(true)
-        when(git.getRepositoryUrl()).thenReturn("repo/url/my/new/repo")
+        gitRepo = new StubFor(GitRepo)
+        gitRepo.demand.with {
+            create { new GitRepo('test', 'test', 'test', 'test', 'test') }
+            // for staging
+            getCommitMessage { 'staging commit message' }
+            getRepositoryUrl { 'staging/reponame/' }
+            getAuthorName { 'stagingName' }
+            getAuthorEmail { 'testerName@email.de' }
+            getCommitHash { '1a' }
+
+            // for production
+            getCommitMessage { 'production commit message' }
+            getRepositoryUrl { 'production/reponame/' }
+            getAuthorName { 'productionName' }
+            getAuthorEmail { 'testerName@email.de' }
+            getCommitHash { '2b' }
+
+            // for qa
+            getCommitMessage { 'qa commit message' }
+            getRepositoryUrl { 'qa/reponame/' }
+            getAuthorName { 'qaName' }
+            getAuthorEmail { 'testerName@email.de' }
+            getCommitHash { '3c' }
+        }
 
         deployViaGitops.metaClass.readYaml = {
             return new YamlSlurper().parseText(configYaml)
         }
 
-        deployViaGitops.metaClass.writeYaml = {
-            return null
+        deployViaGitops.metaClass.writeYaml = { LinkedHashMap args ->
+            echo "filepath is: ${args.file}, data is: ${args.data}, overwrite is: ${args.overwrite}"
         }
     }
 
@@ -147,111 +161,197 @@ spec:
 
     @Test
     void 'single stage deployment via gitops'() {
+        when(git.areChangesStagedForCommit()).thenReturn(true)
 
-        deployViaGitops(gitopsConfig(singleStages))
-        assertThat(helper.callStack.findAll { call ->call.methodName == "dir"}.any { call ->
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfig(singleStages))
+        }
+
+        // testing deploy
+        assertThat(helper.callStack.findAll { call -> call.methodName == "dir"}.any { call ->
             callArgsToString(call).contains(".configRepoTempDir")
         }).isTrue()
 
-        ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo 'configRepositoryUrl'
-        assertThat(argumentCaptor.getValue().branch).isEqualTo('mainBranch')
-
+        assertThat(argumentCaptor.getValue().url).isEqualTo('configRepositoryUrl')
+        assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
-        println("bla")
-        println(deployViaGitops.currentBuild.description)
+        // testing syncGitopsRepoPerStage
+        verify(git, times(1)).checkoutOrCreate('main')
+
+        // TODO somehow this callstack search doesn't find the sh function calls in 'createApplicationFolder'
+        // testing createApplicationFolders
+//        assertThat(
+//            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+//                callArgsToString(call).contains("mkdir -p")
+//        }).isTrue()
+
+        // testing validation
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
+                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1  --strict")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
+                callArgsToString(call).equals("yamllint -c .config/config.yamllint.yaml staging/application/")
+            }).isTrue()
+
+        //testing updateImageVersion
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
+                callArgsToString(call).contains("newImageName")
+            }).isTrue()
+
+        // testing commitAndPushToStage
+        verify(git, times(1)).add('.')
+
+        ArgumentCaptor<String> argumentCaptor2 = ArgumentCaptor.forClass(String.class)
+        verify(git).commit(argumentCaptor2.capture(), anyString(), anyString())
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[staging] staging/reponame@1a')
+
+        argumentCaptor2 = ArgumentCaptor.forClass(String.class)
+        verify(git).pushAndPullOnFailure(argumentCaptor2.capture())
+        assertThat(argumentCaptor2.getValue()).isEqualTo('origin main')
+
+
+        assertThat(deployViaGitops.currentBuild.description).isEqualTo('GitOps commits: staging (1234abcd)\nImage: [newImageName]')
     }
+
     @Test
     void 'multi-stage deployment via GitOps'() {
+        when(git.areChangesStagedForCommit()).thenReturn(true)
 
-//        def expectedKubeShStringArgs = ["kubeval",  "-d ${targetDirectory} -v ${k8sVersion} --strict"]
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfig(multipleStages))
+        }
+
+        // testing deploy
+        assertThat(helper.callStack.findAll { call -> call.methodName == "dir"}.any { call ->
+            callArgsToString(call).contains(".configRepoTempDir")
+        }).isTrue()
+
+        ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
+        verify(git).call(argumentCaptor.capture())
+        assertThat(argumentCaptor.getValue().url).isEqualTo('configRepositoryUrl')
+        assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
+        verify(git, times(1)).fetch()
+
+        // testing syncGitopsRepoPerStage
+        verify(git, times(3)).checkoutOrCreate('main')
+        verify(git, times(1)).checkoutOrCreate('production_application')
+        verify(git, times(1)).checkoutOrCreate('qa_application')
+
+
+        // TODO somehow this callstack search doesn't find the sh function calls in 'createApplicationFolder'
+        // testing createApplicationFolders
+//        assertThat(
+//            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+//                callArgsToString(call).contains("mkdir -p")
+//        }).isTrue()
+
+        // testing validation
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
+                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1  --strict")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
+                callArgsToString(call).equals("yamllint -c .config/config.yamllint.yaml staging/application/")
+            }).isTrue()
+
+        //testing updateImageVersion
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
+                callArgsToString(call).contains("newImageName")
+            }).isTrue()
+
+        // testing commitAndPushToStage
+        verify(git, times(3)).add('.')
+
+        ArgumentCaptor<String> argumentCaptor2 = ArgumentCaptor.forClass(String.class)
+        verify(git).commit(argumentCaptor2.capture(), eq('stagingName'), anyString())
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[staging] staging/reponame@1a')
+
+        argumentCaptor2 = ArgumentCaptor.forClass(String.class)
+        verify(git).commit(argumentCaptor2.capture(), eq('productionName'), anyString())
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[production] production/reponame@2b')
+
+        argumentCaptor2 = ArgumentCaptor.forClass(String.class)
+        verify(git).commit(argumentCaptor2.capture(), eq('qaName'), anyString())
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[qa] qa/reponame@3c')
+
+        verify(git, times(3)).pushAndPullOnFailure(anyString())
+
+        assertThat(deployViaGitops.currentBuild.description).isEqualTo('GitOps commits: staging (1234abcd); production (1234abcd); qa (1234abcd)\nImage: [newImageName]')
     }
 
     @Test
-    void 'no changes in git'() {
+    void 'no changes in git with multiple stages'() {
+        when(git.areChangesStagedForCommit()).thenReturn(false)
 
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfig(multipleStages))
+        }
+
+        List<String> stringArgs = []
+            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
+                stringArgs += callArgsToString(call)
+            }
+        assertThat(stringArgs.contains('No changes on gitOps repo for staging (branch: main)'))
+        assertThat(stringArgs.contains('No changes on gitOps repo for staging (branch: production_application)'))
+        assertThat(stringArgs.contains('No changes on gitOps repo for staging (branch: qa_application)'))
     }
 
+    @Test
+    void 'no changes in git with single stages'() {
+        when(git.areChangesStagedForCommit()).thenReturn(false)
 
-//    @Test
-//    void 'preparing gitRepo returns config'() {
-//        def stub = new StubFor(GitRepo)
-//
-//        stub.demand.with {
-//            create { new GitRepo('test', 'test', 'test', 'test', 'test') }
-//        }
-//
-//        stub.use {
-//            def output = script.prepareGitRepo(cblMock.Git.new)
-//            assert output.applicationRepo != null
-//            assert output.configRepoTempDir == '.configRepoTempDir'
-//        }
-//    }
-//
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfig(singleStages))
+        }
+
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
+                callArgsToString(call).equals("No changes on gitOps repo for staging (branch: main). Not committing or pushing.")
+            }).isTrue()
+    }
+
+    @Test
+    void 'preparing gitRepo returns config'() {
+
+        def stub = new StubFor(GitRepo)
+
+        stub.demand.with {
+            create { new GitRepo('test', 'test', 'test', 'test', 'test') }
+        }
+
+        stub.use {
+            def output = deployViaGitops.prepareGitRepo(git)
+            assert output.applicationRepo != null
+            assert output.configRepoTempDir == '.configRepoTempDir'
+        }
+    }
+
     @Test
     void 'returns correct build description'() {
-        def output = script.createBuildDescription('changes', "imageName")
+        def output = deployViaGitops.createBuildDescription('changes', "imageName")
         assert output == 'GitOps commits: changes\nImage: imageName'
     }
 
     @Test
     void 'return No Changes if no changes are present'() {
-        def output = script.createBuildDescription('', 'imageName')
+        def output = deployViaGitops.createBuildDescription('', 'imageName')
         assert output == 'GitOps commits: No changes\nImage: imageName'
     }
 
     @Test
     void 'changes are being aggregated'() {
         def changes = ['1', '2', '3']
-        def output = script.aggregateChangesOnGitOpsRepo(changes)
+        def output = deployViaGitops.aggregateChangesOnGitOpsRepo(changes)
         assert output == '1; 2; 3'
     }
-//
-//    @Test
-//    void 'sync gitops repo runs three times for three stages'() {
-//        def gitMock = mock(Git.class)
-//
-////        script.metaClass.syncGitopsRepo { return 'changes' }
-//
-//        helper.registerAllowedMethod("syncGitopsRepo", [String, String, Object, Map, Map], { String stage, String branch, Object git, Map gitRepo, Map gitopsConfig ->
-//            return "changes for ${stage}"
-//        })
-//
-//        helper.registerAllowedMethod("createPullRequest", [Map, String, String], { Map gitopsConfig, String stage, String branch ->
-//            null
-//        })
-//
-//
-//        def output = script.syncGitopsRepoPerStage(GITOPS_CONFIG, gitMock, GIT_REPO)
-//        println(output)
-//
-//    }
-//
-//    @Test
-//    void 'successful commit yields commit message'() {
-//        given:
-//        Git gitMock = mock(Git.class)
-//        Mockito.when(gitMock.areChangesStagedForCommit()).thenReturn(true)
-//        Mockito.doNothing().when(gitMock).commit(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())
-////        Mockito.when(gitMock.commit(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(null)
-//        Mockito.doNothing().when(gitMock).pushAndPullOnFailure(Mockito.anyString())
-////        Mockito.when(gitMock.pushAndPullOnFailure(Mockito.anyString())).thenReturn(null)
-////        def git = new MockFor(Git)
-////        git.demand.with {
-////            areChangesStagedForCommit { return true }
-////        }
-//
-//        when:
-//        def output = script.commitAndPushToStage('staging', 'main', gitMock, GIT_REPO)
-//
-//        then:
-//        //            1 * git.commit(_)
-//        1 * git.pushAndPullOnFailure('origin staging')
-//        println(output)
-//    }
-
 
     private static void setupGlobals(Script script) {
         script.metaClass.getAppDockerRegistry = { EXPECTED_REGISTRY }

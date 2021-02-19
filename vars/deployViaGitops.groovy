@@ -33,7 +33,7 @@ protected void deploy(Map gitopsConfig) {
     sh "rm -rf ${gitRepo.configRepoTempDir}"
   }
 
-  currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.imageName)
+  currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.updateImages.imageName as String)
 }
 
 protected Map prepareGitRepo(def git) {
@@ -91,12 +91,12 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
 }
 
 private void createApplicationFolders(String stage, Map gitopsConfig) {
-  sh "mkdir -p ${stage}/${gitopsConfig.application}/"
-  sh "mkdir -p ${configDir}/"
-  // copy extra resources like sealed secrets
-  echo "Copying k8s payload from application repo to gitOps Repo: 'k8s/${stage}/*' to '${stage}/${gitopsConfig.application}'"
-  sh "cp ${env.WORKSPACE}/k8s/${stage}/* ${stage}/${gitopsConfig.application}/ || true"
-  sh "cp ${env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
+    sh "mkdir -p ${stage}/${gitopsConfig.application}/"
+    sh "mkdir -p ${configDir}/"
+    // copy extra resources like sealed secrets
+    echo "Copying k8s payload from application repo to gitOps Repo: 'k8s/${stage}/*' to '${stage}/${gitopsConfig.application}'"
+    sh "cp ${env.WORKSPACE}/k8s/${stage}/* ${stage}/${gitopsConfig.application}/ || true"
+    sh "cp ${env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
 }
 
 protected String commitAndPushToStage(String stage, String branch, def git, Map gitRepo) {
