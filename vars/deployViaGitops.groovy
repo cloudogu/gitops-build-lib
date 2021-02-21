@@ -3,6 +3,13 @@
 import com.cloudogu.gitopsbuildlib.*
 
 String getConfigDir() { '.config' }
+
+List getMandatoryFields() {
+    return [
+        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestUrl', 'application', 'stages'
+    ]
+}
+
 Map getDefaultConfig() {
     String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
     
@@ -37,10 +44,13 @@ Map getDefaultConfig() {
 
 void call(Map gitopsConfig) {
   // Merge default config with the one passed as parameter
-  gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
-    
-  cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
-  deploy(gitopsConfig)
+    gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
+    def nonValidFields = validateMandatoryFields(gitopsConfig)
+    if (nonValidFields) {
+        error 'The following fields in the gitops config are mandatory but were not set: ' + nonValidFields
+    }
+    cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
+    deploy(gitopsConfig)
 }
 
 def mergeMaps(Map a, Map b) {
@@ -52,6 +62,23 @@ def mergeMaps(Map a, Map b) {
         }
         return map
     }
+}
+
+def validateMandatoryFields(Map gitopsConfig) {
+    def nonValidFields = []
+    for (String mandatoryField : mandatoryFields) {
+        // Note: "[]" syntax (and also getProperty()) leads to
+        // Scripts not permitted to use staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getAt
+        if (!gitopsConfig.containsKey(mandatoryField)) {
+            nonValidFields += mandatoryField
+        } else {
+            def mandatoryFieldValue = gitopsConfig.get(mandatoryField)
+            if(!mandatoryFieldValue) {
+                nonValidFields += mandatoryField
+            }
+        }
+    }
+    return nonValidFields
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {

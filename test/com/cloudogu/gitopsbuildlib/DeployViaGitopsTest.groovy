@@ -1,24 +1,21 @@
-import com.cloudogu.ces.cesbuildlib.Docker
+package com.cloudogu.gitopsbuildlib
+
+import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.gitopsbuildlib.GitRepo
+import com.cloudogu.gitopsbuildlib.Kubeval
+import com.cloudogu.gitopsbuildlib.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
 import groovy.mock.interceptor.StubFor
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import groovy.yaml.YamlSlurper
+import org.junit.jupiter.api.*
 import org.mockito.ArgumentCaptor
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
-import static org.assertj.core.api.Assertions.assertThat
+
 import static com.lesfurets.jenkins.unit.MethodCall.callArgsToString
-import static org.mockito.Mockito.times
-import static org.mockito.Mockito.when
-import static org.mockito.ArgumentMatchers.*
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.verify
+import static org.assertj.core.api.Assertions.assertThat
+import static org.mockito.ArgumentMatchers.anyString
+import static org.mockito.ArgumentMatchers.eq
+import static org.mockito.Mockito.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DeployViaGitopsTest extends BasePipelineTest {
@@ -36,14 +33,11 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     def cesBuildLibMock
     def deployViaGitops
-    def actualShStringArgs = []
 
-    static final String EXPECTED_OUTPUT = "test"
     static final String EXPECTED_APPLICATION = 'app'
-    static final Map GIT_REPO = [
-            applicationRepo  : 'applicationRepo',
-            configRepoTempDir: 'configRepoTempDir'
-    ]
+
+    String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
+
     Map gitopsConfig(Map stages) {
         return [
                 scmmCredentialsId : 'scmManagerCredentials',
@@ -57,6 +51,27 @@ class DeployViaGitopsTest extends BasePipelineTest {
                         [deploymentFilename: "deployment.yaml",
                          containerName     : 'application',
                          imageName         : 'newImageName']
+                ],
+                validators: [
+                    kubeval: [
+                        validator: new Kubeval(deployViaGitops),
+                        enabled: true,
+                        config: [
+                            // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
+                            image: helmImage,
+                            k8sSchemaVersion: '1.18.1'
+                        ]
+                    ],
+                    yamllint: [
+                        validator: new Yamllint(deployViaGitops),
+                        enabled: true,
+                        config: [
+                            image: 'cytopia/yamllint:1.25-0.7',
+                            // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
+                            // It still fails on syntax errors.
+                            profile: 'relaxed'
+                        ]
+                    ]
                 ],
                 stages            : stages
         ]
@@ -87,17 +102,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
         cesBuildLibMock = new CesBuildLibMock()
         git = mock(Git.class)
-        // TODO re-use DockerMock from class
-        docker = mock(Docker.class)
-        Docker.Image imageMock = mock(Docker.Image.class)
-        when(docker.image(anyString())).thenReturn(imageMock)
-        when(imageMock.inside(anyString(), any())).thenAnswer(new Answer<Object>() {
-            @Override
-            Object answer(InvocationOnMock invocation) throws Throwable {
-                Closure closure = invocation.getArgument(1)
-                closure.call()
-            }
-        })
+        docker = new DockerMock().createMock()
 
         cesBuildLibMock.Docker.new = {
             return docker
@@ -105,19 +110,6 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
         cesBuildLibMock.Git.new = { def script, String credentials ->
             return git
-        }
-
-        deployViaGitops.metaClass.initCesBuildLib = { String repo, String version ->
-            return cesBuildLibMock
-        }
-
-        deployViaGitops.metaClass.sh = { String args ->
-            actualShStringArgs += args
-
-        }
-
-        deployViaGitops.metaClass.pwd = {
-            return '/'
         }
 
         def configYaml = '''\
@@ -133,26 +125,37 @@ spec:
         gitRepo = new StubFor(GitRepo)
         gitRepo.demand.with {
             create { new GitRepo('test', 'test', 'test', 'test', 'test') }
+            // this needs to be defined three times for our three stages.
+            // the authorName changes are only for verifying purposes within this testcase.
+            // in normal usage the authorName is the same
             // for staging
-            getCommitMessage { 'staging commit message' }
-            getRepositoryUrl { 'staging/reponame/' }
-            getAuthorName { 'stagingName' }
-            getAuthorEmail { 'testerName@email.de' }
-            getCommitHash { '1a' }
+            getCommitMessage { '#0001' }
+            getRepositoryUrl { 'backend/k8s-gitops/' }
+            getAuthorName { 'staging' }
+            getAuthorEmail { 'authorName@email.de' }
+            getCommitHash { '1234abcd' }
 
             // for production
-            getCommitMessage { 'production commit message' }
-            getRepositoryUrl { 'production/reponame/' }
-            getAuthorName { 'productionName' }
-            getAuthorEmail { 'testerName@email.de' }
-            getCommitHash { '2b' }
+            getCommitMessage { '#0001' }
+            getRepositoryUrl { 'backend/k8s-gitops/' }
+            getAuthorName { 'production' }
+            getAuthorEmail { 'authorName@email.de' }
+            getCommitHash { '1234abcd' }
 
             // for qa
-            getCommitMessage { 'qa commit message' }
-            getRepositoryUrl { 'qa/reponame/' }
-            getAuthorName { 'qaName' }
-            getAuthorEmail { 'testerName@email.de' }
-            getCommitHash { '3c' }
+            getCommitMessage { '#0001' }
+            getRepositoryUrl { 'backend/k8s-gitops/' }
+            getAuthorName { 'qa' }
+            getAuthorEmail { 'authorName@email.de' }
+            getCommitHash { '1234abcd' }
+        }
+
+        deployViaGitops.metaClass.initCesBuildLib = { String repo, String version ->
+            return cesBuildLibMock
+        }
+
+        deployViaGitops.metaClass.pwd = {
+            return '/'
         }
 
         deployViaGitops.metaClass.readYaml = {
@@ -162,6 +165,8 @@ spec:
         deployViaGitops.metaClass.writeYaml = { LinkedHashMap args ->
             echo "filepath is: ${args.file}, data is: ${args.data}, overwrite is: ${args.overwrite}"
         }
+
+        when(git.commitHashShort).thenReturn('1234abcd')
     }
 
     @AfterEach
@@ -231,6 +236,7 @@ spec:
 
     @Test
     void 'single stage deployment via gitops'() {
+
         when(git.areChangesStagedForCommit()).thenReturn(true)
 
         gitRepo.use {
@@ -248,24 +254,39 @@ spec:
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
+        assertThat(helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+            callArgsToString(call).equals("rm -rf .configRepoTempDir")
+        }).isTrue()
+
         // testing syncGitopsRepoPerStage
         verify(git, times(1)).checkoutOrCreate('main')
 
-        // TODO somehow this callstack search doesn't find the sh function calls in 'createApplicationFolder'
         // testing createApplicationFolders
-//        assertThat(
-//            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-//                callArgsToString(call).contains("mkdir -p")
-//        }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("mkdir -p staging")
+        }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("mkdir -p .config")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("cp null/k8s/staging")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("cp null/*.yamllint.yaml")
+            }).isTrue()
 
         // testing validation
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1  --strict")
+                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1 --strict")
             }).isTrue()
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -c .config/config.yamllint.yaml staging/application/")
+                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application/")
             }).isTrue()
 
         //testing updateImageVersion
@@ -279,7 +300,7 @@ spec:
 
         ArgumentCaptor<String> argumentCaptor2 = ArgumentCaptor.forClass(String.class)
         verify(git).commit(argumentCaptor2.capture(), anyString(), anyString())
-        assertThat(argumentCaptor2.getValue()).isEqualTo('[staging] staging/reponame@1a')
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[staging] #0001 backend/k8s-gitops@1234abcd')
 
         argumentCaptor2 = ArgumentCaptor.forClass(String.class)
         verify(git).pushAndPullOnFailure(argumentCaptor2.capture())
@@ -308,27 +329,57 @@ spec:
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
+        assertThat(helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+            callArgsToString(call).equals("rm -rf .configRepoTempDir")
+        }).isTrue()
+
         // testing syncGitopsRepoPerStage
         verify(git, times(3)).checkoutOrCreate('main')
         verify(git, times(1)).checkoutOrCreate('production_application')
         verify(git, times(1)).checkoutOrCreate('qa_application')
 
-
-        // TODO somehow this callstack search doesn't find the sh function calls in 'createApplicationFolder'
         // testing createApplicationFolders
-//        assertThat(
-//            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-//                callArgsToString(call).contains("mkdir -p")
-//        }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("mkdir -p staging")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("mkdir -p production")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("mkdir -p qa")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("mkdir -p .config")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("cp null/k8s/staging")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("cp null/k8s/production")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("cp null/k8s/qa")
+            }).isTrue()
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+                callArgsToString(call).contains("cp null/*.yamllint.yaml")
+            }).isTrue()
 
         // testing validation
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1  --strict")
+                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1 --strict")
             }).isTrue()
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -c .config/config.yamllint.yaml staging/application/")
+                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application/")
             }).isTrue()
 
         //testing updateImageVersion
@@ -341,16 +392,18 @@ spec:
         verify(git, times(3)).add('.')
 
         ArgumentCaptor<String> argumentCaptor2 = ArgumentCaptor.forClass(String.class)
-        verify(git).commit(argumentCaptor2.capture(), eq('stagingName'), anyString())
-        assertThat(argumentCaptor2.getValue()).isEqualTo('[staging] staging/reponame@1a')
+        verify(git).commit(argumentCaptor2.capture(), eq('staging'), anyString())
+        println("before argument get value")
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[staging] #0001 backend/k8s-gitops@1234abcd')
+        println("after argument get value")
 
         argumentCaptor2 = ArgumentCaptor.forClass(String.class)
-        verify(git).commit(argumentCaptor2.capture(), eq('productionName'), anyString())
-        assertThat(argumentCaptor2.getValue()).isEqualTo('[production] production/reponame@2b')
+        verify(git).commit(argumentCaptor2.capture(), eq('production'), anyString())
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[production] #0001 backend/k8s-gitops@1234abcd')
 
         argumentCaptor2 = ArgumentCaptor.forClass(String.class)
-        verify(git).commit(argumentCaptor2.capture(), eq('qaName'), anyString())
-        assertThat(argumentCaptor2.getValue()).isEqualTo('[qa] qa/reponame@3c')
+        verify(git).commit(argumentCaptor2.capture(), eq('qa'), anyString())
+        assertThat(argumentCaptor2.getValue()).isEqualTo('[qa] #0001 backend/k8s-gitops@1234abcd')
 
         verify(git, times(3)).pushAndPullOnFailure(anyString())
 
@@ -406,7 +459,7 @@ spec:
 
     @Test
     void 'returns correct build description'() {
-        def output = deployViaGitops.createBuildDescription('changes', "imageName")
+        def output = deployViaGitops.createBuildDescription('changes', 'imageName')
         assert output == 'GitOps commits: changes\nImage: imageName'
     }
 
@@ -421,6 +474,74 @@ spec:
         def changes = ['1', '2', '3']
         def output = deployViaGitops.aggregateChangesOnGitOpsRepo(changes)
         assert output == '1; 2; 3'
+    }
+
+    @Test
+    void 'error on single missing mandatory field'() {
+
+        def gitopsConfigMissingMandatoryField = [
+            scmmConfigRepoUrl : 'configRepositoryUrl',
+            scmmPullRequestUrl: 'configRepositoryPRUrl',
+            application       : 'application',
+            stages            : [
+                staging   : [deployDirectly: true],
+                production: [deployDirectly: false],
+                qa        : []
+            ]
+        ]
+
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+        }
+
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
+                callArgsToString(call).contains("[scmmCredentialsId]")
+            }).isTrue()
+    }
+
+    @Test
+    void 'error on single non valid mandatory field'() {
+
+        def gitopsConfigMissingMandatoryField = [
+            scmmCredentialsId : 'scmManagerCredentials',
+            scmmConfigRepoUrl : '',
+            scmmPullRequestUrl: 'configRepositoryPRUrl',
+            application       : 'application',
+            stages            : [
+                staging   : [deployDirectly: true],
+                production: [deployDirectly: false],
+                qa        : []
+            ]
+        ]
+
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+        }
+
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
+                callArgsToString(call).contains("[scmmConfigRepoUrl]")
+            }).isTrue()
+    }
+
+    @Test
+    void 'error on missing or non valid values on mandatory fields'() {
+
+        def gitopsConfigMissingMandatoryField = [
+            scmmPullRequestUrl: null,
+            application       : '',
+            stages            : []
+        ]
+
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+        }
+
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
+                callArgsToString(call).contains("[scmmCredentialsId, scmmConfigRepoUrl, scmmPullRequestUrl, application, stages]")
+            }).isTrue()
     }
 
     private static void setupGlobals(Script script) {
