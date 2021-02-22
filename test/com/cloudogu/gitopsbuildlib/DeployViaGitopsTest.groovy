@@ -2,6 +2,7 @@ package com.cloudogu.gitopsbuildlib
 
 import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
+import com.cloudogu.ces.cesbuildlib.SCMManager
 import com.cloudogu.gitopsbuildlib.GitRepo
 import com.cloudogu.gitopsbuildlib.Kubeval
 import com.cloudogu.gitopsbuildlib.Yamllint
@@ -23,11 +24,13 @@ class DeployViaGitopsTest extends BasePipelineTest {
     class CesBuildLibMock {
         def Git = [:]
         def Docker = [:]
+        def SCMManager = [:]
     }
 
     //TODO naming mock?
     def git
     def docker
+    def scmm
 
     def gitRepo
 
@@ -40,32 +43,33 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     Map gitopsConfig(Map stages) {
         return [
-                scmmCredentialsId : 'scmManagerCredentials',
-                scmmConfigRepoUrl : 'configRepositoryUrl',
-                scmmPullRequestUrl: 'configRepositoryPRUrl',
-                cesBuildLibRepo   : 'cesBuildLibRepo',
-                cesBuildLibVersion: 'cesBuildLibVersion',
-                application       : 'application',
-                mainBranch        : 'main',
-                updateImages      : [
-                        [deploymentFilename: "deployment.yaml",
-                         containerName     : 'application',
-                         imageName         : 'newImageName']
+                scmmCredentialsId       : 'scmManagerCredentials',
+                scmmConfigRepoUrl       : 'configRepositoryUrl',
+                scmmPullRequestBaseUrl  : 'http://scmm-scm-manager/scm',
+                scmmPullRequestRepo     : 'fluxv1/gitops',
+                cesBuildLibRepo         : 'cesBuildLibRepo',
+                cesBuildLibVersion      : 'cesBuildLibVersion',
+                application             : 'application',
+                mainBranch              : 'main',
+                updateImages            : [
+                    [deploymentFilename : "deployment.yaml",
+                     containerName       : 'application',
+                     imageName           : 'newImageName']
                 ],
                 validators: [
                     kubeval: [
-                        validator: new Kubeval(deployViaGitops),
-                        enabled: true,
-                        config: [
+                        validator   : new Kubeval(deployViaGitops),
+                        enabled     : true,
+                        config      : [
                             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
                             image: helmImage,
                             k8sSchemaVersion: '1.18.1'
                         ]
                     ],
                     yamllint: [
-                        validator: new Yamllint(deployViaGitops),
-                        enabled: true,
-                        config: [
+                        validator   : new Yamllint(deployViaGitops),
+                        enabled     : true,
+                        config      : [
                             image: 'cytopia/yamllint:1.25-0.7',
                             // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
                             // It still fails on syntax errors.
@@ -103,6 +107,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
         cesBuildLibMock = new CesBuildLibMock()
         git = mock(Git.class)
         docker = new DockerMock().createMock()
+        scmm = mock(SCMManager.class)
 
         cesBuildLibMock.Docker.new = {
             return docker
@@ -110,6 +115,10 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
         cesBuildLibMock.Git.new = { def script, String credentials ->
             return git
+        }
+
+        cesBuildLibMock.SCMManager.new = { def script, String prBaseUrl, String scmmCredentialsId ->
+            return scmm
         }
 
         def configYaml = '''\
@@ -481,7 +490,8 @@ spec:
 
         def gitopsConfigMissingMandatoryField = [
             scmmConfigRepoUrl : 'configRepositoryUrl',
-            scmmPullRequestUrl: 'configRepositoryPRUrl',
+            scmmPullRequestBaseUrl: 'configRepositoryPRBaseUrl',
+            scmmPullRequestRepo: 'scmmPullRequestRepo',
             application       : 'application',
             stages            : [
                 staging   : [deployDirectly: true],
@@ -505,7 +515,9 @@ spec:
 
         def gitopsConfigMissingMandatoryField = [
             scmmCredentialsId : 'scmManagerCredentials',
-            scmmConfigRepoUrl : '',
+            scmmConfigRepoUrl : 'configRepositoryUrl',
+            scmmPullRequestBaseUrl: '',
+            scmmPullRequestRepo: 'scmmPullRequestRepo',
             scmmPullRequestUrl: 'configRepositoryPRUrl',
             application       : 'application',
             stages            : [
@@ -521,7 +533,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmConfigRepoUrl]")
+                callArgsToString(call).contains("[scmmPullRequestBaseUrl]")
             }).isTrue()
     }
 
@@ -529,7 +541,7 @@ spec:
     void 'error on missing or non valid values on mandatory fields'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmPullRequestUrl: null,
+            scmmPullRequestBaseUrl: null,
             application       : '',
             stages            : []
         ]
@@ -540,7 +552,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmCredentialsId, scmmConfigRepoUrl, scmmPullRequestUrl, application, stages]")
+                callArgsToString(call).contains("[scmmCredentialsId, scmmConfigRepoUrl, scmmPullRequestBaseUrl, scmmPullRequestRepo, application, stages]")
             }).isTrue()
     }
 

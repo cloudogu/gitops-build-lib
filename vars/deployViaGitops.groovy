@@ -1,12 +1,12 @@
 #!groovy
-
+import com.cloudogu.ces.cesbuildlib.SCMManager
 import com.cloudogu.gitopsbuildlib.*
 
 String getConfigDir() { '.config' }
 
 List getMandatoryFields() {
     return [
-        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestUrl', 'application', 'stages'
+        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestBaseUrl', 'scmmPullRequestRepo', 'application', 'stages'
     ]
 }
 
@@ -128,6 +128,9 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
   HashSet<String> allRepoChanges = new HashSet<String>()
 
   gitopsConfig.stages.each{ stage, config ->
+      def scmm = cesBuildLib.SCMManager.new(this, gitopsConfig.scmmPullRequestBaseUrl, gitopsConfig.scmmCredentialsId)
+      def title = 'created by service \'' + gitopsConfig.application + '\' for stage \'' + stage + '\''
+      def description = 'testDescription'
     //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
     git.checkoutOrCreate(gitopsConfig.mainBranch)
     if(config.deployDirectly) {
@@ -138,7 +141,7 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
       String repoChanges = syncGitopsRepo(stage, stageBranch, git, gitRepo, gitopsConfig)
 
       if(repoChanges) {
-        createPullRequest(gitopsConfig, stage, stageBranch)
+          scmm.createOrUpdatePullRequest(gitopsConfig.scmmPullRequestRepo, stageBranch, gitopsConfig.mainBranch, title, description)
         allRepoChanges += repoChanges
       }
     }
@@ -208,31 +211,6 @@ private String createApplicationCommitMessage(GitRepo applicationRepo) {
   String message = "${issueIds}${repoNamespace}/${repoName}@${applicationRepo.commitHash}"
 
   return message
-}
-
-// TODO use from ces-build-lib
-private void createPullRequest(Map gitopsConfig, String stage, String sourceBranch) {
-
-  withCredentials([usernamePassword(credentialsId: gitopsConfig.scmmCredentialsId, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USER')]) {
-
-    String script =
-            'curl -s -o /dev/null -w "%{http_code}" ' +
-                    "-u ${GIT_USER}:${GIT_PASSWORD} " +
-                    '-H "Content-Type: application/vnd.scmm-pullRequest+json;v=2" ' +
-                    '--data \'{"title": "created by service ' + gitopsConfig.application + ' for stage ' + stage + '", "source": "' + sourceBranch + '", "target": "' + gitopsConfig.mainBranch + '"}\' ' +
-                    gitopsConfig.scmmPullRequestUrl
-
-    // For debugging the quotation of the shell script, just do: echo script
-    String http_code = sh returnStdout: true, script: script
-
-    // At this point we could write a mail to the last committer that his commit triggered a new or updated GitOps PR
-
-    echo "http_code: ${http_code}"
-    // PR exists if we get 409
-    if (http_code != "201" && http_code != "409") {
-      unstable 'Could not create pull request'
-    }
-  }
 }
 
 private void updateImageVersion(String deploymentFilePath, String containerName, String newImageTag) {
