@@ -1,5 +1,4 @@
 #!groovy
-import com.cloudogu.ces.cesbuildlib.SCMManager
 import com.cloudogu.gitopsbuildlib.*
 
 String getConfigDir() { '.config' }
@@ -125,12 +124,10 @@ protected Map prepareGitRepo(def git) {
 
 protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map gitRepo) {
 
-  HashSet<String> allRepoChanges = new HashSet<String>()
+    HashSet<String> allRepoChanges = new HashSet<String>()
+    def scmm = cesBuildLib.SCMManager.new(this , gitopsConfig.scmmPullRequestBaseUrl, gitopsConfig.scmmCredentialsId)
 
-  gitopsConfig.stages.each{ stage, config ->
-      def scmm = cesBuildLib.SCMManager.new(this, gitopsConfig.scmmPullRequestBaseUrl, gitopsConfig.scmmCredentialsId)
-      def title = 'created by service \'' + gitopsConfig.application + '\' for stage \'' + stage + '\''
-      def description = 'testDescription'
+    gitopsConfig.stages.each{ stage, config ->
     //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
     git.checkoutOrCreate(gitopsConfig.mainBranch)
     if(config.deployDirectly) {
@@ -141,6 +138,9 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
       String repoChanges = syncGitopsRepo(stage, stageBranch, git, gitRepo, gitopsConfig)
 
       if(repoChanges) {
+          def title = 'created by service \'' + gitopsConfig.application + '\' for stage \'' + stage + '\''
+          //TODO description functionality needs to be implemented
+          def description = ''
           scmm.createOrUpdatePullRequest(gitopsConfig.scmmPullRequestRepo, stageBranch, gitopsConfig.mainBranch, title, description)
         allRepoChanges += repoChanges
       }
