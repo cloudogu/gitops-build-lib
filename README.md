@@ -22,7 +22,8 @@ gitopsConfig = [
     // Mandatory properties
     scmmCredentialsId : 'scmManagerCredentials',
     scmmConfigRepoUrl : 'configRepositoryUrl',
-    scmmPullRequestUrl: 'configRepositoryPRUrl',
+    scmmPullRequestBaseUrl  : 'configRepositoryPRBaseUrl',
+    scmmPullRequestRepo     : 'configRepositoryPRRepo',
     application       : 'application',
     // stages consists of [ stageName: [ deployDirectly: true ]]
     // stageName is mapped to a folder in the gitops repo
