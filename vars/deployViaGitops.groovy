@@ -156,13 +156,14 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
   gitopsConfig.validators.each { validatorConfig ->
       echo "Executing validator ${validatorConfig.key}"
       
+      // TODO pass gitopsConfig.deployments as param
       validatorConfig.value.validator.validate(
-          validatorConfig.value.enabled, 
+          validatorConfig.value.enabled,
           "${stage}/${gitopsConfig.application}/",
           validatorConfig.value.config)
   }
   
-
+  // TODO move this to a PlainDeployment class and introduce a HelmDeployment class?
   gitopsConfig.updateImages.each {
     updateImageVersion("${stage}/${gitopsConfig.application}/${it['deploymentFilename']}", it['containerName'], it['imageName'])
   }
