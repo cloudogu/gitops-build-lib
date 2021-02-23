@@ -19,7 +19,7 @@ Jenkins pipeline shared library for automating deployments via GitOps
 
 ## Usage
 
-TODO describe how to use, conventions and folder in and output 
+TODO describe how to use, conventions and folder input and output 
 
 * Stages
 * Plain 
@@ -46,7 +46,7 @@ gitopsConfig = [
         qa        : []
     ],
     deployments :[
-        path: 'k8s', // k8s is default
+        sourcePath: 'k8s', // path of k8s resources in application repository. Default: 'k8s'
         // Either "plain" or "helm" is mandatory
         plain: [
             updateImages      : [
@@ -74,7 +74,7 @@ gitopsConfig = [
             extraResources: ['config, secrets'], // files or folders relative to deployments.path. Default empty array. 
             updateValues: [ [fieldPath: "image.name", newValue: imageName] ]
         ]
-        // Additional alternative future
+        // Additional future alternative
         // kustomize: []
     ],
 
