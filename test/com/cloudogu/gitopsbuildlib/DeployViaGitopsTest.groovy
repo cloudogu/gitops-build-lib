@@ -38,7 +38,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
 
-    Map gitopsConfig(Map stages) {
+    Map gitopsConfig(Map stages, Map deployments) {
         return [
             scmmCredentialsId     : 'scmManagerCredentials',
             scmmConfigRepoUrl     : 'configRepositoryUrl',
@@ -48,11 +48,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
             cesBuildLibVersion    : 'cesBuildLibVersion',
             application           : 'application',
             mainBranch            : 'main',
-            updateImages          : [
-                [deploymentFilename: "deployment.yaml",
-                 containerName     : 'application',
-                 imageName         : 'newImageName']
-            ],
+            deployments           : deployments,
             validators            : [
                 kubeval : [
                     validator: new Kubeval(deployViaGitops),
@@ -78,6 +74,21 @@ class DeployViaGitopsTest extends BasePipelineTest {
         ]
     }
 
+    def plainDeployment = [
+        plain             : [
+            updateImages          : [
+                [deploymentFilename: "deployment.yaml",
+                 containerName     : 'application',
+                 imageName         : 'newImageName']
+            ]
+        ]
+    ]
+
+    def helmDeployment = [
+        helm             : [
+            // TODO implement helm test data
+        ]
+    ]
 
     def singleStages = [
         staging: [deployDirectly: true]
@@ -246,7 +257,7 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(true)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(singleStages))
+            deployViaGitops.call(gitopsConfig(singleStages, plainDeployment))
         }
 
         // testing deploy
@@ -321,7 +332,7 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(true)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(multipleStages))
+            deployViaGitops.call(gitopsConfig(multipleStages, plainDeployment))
         }
 
         // testing deploy
@@ -421,7 +432,7 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(false)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(multipleStages))
+            deployViaGitops.call(gitopsConfig(multipleStages, plainDeployment))
         }
 
         List<String> stringArgs = []
@@ -438,7 +449,7 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(false)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(singleStages))
+            deployViaGitops.call(gitopsConfig(singleStages, plainDeployment))
         }
 
         assertThat(
