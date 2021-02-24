@@ -75,6 +75,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
     }
 
     def plainDeployment = [
+        sourcePath: 'k8s',
         plain             : [
             updateImages          : [
                 [deploymentFilename: "deployment.yaml",
@@ -85,6 +86,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
     ]
 
     def helmDeployment = [
+        sourcePath: 'k8s',
         helm             : [
             // TODO implement helm test data
         ]

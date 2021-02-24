@@ -17,6 +17,7 @@ Map getDefaultConfig() {
         cesBuildLibVersion: '1.45.0',
         mainBranch        : 'main',
         deployments       : [
+            sourcePath: 'k8s',
             plain: [
                 updateImages: [],
             ]
