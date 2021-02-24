@@ -16,7 +16,11 @@ Map getDefaultConfig() {
         cesBuildLibRepo   : 'https://github.com/cloudogu/ces-build-lib',
         cesBuildLibVersion: '1.45.0',
         mainBranch        : 'main',
-        updateImages      : [],
+        deployments       : [
+            plain         : [
+                updateImages      : [],
+            ]
+        ],
         validators        : [
             kubeval : [
                 validator: new Kubeval(this),
@@ -44,10 +48,7 @@ Map getDefaultConfig() {
 void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
     gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
-    def nonValidFields = validateMandatoryFields(gitopsConfig)
-    if (nonValidFields) {
-        error 'The following fields in the gitops config are mandatory but were not set: ' + nonValidFields
-    }
+    validateConfig(gitopsConfig)
     cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
     deploy(gitopsConfig)
 }
@@ -61,6 +62,11 @@ def mergeMaps(Map a, Map b) {
         }
         return map
     }
+}
+
+def validateConfig(Map gitopsConfig) {
+    validateMandatoryFields(gitopsConfig)
+    validateDeploymentConfig(gitopsConfig.deployments)
 }
 
 def validateMandatoryFields(Map gitopsConfig) {
@@ -77,7 +83,15 @@ def validateMandatoryFields(Map gitopsConfig) {
             }
         }
     }
-    return nonValidFields
+    if(nonValidFields) {
+        error 'The following fields in the gitops config are mandatory but were not set or have invalid values: ' + nonValidFields
+    }
+}
+
+def validateDeploymentConfig(Map deployments) {
+    if(deployments.containsKey('plain') && deployments.containsKey('helm')) {
+        return 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
+    }
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
@@ -103,13 +117,13 @@ protected void deploy(Map gitopsConfig) {
         sh "rm -rf ${gitRepo.configRepoTempDir}"
     }
 
-    //TODO
+    //TODO check if plain or helm
     currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.deployments.plain.updateImages.imageName as String)
 }
 
 protected Map prepareGitRepo(def git) {
     // Query and store info about application repo before cloning into gitops repo
-    def applicationRepo = GitRepo.create(git)
+    GitRepo applicationRepo = GitRepo.create(git)
 
     // Display that Jenkins made the GitOps commits, not the application repo author
     git.committerName = 'Jenkins'
@@ -165,7 +179,7 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
     }
 
     // TODO move this to a PlainDeployment class and introduce a HelmDeployment class?
-    gitopsConfig.updateImages.each {
+    gitopsConfig.deployments.plain.updateImages.each {
         updateImageVersion("${stage}/${gitopsConfig.application}/${it['deploymentFilename']}", it['containerName'], it['imageName'])
     }
 
@@ -205,14 +219,14 @@ protected String aggregateChangesOnGitOpsRepo(changes) {
 }
 
 private String createApplicationCommitMessage(GitRepo applicationRepo) {
-    String issueIds = (applicationRepo.commitMessage =~ /#\d*/).collect { "${it} " }.join('')
+//    String issueIds = (applicationRepo.commitMessage =~ /#\d*/).collect { "${it} " }.join('')
 
-    String[] urlSplit = applicationRepo.repositoryUrl.split('/')
-    def repoNamespace = urlSplit[-2]
-    def repoName = urlSplit[-1]
-    String message = "${issueIds}${repoNamespace}/${repoName}@${applicationRepo.commitHash}"
-
-    return message
+//    String[] urlSplit = applicationRepo.repositoryUrl.split('/')
+//    def repoNamespace = urlSplit[-2]
+//    def repoName = urlSplit[-1]
+//    String message = "${issueIds}${repoNamespace}/${repoName}@${applicationRepo.commitHash}"
+//
+//    return message
 }
 
 private void updateImageVersion(String deploymentFilePath, String containerName, String newImageTag) {
