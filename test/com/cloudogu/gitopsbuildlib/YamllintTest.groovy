@@ -3,7 +3,7 @@ package com.cloudogu.gitopsbuildlib
 
 import org.junit.jupiter.api.Test
 
-import static org.assertj.core.api.Assertions.assertThat 
+import static org.assertj.core.api.Assertions.assertThat
 
 class YamllintTest {
     def scriptMock = new ScriptMock()
@@ -12,7 +12,7 @@ class YamllintTest {
 
     @Test
     void 'is executed with defaults'() {
-        yamllint.validate(true,'target', [
+        yamllint.validate(true, 'target', [
             image  : 'img',
             profile: 'pro'
         ])
@@ -24,8 +24,8 @@ class YamllintTest {
 
     @Test
     void 'is executed without profile'() {
-        yamllint.validate(true,'target', [
-            image  : 'img'
+        yamllint.validate(true, 'target', [
+            image: 'img'
         ])
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(
             'yamllint -f standard target'

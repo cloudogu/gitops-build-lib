@@ -19,7 +19,7 @@ class Yamllint extends Validator {
             script.sh "yamllint " +
                 "${config.profile ? "-d ${config.profile} " : ''}" +
                 '-f standard ' + // non-colored for CI-server  
-            "${targetDirectory}"
+                "${targetDirectory}"
         }
     }
 

@@ -34,7 +34,7 @@ class ValidatorTest {
         assertThat(scriptMock.actualEchoArgs[0])
             .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false")
     }
-    
+
     class ValidatorUnderTest extends Validator {
 
         ValidatorUnderTest(Object script) {

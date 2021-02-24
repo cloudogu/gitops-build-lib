@@ -11,8 +11,8 @@ class KubevalTest {
 
     @Test
     void 'is executed with defaults'() {
-        kubeval.validate(true,'target', [
-            image  : 'img',
+        kubeval.validate(true, 'target', [
+            image           : 'img',
             k8sSchemaVersion: '1.5'
         ])
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
