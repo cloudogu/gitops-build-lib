@@ -2,6 +2,7 @@
 import com.cloudogu.gitopsbuildlib.*
 
 String getConfigDir() { '.config' }
+String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
 
 List getMandatoryFields() {
     return [
@@ -9,8 +10,8 @@ List getMandatoryFields() {
     ]
 }
 
+
 Map getDefaultConfig() {
-    String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
 
     return [
         cesBuildLibRepo   : 'https://github.com/cloudogu/ces-build-lib',
@@ -266,7 +267,7 @@ private void updateImageVersionHelm(Map gitopsConfig, String stage) {
     writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
     updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
 
-    writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
+    writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
 
     // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
     sh "rm ${stage}/${application}/mergedValues.yaml"
@@ -289,7 +290,7 @@ void updateYamlValue(String yamlFilePath, Map helmConfig) {
     writeYaml file: yamlFilePath, data: data, overwrite: true
 }
 
-String createHelmRelease(Map helmConfig, String namespace, String valuesFile) {
+String createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
     def values = fileToInlineYaml(valuesFile)
     return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
