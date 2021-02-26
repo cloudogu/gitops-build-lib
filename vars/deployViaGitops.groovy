@@ -18,9 +18,6 @@ Map getDefaultConfig() {
         mainBranch        : 'main',
         deployments       : [
             sourcePath: 'k8s',
-            plain: [
-                updateImages: [],
-            ]
         ],
         validators        : [
             kubeval : [
