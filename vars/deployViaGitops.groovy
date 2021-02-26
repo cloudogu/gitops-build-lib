@@ -93,6 +93,9 @@ def validateDeploymentConfig(Map deployments) {
     if (deployments.containsKey('plain') && deployments.containsKey('helm')) {
         error 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
     }
+    if (!deployments.containsKey('plain') && !deployments.containsKey('helm')) {
+        error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
+    }
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
@@ -255,7 +258,7 @@ private void updateImageVersionPlain(String deploymentFilePath, String container
 private void updateImageVersionHelm(Map gitopsConfig, String stage) {
     def helmConfig = gitopsConfig.deployments.helm
     def application = gitopsConfig.application
-    def sourcepath = gitopsConfig.deployments.sourcePath
+    def sourcePath = gitopsConfig.deployments.sourcePath
     // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
     // This makes it easier to read in and indent for the inline use in the helmRelease.
     // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
