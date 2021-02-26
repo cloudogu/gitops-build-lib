@@ -118,8 +118,12 @@ protected void deploy(Map gitopsConfig) {
         sh "rm -rf ${gitRepo.configRepoTempDir}"
     }
 
-    //TODO check if plain or helm
-    currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.deployments.plain.updateImages.imageName as String)
+    if (gitopsConfig.deployments.containsKey('plain')) {
+        currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.deployments.plain.updateImages.imageName as String)
+    } else if (gitopsConfig.deployments.containsKey('helm')) {
+        // TODO change description
+        currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.deployments.helm.version)
+    }
 }
 
 protected Map prepareGitRepo(def git) {
