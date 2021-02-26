@@ -1,5 +1,6 @@
 package com.cloudogu.gitopsbuildlib
 
+import com.cloudogu.gitopsbuildlib.validation.Validator
 import org.junit.jupiter.api.Test
 import static org.assertj.core.api.Assertions.assertThat
 

@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib
+package com.cloudogu.gitopsbuildlib.validation
 
 /**
  * Validates all yaml-resources within the target-directory against the specs of the given k8s version

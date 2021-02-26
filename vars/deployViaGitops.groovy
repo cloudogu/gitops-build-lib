@@ -1,5 +1,7 @@
 #!groovy
 import com.cloudogu.gitopsbuildlib.*
+import com.cloudogu.gitopsbuildlib.validation.Kubeval
+import com.cloudogu.gitopsbuildlib.validation.Yamllint
 
 String getConfigDir() { '.config' }
 String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
@@ -188,6 +190,9 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
             "${stage}/${gitopsConfig.application}/",
             validatorConfig.value.config)
     }
+    gitopsConfig.deployment.update()
+    echo '${gitopsConfig.deployment.type}'
+    echo '${gitopsConfig.deployment.config}'
     if (gitopsConfig.deployments.containsKey('plain')) {
 
         // TODO move this to a PlainDeployment class and introduce a HelmDeployment class?

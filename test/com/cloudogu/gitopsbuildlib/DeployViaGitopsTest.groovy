@@ -3,6 +3,8 @@ package com.cloudogu.gitopsbuildlib
 import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.ces.cesbuildlib.SCMManager
+import com.cloudogu.gitopsbuildlib.validation.Kubeval
+import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
 import groovy.mock.interceptor.StubFor
 import groovy.yaml.YamlSlurper

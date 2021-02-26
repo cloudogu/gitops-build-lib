@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib
+package com.cloudogu.gitopsbuildlib.validation
 
 /**
  * Checks for correct YAML syntax using yamllint
