@@ -19,6 +19,15 @@ Jenkins pipeline shared library for automating deployments via GitOps
 
 ## Usage
 
+TODO load library 
+* `library()` (see playground) or
+* `@Library` works out of the box with [pipeline-github-lib plugin](https://plugins.jenkins.io/pipeline-github-lib/)
+
+```groovy
+@Library('github.com/cloudogu/gitops-build-lib@0.0.5')
+import com.cloudogu.gitops.gitopsbuildlib.*
+```
+
 TODO describe how to use, conventions and folder input and output
 
 * Stages
@@ -27,6 +36,8 @@ TODO describe how to use, conventions and folder input and output
     * Stage name -> `${deployments.path}/values-<stage>.yaml` + `${deployments.path}/values-common.yaml`
     * Helm Release name = `${application}` (Flux, not used for argo, because we create plain ressources
       using `helm template`)
+
+TODO super simple example for gitopsConfig.
 
 ```groovy
 gitopsConfig = [
@@ -40,6 +51,7 @@ gitopsConfig = [
     // stageName is mapped to a folder in the gitops repo
     // deployDirectly: true  -> deploys directly
     // deployDirectly: false -> creates a PR (default)
+    // TODO use two stages as default?
     stages                : [
         staging   : [deployDirectly: true],
         production: [deployDirectly: false],
@@ -120,6 +132,62 @@ gitopsConfig = [
 deployViaGitops(gitopsConfig)
 ```
 
+## Validators
+
+You can disable the built-in operators and/or add your own.
+The operators are processed sequentially in no particular order.
+
+Example: Disable all built-ins and add a custom validator.
+
+```groovy
+node {
+    stage('Deploy') {
+
+        def gitopsConfig = [
+            // ...
+            validators        : [
+                yamllint: [
+                    enabled  : false,
+                ],
+                kubeval: [ 
+                    enabled  : false,
+                ],
+                myVali: [
+                    validator: new MyVali(this),
+                    enabled  : true,
+                    config   : [
+                        some: 'thing'
+                    ]
+                ]
+            ]
+        ]
+
+        deployViaGitops(gitopsConfig)
+    }
+}
+
+// Simple example that works with dynamic library loading, i.e. the library() step
+class MyVali {
+    def script
+    MyVali(def script) {
+        this.script = script
+    }
+
+    void validate(boolean enabled, String targetDirectory, Map config) {
+        script.echo "Enabled: $enabled; targetDirectory: $targetDirectory; config: $config"
+    }
+}
+```
+
+### Custom validators
+
+In general a custom validator must provide this method: `validate(boolean enabled, String targetDirectory, Map config)`
+
+The library also offers a convenient base class [`com.cloudogu.gitops.gitopsbuildlib.Validator`](src/com/cloudogu/gitopsbuildlib/Validator.groovy)
+However, this seems impossible to use with neither dynamic library loading via the `library()` nor with `@Library`, 
+because the library is loaded after the class is evaluated. 
+
+
 ## Examples
 
 The first evolution of this library was extracted from
@@ -127,4 +195,5 @@ our [GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground).
 
 There you will find example on how to use this library:
 
-* [fluxv1/plain-k8s](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile)
+* [fluxv1/plain-k8s](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile) 
+

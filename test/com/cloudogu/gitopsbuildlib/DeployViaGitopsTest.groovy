@@ -221,6 +221,7 @@ spec:
 
         deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
             assertThat(actualGitOpsConfig.validators.kubeval.enabled).isEqualTo(false)
+            assertThat(actualGitOpsConfig.validators.kubeval.validator).isNotNull()
             assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
         }
 
