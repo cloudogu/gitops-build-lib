@@ -1,5 +1,8 @@
 #!groovy
 import com.cloudogu.gitopsbuildlib.*
+import com.cloudogu.gitopsbuildlib.deployments.Deployment
+import com.cloudogu.gitopsbuildlib.deployments.Helm
+import com.cloudogu.gitopsbuildlib.deployments.Plain
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 
@@ -96,6 +99,12 @@ def validateDeploymentConfig(Map deployments) {
     if (!deployments.containsKey('plain') && !deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
     }
+    if (deployments.containsKey('plain')) {
+        deployment = new Plain(deployments)
+    } else if (deployments.containsKey('helm')) {
+        deployment = new Helm(deployments)
+    }
+
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
@@ -366,3 +375,4 @@ protected String createBuildDescription(String pushedChanges, String imageName) 
 }
 
 def cesBuildLib
+Deployment deployment
