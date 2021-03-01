@@ -199,9 +199,9 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
             "${stage}/${gitopsConfig.application}/",
             validatorConfig.value.config)
     }
-    gitopsConfig.deployment.update()
-    echo '${gitopsConfig.deployment.type}'
-    echo '${gitopsConfig.deployment.config}'
+    deployment.update()
+    echo '${deployment.type}'
+    echo '${deployment.config}'
     if (gitopsConfig.deployments.containsKey('plain')) {
 
         // TODO move this to a PlainDeployment class and introduce a HelmDeployment class?
