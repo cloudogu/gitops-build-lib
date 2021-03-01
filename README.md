@@ -125,7 +125,7 @@ gitopsConfig = [
                 image           : 'ghcr.io/cloudogu/helm:3.4.1-1',
                 k8sSchemaVersion: '1.18.1'
             ]
-        ],
+        ]
     ]
 ]
 

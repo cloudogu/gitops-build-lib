@@ -86,8 +86,8 @@ spec:
         script.sh "git clone ${chart} ${script.env.WORKSPACE}/spring-boot-helm-chart || true"
 
         withHelm {
-            String script = "helm values ${script.env.WORKSPACE}/spring-boot-helm-chart ${_files}"
-            merge = script.sh returnStdout: true, script: script
+            String helmScript = "helm values ${script.env.WORKSPACE}/spring-boot-helm-chart ${_files}"
+            merge = script.sh returnStdout: true, script: helmScript
         }
 
         script.sh "rm -rf ${script.env.WORKSPACE}/spring-boot-helm-chart || true"
@@ -96,7 +96,7 @@ spec:
     }
 
     private void withHelm(Closure body) {
-        script.cesBuildLib.Docker.new(this).image(helmImage)
+        script.cesBuildLib.Docker.new(script).image(helmImage)
             .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
                 body()
             }
