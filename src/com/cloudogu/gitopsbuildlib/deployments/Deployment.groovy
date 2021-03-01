@@ -2,7 +2,6 @@ package com.cloudogu.gitopsbuildlib.deployments
 
 interface Deployment {
 
-    def getType()
-    def update()
-    def config()
+    def createApplicationFolders(String stage, Map gitopsConfig)
+    def update(String stage, Map gitopsConfig)
 }

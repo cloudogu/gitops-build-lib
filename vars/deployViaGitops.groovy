@@ -6,7 +6,6 @@ import com.cloudogu.gitopsbuildlib.deployments.Plain
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 
-String getConfigDir() { '.config' }
 String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
 
 List getMandatoryFields() {
@@ -14,7 +13,6 @@ List getMandatoryFields() {
         'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestBaseUrl', 'scmmPullRequestRepo', 'application', 'stages'
     ]
 }
-
 
 Map getDefaultConfig() {
 
@@ -95,14 +93,13 @@ def validateMandatoryFields(Map gitopsConfig) {
 def validateDeploymentConfig(Map deployments) {
     if (deployments.containsKey('plain') && deployments.containsKey('helm')) {
         error 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
-    }
-    if (!deployments.containsKey('plain') && !deployments.containsKey('helm')) {
+    } else if (!deployments.containsKey('plain') && !deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
     }
     if (deployments.containsKey('plain')) {
-        deployment = new Plain(deployments)
+        deployment = new Plain(this)
     } else if (deployments.containsKey('helm')) {
-        deployment = new Helm(deployments)
+        deployment = new Helm(this)
     }
 
 }
@@ -130,6 +127,7 @@ protected void deploy(Map gitopsConfig) {
         sh "rm -rf ${gitRepo.configRepoTempDir}"
     }
 
+    // TODO change to method call of deplyoment interface
     if (gitopsConfig.deployments.containsKey('plain')) {
         currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.deployments.plain.updateImages.imageName as String)
     } else if (gitopsConfig.deployments.containsKey('helm')) {
@@ -183,12 +181,7 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
 
 protected String syncGitopsRepo(String stage, String branch, def git, Map gitRepo, Map gitopsConfig) {
 
-    // TODO this is only for k8s?
-    if (gitopsConfig.deployments.containsKey('plain')) {
-        createApplicationFoldersPlain(stage, gitopsConfig)
-    } else if (gitopsConfig.deployments.containsKey('helm')) {
-        createApplicationFoldersHelm(stage, gitopsConfig)
-    }
+    deployment.createApplicationFolders(stage, gitopsConfig)
 
     gitopsConfig.validators.each { validatorConfig ->
         echo "Executing validator ${validatorConfig.key}"
@@ -199,34 +192,10 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
             "${stage}/${gitopsConfig.application}/",
             validatorConfig.value.config)
     }
-    deployment.update()
-    echo '${deployment.type}'
-    echo '${deployment.config}'
-    if (gitopsConfig.deployments.containsKey('plain')) {
 
-        // TODO move this to a PlainDeployment class and introduce a HelmDeployment class?
-        gitopsConfig.deployments.plain.updateImages.each {
-            updateImageVersionPlain("${stage}/${gitopsConfig.application}/${it['deploymentFilename']}", it['containerName'], it['imageName'])
-        }
-    } else if (gitopsConfig.deployments.containsKey('helm')) {
-        updateImageVersionHelm(gitopsConfig, stage)
-    }
+    deployment.update(stage, gitopsConfig)
 
     return commitAndPushToStage(stage, branch, git, gitRepo)
-}
-
-private void createApplicationFoldersPlain(String stage, Map gitopsConfig) {
-    def sourcePath = gitopsConfig.deployments.sourcePath
-    sh "mkdir -p ${stage}/${gitopsConfig.application}/"
-    sh "mkdir -p ${configDir}/"
-    // copy extra resources like sealed secrets
-    echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${gitopsConfig.application}'"
-    sh "cp ${env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${gitopsConfig.application}/ || true"
-    sh "cp ${env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
-}
-
-private void createApplicationFoldersHelm(String stage, Map gitopsConfig) {
-    sh "mkdir -p ${stage}/${gitopsConfig.application}/"
 }
 
 protected String commitAndPushToStage(String stage, String branch, def git, Map gitRepo) {
@@ -263,101 +232,7 @@ private String createApplicationCommitMessage(GitRepo applicationRepo) {
     return message
 }
 
-private void updateImageVersionPlain(String deploymentFilePath, String containerName, String newImageTag) {
-    def data = readYaml file: deploymentFilePath
-    def containers = data.spec.template.spec.containers
-    def updateContainer = containers.find { it.name == containerName }
-    updateContainer.image = newImageTag
-    writeYaml file: deploymentFilePath, data: data, overwrite: true
-}
-
-private void updateImageVersionHelm(Map gitopsConfig, String stage) {
-    def helmConfig = gitopsConfig.deployments.helm
-    def application = gitopsConfig.application
-    def sourcePath = gitopsConfig.deployments.sourcePath
-    // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
-    // This makes it easier to read in and indent for the inline use in the helmRelease.
-    // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-    writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
-    updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
-
-    writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
-
-    // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
-    sh "rm ${stage}/${application}/mergedValues.yaml"
-}
-
-void updateYamlValue(String yamlFilePath, Map helmConfig) {
-    def data = readYaml file: yamlFilePath
-    helmConfig.updateValues.each {
-        String[] paths = it["fieldPath"].split("\\.")
-        def _tmp = data
-        paths.eachWithIndex { String p, int i ->
-            def tmp = _tmp.get(p)
-            if (i == paths.length - 1 && tmp != null) {
-                _tmp.put(p, it["newValue"])
-            }
-            _tmp = tmp
-        }
-    }
-
-    writeYaml file: yamlFilePath, data: data, overwrite: true
-}
-
-String createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
-    def values = fileToInlineYaml(valuesFile)
-    return """apiVersion: helm.fluxcd.io/v1
-kind: HelmRelease
-metadata:
-  name: ${application}
-  namespace: ${namespace}
-  annotations:
-    fluxcd.io/automated: "false"
-spec:
-  releaseName: ${application}
-  chart:
-    git: ${helmConfig.repoUrl}
-    ref: ${helmConfig.version}
-    path: .
-  values:
-    ${values}
-"""
-}
-
-String fileToInlineYaml(String fileContents) {
-    String values = ""
-    String indent = "    "
-    def fileContent = readFile fileContents
-    values += fileContent.split("\\n").join("\n" + indent)
-    return values
-}
-
-String mergeValues(String chart, String[] files) {
-    String merge = ""
-    String _files = ""
-    files.each {
-        _files += "-f $it "
-    }
-
-    sh "git clone ${chart} ${env.WORKSPACE}/spring-boot-helm-chart || true"
-
-    withHelm {
-        String script = "helm values ${env.WORKSPACE}/spring-boot-helm-chart ${_files}"
-        merge = sh returnStdout: true, script: script
-    }
-
-    sh "rm -rf ${env.WORKSPACE}/spring-boot-helm-chart || true"
-
-    return merge
-}
-
-void withHelm(Closure body) {
-    cesBuildLib.Docker.new(this).image(helmImage)
-        .inside("${pwd().equals(env.WORKSPACE) ? '' : "-v ${env.WORKSPACE}:${env.WORKSPACE}"}") {
-            body()
-        }
-}
-
+// TODO put also into depoyment classes
 protected String createBuildDescription(String pushedChanges, String imageName) {
     String description = ''
 
