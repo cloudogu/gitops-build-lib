@@ -9,9 +9,15 @@ class HelmKubeval extends Validator {
     @Override
     void validate(String targetDirectory, Map config, Map deployments) {
         if (deployments.containsKey('helm')) {
+
+            //TODO branch / tag / commit clone
+            script.sh "git clone ${deployments.helm.repoUrl} ${targetDirectory}/chart || true"
+
             withDockerImage(config.image) {
-                script.sh "helm kubeval -d ${targetDirectory} -v ${config.k8sSchemaVersion} --strict"
+                script.sh "helm kubeval ${targetDirectory}/chart -v ${config.k8sSchemaVersion} --strict"
             }
+
+            script.sh "rm -rf ${targetDirectory}/chart"
         }
     }
 }

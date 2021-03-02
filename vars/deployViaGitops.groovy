@@ -194,7 +194,6 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
     gitopsConfig.validators.each { validatorConfig ->
         echo "Executing validator ${validatorConfig.key}"
 
-        // TODO pass gitopsConfig.deployments as param
         validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}/", validatorConfig.value.config, gitopsConfig.deployments)
     }
 
