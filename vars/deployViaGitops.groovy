@@ -127,12 +127,10 @@ protected void deploy(Map gitopsConfig) {
         sh "rm -rf ${gitRepo.configRepoTempDir}"
     }
 
-    // TODO change to method call of deplyoment interface
     if (gitopsConfig.deployments.containsKey('plain')) {
         currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.deployments.plain.updateImages.imageName as String)
     } else if (gitopsConfig.deployments.containsKey('helm')) {
-        // TODO change description
-        currentBuild.description = createBuildDescription(changesOnGitOpsRepo, gitopsConfig.deployments.helm.version)
+        currentBuild.description = createBuildDescription(changesOnGitOpsRepo)
     }
 }
 
@@ -181,7 +179,7 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
 
 protected String syncGitopsRepo(String stage, String branch, def git, Map gitRepo, Map gitopsConfig) {
 
-    deployment.createApplicationFolders(stage, gitopsConfig)
+    deployment.prepareApplicationFolders(stage, gitopsConfig)
 
     gitopsConfig.validators.each { validatorConfig ->
         echo "Executing validator ${validatorConfig.key}"
@@ -229,8 +227,15 @@ private String createApplicationCommitMessage(GitRepo applicationRepo) {
     return message
 }
 
-// TODO put also into depoyment classes
 protected String createBuildDescription(String pushedChanges, String imageName) {
+    String description = createBuildDescription(pushedChanges)
+
+    description += "\nImage: ${imageName}"
+
+    return description
+}
+
+protected String createBuildDescription(String pushedChanges) {
     String description = ''
 
     description += "GitOps commits: "
@@ -240,8 +245,6 @@ protected String createBuildDescription(String pushedChanges, String imageName) 
     } else {
         description += 'No changes'
     }
-
-    description += "\nImage: ${imageName}"
 
     return description
 }

@@ -11,7 +11,7 @@ class Plain implements Deployment{
     }
 
     @Override
-    def createApplicationFolders(String stage, Map gitopsConfig) {
+    def prepareApplicationFolders(String stage, Map gitopsConfig) {
         def sourcePath = gitopsConfig.deployments.sourcePath
         script.sh "mkdir -p ${stage}/${gitopsConfig.application}/"
         script.sh "mkdir -p ${configDir}/"

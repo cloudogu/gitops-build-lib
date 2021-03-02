@@ -10,19 +10,23 @@ class Helm implements Deployment{
     }
 
     @Override
-    def createApplicationFolders(String stage, Map gitopsConfig) {
+    def prepareApplicationFolders(String stage, Map gitopsConfig) {
+        def helmConfig = gitopsConfig.deployments.helm
+        def application = gitopsConfig.application
+        def sourcePath = gitopsConfig.deployments.sourcePath
+
         script.sh "mkdir -p ${stage}/${gitopsConfig.application}/"
+        // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
+        // This makes it easier to read in and indent for the inline use in the helmRelease.
+        // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
+        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
     }
 
     @Override
     def update(String stage, Map gitopsConfig) {
         def helmConfig = gitopsConfig.deployments.helm
         def application = gitopsConfig.application
-        def sourcePath = gitopsConfig.deployments.sourcePath
-        // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
-        // This makes it easier to read in and indent for the inline use in the helmRelease.
-        // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
+
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
 
         script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
@@ -83,21 +87,22 @@ spec:
             _files += "-f $it "
         }
 
-        script.sh "git clone ${chart} ${script.env.WORKSPACE}/spring-boot-helm-chart || true"
+        script.sh "git clone ${chart} ${script.env.WORKSPACE}/chart || true"
 
         withHelm {
-            String helmScript = "helm values ${script.env.WORKSPACE}/spring-boot-helm-chart ${_files}"
+            String helmScript = "helm values ${script.env.WORKSPACE}/chart ${_files}"
             merge = script.sh returnStdout: true, script: helmScript
         }
 
-        script.sh "rm -rf ${script.env.WORKSPACE}/spring-boot-helm-chart || true"
+        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
 
         return merge
     }
 
     private void withHelm(Closure body) {
-        script.docker.image(helmImage)
-            .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
+        script.cesBuildLib.Docker.new(script).image(helmImage).inside(
+            "${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}"
+            ) {
                 body()
             }
     }
