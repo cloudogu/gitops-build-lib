@@ -3,6 +3,7 @@ import com.cloudogu.gitopsbuildlib.*
 import com.cloudogu.gitopsbuildlib.deployments.Deployment
 import com.cloudogu.gitopsbuildlib.deployments.Helm
 import com.cloudogu.gitopsbuildlib.deployments.Plain
+import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 
@@ -29,6 +30,15 @@ Map getDefaultConfig() {
                 enabled  : true,
                 config   : [
                     // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
+                    image           : helmImage,
+                    k8sSchemaVersion: '1.18.1'
+                ]
+            ],
+            helmKubeval: [
+                validator: new HelmKubeval(this),
+                enabled  : true,
+                config   : [
+                    // We use the helm image (that also contains helm kubeval plugin) to speed up builds by allowing to reuse image
                     image           : helmImage,
                     k8sSchemaVersion: '1.18.1'
                 ]
@@ -185,7 +195,7 @@ protected String syncGitopsRepo(String stage, String branch, def git, Map gitRep
         echo "Executing validator ${validatorConfig.key}"
 
         // TODO pass gitopsConfig.deployments as param
-        validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}/", validatorConfig.value.config)
+        validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}/", validatorConfig.value.config, gitopsConfig.deployments)
     }
 
     deployment.update(stage, gitopsConfig)

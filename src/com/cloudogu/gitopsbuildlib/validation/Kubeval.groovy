@@ -10,10 +10,11 @@ class Kubeval extends Validator {
     }
 
     @Override
-    void validate(String targetDirectory, Map config) {
-        withDockerImage(config.image) {
-            script.sh "kubeval -d ${targetDirectory} -v ${config.k8sSchemaVersion} --strict"
+    void validate(String targetDirectory, Map config, Map deployments) {
+        if (deployments.containsKey('plain')) {
+            withDockerImage(config.image) {
+                script.sh "kubeval -d ${targetDirectory} -v ${config.k8sSchemaVersion} --strict"
+            }
         }
     }
-
 }

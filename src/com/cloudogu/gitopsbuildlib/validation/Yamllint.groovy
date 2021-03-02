@@ -14,7 +14,7 @@ class Yamllint extends Validator {
     }
 
     @Override
-    void validate(String targetDirectory, Map config) {
+    void validate(String targetDirectory, Map config, Map deployments) {
         withDockerImage(config.image) {
             script.sh "yamllint " +
                 "${config.profile ? "-d ${config.profile} " : ''}" +

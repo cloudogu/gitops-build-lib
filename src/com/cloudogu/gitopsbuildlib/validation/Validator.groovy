@@ -8,15 +8,15 @@ abstract class Validator {
         this.script = script
     }
 
-    void validate(boolean enabled, String targetDirectory, Map config) {
+    void validate(boolean enabled, String targetDirectory, Map config, Map deployments) {
         if (enabled) {
-            validate(targetDirectory, config)
+            validate(targetDirectory, config, deployments)
         } else {
             script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false"
         }
     }
 
-    abstract protected void validate(String targetDirectory, Map config)
+    abstract protected void validate(String targetDirectory, Map config, Map deployments)
 
     protected void withDockerImage(String image, Closure body) {
         script.docker.image(image).inside(
