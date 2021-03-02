@@ -96,7 +96,7 @@ spec:
     }
 
     private void withHelm(Closure body) {
-        script.cesBuildLib.Docker.new(script).image(helmImage)
+        script.docker.image(helmImage)
             .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
                 body()
             }

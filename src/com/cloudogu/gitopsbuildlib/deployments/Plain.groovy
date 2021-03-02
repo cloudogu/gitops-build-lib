@@ -32,11 +32,5 @@ class Plain implements Deployment{
             updateContainer.image = it['imageName']
             script.writeYaml file: deploymentFilePath, data: data, overwrite: true
         }
-
-
-
-
-
-
     }
 }

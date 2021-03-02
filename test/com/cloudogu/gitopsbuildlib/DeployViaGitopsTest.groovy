@@ -3,6 +3,7 @@ package com.cloudogu.gitopsbuildlib
 import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.ces.cesbuildlib.SCMManager
+import com.cloudogu.gitopsbuildlib.deployments.Plain
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
@@ -506,6 +507,16 @@ spec:
             scmmPullRequestBaseUrl: 'configRepositoryPRBaseUrl',
             scmmPullRequestRepo   : 'scmmPullRequestRepo',
             application           : 'application',
+            deployments           : [
+                sourcePath: 'k8s',
+                plain     : [
+                    updateImages: [
+                        [filename     : "deployment.yaml",
+                         containerName: 'application',
+                         imageName    : 'imageName']
+                    ]
+                ]
+            ],
             stages                : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
@@ -533,6 +544,16 @@ spec:
             scmmPullRequestRepo   : 'scmmPullRequestRepo',
             scmmPullRequestUrl    : 'configRepositoryPRUrl',
             application           : 'application',
+            deployments           : [
+                sourcePath: 'k8s',
+                plain     : [
+                    updateImages: [
+                        [filename     : "deployment.yaml",
+                         containerName: 'application',
+                         imageName    : 'imageName']
+                    ]
+                ]
+            ],
             stages                : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
