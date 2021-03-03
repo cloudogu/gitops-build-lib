@@ -11,7 +11,7 @@ class HelmKubevalTest {
     def helmKubeval = new HelmKubeval(scriptMock.mock)
 
     @Test
-    void 'is executed with defaults'() {
+    void 'is executed with repoType GIT'() {
         helmKubeval.validate(
             'target',
             [
@@ -33,7 +33,29 @@ class HelmKubevalTest {
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('git checkout version')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('helm kubeval target/chart -v 1.5')
         assertThat(scriptMock.actualShArgs[4]).isEqualTo('rm -rf target/chart')
+    }
 
+    @Test
+    void 'is executed with repoType HELM'() {
+        helmKubeval.validate(
+            'target',
+            [
+                image           : 'img',
+                k8sSchemaVersion: '1.5'
+            ],
+            [
+                helm: [
+                    repoType: 'HELM',
+                    chartName: 'chart',
+                    repoUrl: 'chartRepo',
+                    version: 'version'
+                ]
+            ]
+        )
+        assertThat(dockerMock.actualImages[0]).isEqualTo('img')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm add repo chartRepo chartRepo')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm kubeval chartRepo/chart --version=version -v 1.5')
     }
 
     @Test
