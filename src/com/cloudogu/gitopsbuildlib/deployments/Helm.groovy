@@ -1,6 +1,6 @@
 package com.cloudogu.gitopsbuildlib.deployments
 
-class Helm implements Deployment{
+class Helm implements Deployment {
 
     static String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
     private def script
@@ -48,7 +48,6 @@ class Helm implements Deployment{
                 _tmp = tmp
             }
         }
-
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
     }
 
@@ -87,7 +86,6 @@ spec:
             _files += "-f $it "
         }
 
-        // TODO implement repoType GIT or HELM distinction
         script.sh "git clone ${chart} ${script.env.WORKSPACE}/chart || true"
 
         withHelm {
@@ -103,8 +101,8 @@ spec:
     private void withHelm(Closure body) {
         script.cesBuildLib.Docker.new(script).image(helmImage).inside(
             "${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}"
-            ) {
-                body()
-            }
+        ) {
+            body()
+        }
     }
 }

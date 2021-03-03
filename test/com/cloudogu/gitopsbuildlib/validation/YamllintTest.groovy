@@ -1,5 +1,6 @@
-package com.cloudogu.gitopsbuildlib
+package com.cloudogu.gitopsbuildlib.validation
 
+import com.cloudogu.gitopsbuildlib.ScriptMock
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import org.junit.jupiter.api.Test
 

@@ -238,23 +238,18 @@ private String createApplicationCommitMessage(GitRepo applicationRepo) {
 
 protected String createBuildDescription(String pushedChanges, String imageName) {
     String description = createBuildDescription(pushedChanges)
-
     description += "\nImage: ${imageName}"
-
     return description
 }
 
 protected String createBuildDescription(String pushedChanges) {
     String description = ''
-
     description += "GitOps commits: "
-
     if (pushedChanges) {
         description += pushedChanges
     } else {
         description += 'No changes'
     }
-
     return description
 }
 

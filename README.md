@@ -72,6 +72,7 @@ gitopsConfig = [
             repoUrl       : "https://git-repo/namespace/name",
             credentialsId : 'creds',
             version       : '1.2.3', // tag, commit or branch
+            //TODO ask when to use chartPath
             chartPath     : 'chart',
             extraResources: ['config, secrets'], // files or folders relative to deployments.path 
             updateValues  : [[fieldPath: "image.name", newValue: imageName]]

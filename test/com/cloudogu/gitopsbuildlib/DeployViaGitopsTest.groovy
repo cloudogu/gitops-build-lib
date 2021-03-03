@@ -27,7 +27,6 @@ class DeployViaGitopsTest extends BasePipelineTest {
         def SCMManager = [:]
     }
 
-    //TODO naming mock?
     def git
     def docker
     def scmm
@@ -85,13 +84,6 @@ class DeployViaGitopsTest extends BasePipelineTest {
                  containerName     : 'application',
                  imageName         : 'newImageName']
             ]
-        ]
-    ]
-
-    def helmDeployment = [
-        sourcePath: 'k8s',
-        helm             : [
-            // TODO implement helm test data
         ]
     ]
 
@@ -284,40 +276,6 @@ spec:
         // testing syncGitopsRepoPerStage
         verify(git, times(1)).checkoutOrCreate('main')
 
-        // testing createApplicationFolders
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("mkdir -p staging")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("mkdir -p .config")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("cp null/k8s/staging")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("cp null/*.yamllint.yaml")
-            }).isTrue()
-
-        // testing validation
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application -v 1.18.1 --strict")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application")
-            }).isTrue()
-
-        //testing updateImageVersion
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
-                callArgsToString(call).contains("newImageName")
-            }).isTrue()
-
         // testing commitAndPushToStage
         verify(git, times(1)).add('.')
 
@@ -361,55 +319,6 @@ spec:
         verify(git, times(1)).checkoutOrCreate('production_application')
         verify(git, times(1)).checkoutOrCreate('qa_application')
 
-        // testing createApplicationFolders
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("mkdir -p staging")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("mkdir -p production")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("mkdir -p qa")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("mkdir -p .config")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("cp null/k8s/staging")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("cp null/k8s/production")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("cp null/k8s/qa")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).contains("cp null/*.yamllint.yaml")
-            }).isTrue()
-
-        // testing validation
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application -v 1.18.1 --strict")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application")
-            }).isTrue()
-
-        //testing updateImageVersion
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
-                callArgsToString(call).contains("newImageName")
-            }).isTrue()
 
         // testing commitAndPushToStage
         verify(git, times(3)).add('.')
@@ -487,9 +396,21 @@ spec:
     }
 
     @Test
+    void 'returns correct build description without imageName'() {
+        def output = deployViaGitops.createBuildDescription('changes')
+        assert output == 'GitOps commits: changes'
+    }
+
+    @Test
     void 'return No Changes if no changes are present'() {
         def output = deployViaGitops.createBuildDescription('', 'imageName')
         assert output == 'GitOps commits: No changes\nImage: imageName'
+    }
+
+    @Test
+    void 'return No Changes if no changes are present without imageName'() {
+        def output = deployViaGitops.createBuildDescription('')
+        assert output == 'GitOps commits: No changes'
     }
 
     @Test

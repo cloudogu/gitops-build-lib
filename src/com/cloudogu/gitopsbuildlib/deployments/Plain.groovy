@@ -24,7 +24,7 @@ class Plain implements Deployment{
     @Override
     def update(String stage, Map gitopsConfig) {
         gitopsConfig.deployments.plain.updateImages.each {
-            def deploymentFilePath = "${stage}/${gitopsConfig.application}/${it['deploymentFilename']}"
+            def deploymentFilePath = "${stage}/${gitopsConfig.application}/${it['filename']}"
             def data = script.readYaml file: deploymentFilePath
             def containers = data.spec.template.spec.containers
             def containerName = it['containerName']
