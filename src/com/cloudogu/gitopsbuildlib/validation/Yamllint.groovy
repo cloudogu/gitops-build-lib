@@ -22,5 +22,4 @@ class Yamllint extends Validator {
                 "${targetDirectory}"
         }
     }
-
 }

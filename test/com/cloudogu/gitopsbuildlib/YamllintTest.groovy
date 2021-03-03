@@ -12,10 +12,12 @@ class YamllintTest {
 
     @Test
     void 'is executed with defaults'() {
-        yamllint.validate(true, 'target', [
-            image  : 'img',
-            profile: 'pro'
-        ])
+        yamllint.validate(
+            'target',
+            [image  : 'img',
+            profile: 'pro'],
+            [plain: []]
+        )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(
             'yamllint -d pro -f standard target'
@@ -24,9 +26,11 @@ class YamllintTest {
 
     @Test
     void 'is executed without profile'() {
-        yamllint.validate(true, 'target', [
-            image: 'img'
-        ])
+        yamllint.validate(
+            'target',
+            [image: 'img'],
+            [plain: []]
+        )
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(
             'yamllint -f standard target'
         )

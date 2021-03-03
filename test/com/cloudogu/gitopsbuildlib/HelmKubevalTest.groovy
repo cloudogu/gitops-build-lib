@@ -1,36 +1,40 @@
 package com.cloudogu.gitopsbuildlib
 
+import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import org.junit.jupiter.api.Test
 
 import static org.assertj.core.api.Assertions.assertThat
 
-class KubevalTest {
+class HelmKubevalTest {
     def scriptMock = new ScriptMock()
     def dockerMock = scriptMock.dockerMock
-    def kubeval = new Kubeval(scriptMock.mock)
+    def helmKubeval = new HelmKubeval(scriptMock.mock)
 
     @Test
     void 'is executed with defaults'() {
-        kubeval.validate(
+        helmKubeval.validate(
             'target',
             [image           : 'img',
             k8sSchemaVersion: '1.5'],
-            [plain: []]
+            [helm: [
+                repoUrl: 'chartRepo'
+            ]]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo(
-            'kubeval -d target -v 1.5 --strict'
-        )
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('git clone chartRepo target/chart || true')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm kubeval target/chart -v 1.5 --strict')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf target/chart')
+
     }
 
     @Test
-    void 'is not executed on helm deployment'() {
-        kubeval.validate(
+    void 'is not executed on plain deployment'() {
+        helmKubeval.validate(
             'target',
             [image           : 'img',
              k8sSchemaVersion: '1.5'],
-            [helm: []]
+            [plain: []]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo(null)
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(null)
