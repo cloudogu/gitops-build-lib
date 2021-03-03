@@ -305,11 +305,11 @@ spec:
         // testing validation
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1 --strict")
+                callArgsToString(call).equals("kubeval -d staging/application -v 1.18.1 --strict")
             }).isTrue()
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application/")
+                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application")
             }).isTrue()
 
         //testing updateImageVersion
@@ -398,11 +398,11 @@ spec:
         // testing validation
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1 --strict")
+                callArgsToString(call).equals("kubeval -d staging/application -v 1.18.1 --strict")
             }).isTrue()
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application/")
+                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application")
             }).isTrue()
 
         //testing updateImageVersion

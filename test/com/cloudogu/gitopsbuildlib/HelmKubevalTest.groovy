@@ -22,14 +22,14 @@ class HelmKubevalTest {
                 helm: [
                     repoType: 'GIT',
                     chartPath: 'chart',
-                    repoUrl: 'chartRepo',
+                    repoUrl: 'chartRepo/namespace/repoPath',
                     version: 'version'
                 ]
             ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('git clone chartRepo target/chart || true')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('cd target/chart')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('git clone chartRepo/namespace/repoPath target/chart || true')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('cd target/chart/repoPath')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('git checkout version')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('helm kubeval target/chart -v 1.5')
         assertThat(scriptMock.actualShArgs[4]).isEqualTo('rm -rf target/chart')
