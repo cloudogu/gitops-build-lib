@@ -10,21 +10,23 @@ class HelmKubeval extends Validator {
     void validate(String targetDirectory, Map config, Map deployments) {
         if (deployments.containsKey('helm')) {
 
-            if(deployments.helm.repoType == 'HELM') {
-                cloneGitHelmRepo(deployments.helm.repoUrl, deployments.helm.version, targetDirectory)
+            if (deployments.helm.repoType == 'GIT') {
+                cloneGitHelmRepo(deployments.helm, targetDirectory)
+                withDockerImage(config.image) {
+                    script.sh "helm kubeval ${targetDirectory}/chart -v ${config.k8sSchemaVersion}"
+                }
+                script.sh "rm -rf ${targetDirectory}/chart"
             }
-
-            withDockerImage(config.image) {
-                script.sh "helm kubeval ${targetDirectory}/chart -v ${config.k8sSchemaVersion} --strict"
-            }
-
-            script.sh "rm -rf ${targetDirectory}/chart"
+            if (deployments.helm.repoType == 'HELM')
+                withDockerImage(config.image) {
+                    script.sh "helm kubeval ${targetDirectory}/chart -v ${config.k8sSchemaVersion}"
+                }
         }
     }
 
-    private void cloneGitHelmRepo(String repoUrl, String version, String targetDirectory) {
-        script.sh "git clone ${repoUrl} ${targetDirectory}/chart || true"
-        script.sh "cd ${targetDirectory}/chart"
-        script.sh "git checkout ${version}"
+    private void cloneGitHelmRepo(String helmConfig, String targetDirectory) {
+        script.sh "git clone ${helmConfig.repoUrl} ${targetDirectory}/${helmConfig.chartPath} || true"
+        script.sh "cd ${targetDirectory}/${helmConfig.chartPath}"
+        script.sh "git checkout ${helmConfig.version}"
     }
 }

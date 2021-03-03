@@ -1,7 +1,6 @@
 package com.cloudogu.gitopsbuildlib
 
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
-import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import org.junit.jupiter.api.Test
 
 import static org.assertj.core.api.Assertions.assertThat
@@ -39,4 +38,7 @@ class HelmKubevalTest {
         assertThat(dockerMock.actualImages[0]).isEqualTo(null)
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(null)
     }
+
+    @Test
+    void 'no git clone on '
 }
