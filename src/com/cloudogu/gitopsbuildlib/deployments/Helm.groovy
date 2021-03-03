@@ -87,6 +87,7 @@ spec:
             _files += "-f $it "
         }
 
+        // TODO implement repoType GIT or HELM distinction
         script.sh "git clone ${chart} ${script.env.WORKSPACE}/chart || true"
 
         withHelm {

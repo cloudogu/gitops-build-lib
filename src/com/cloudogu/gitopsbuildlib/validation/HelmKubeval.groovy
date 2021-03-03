@@ -24,7 +24,7 @@ class HelmKubeval extends Validator {
         }
     }
 
-    private void cloneGitHelmRepo(String helmConfig, String targetDirectory) {
+    private void cloneGitHelmRepo(Map helmConfig, String targetDirectory) {
         script.sh "git clone ${helmConfig.repoUrl} ${targetDirectory}/${helmConfig.chartPath} || true"
         script.sh "cd ${targetDirectory}/${helmConfig.chartPath}"
         script.sh "git checkout ${helmConfig.version}"

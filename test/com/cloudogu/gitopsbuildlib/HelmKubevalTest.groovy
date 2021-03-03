@@ -14,16 +14,25 @@ class HelmKubevalTest {
     void 'is executed with defaults'() {
         helmKubeval.validate(
             'target',
-            [image           : 'img',
-            k8sSchemaVersion: '1.5'],
-            [helm: [
-                repoUrl: 'chartRepo'
-            ]]
+            [
+                image           : 'img',
+                k8sSchemaVersion: '1.5'
+            ],
+            [
+                helm: [
+                    repoType: 'GIT',
+                    chartPath: 'chart',
+                    repoUrl: 'chartRepo',
+                    version: 'version'
+                ]
+            ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('git clone chartRepo target/chart || true')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm kubeval target/chart -v 1.5 --strict')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf target/chart')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('cd target/chart')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('git checkout version')
+        assertThat(scriptMock.actualShArgs[3]).isEqualTo('helm kubeval target/chart -v 1.5')
+        assertThat(scriptMock.actualShArgs[4]).isEqualTo('rm -rf target/chart')
 
     }
 
@@ -38,7 +47,4 @@ class HelmKubevalTest {
         assertThat(dockerMock.actualImages[0]).isEqualTo(null)
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(null)
     }
-
-    @Test
-    void 'no git clone on '
 }
