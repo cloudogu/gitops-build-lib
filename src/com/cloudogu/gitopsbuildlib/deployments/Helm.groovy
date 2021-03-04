@@ -32,12 +32,12 @@ class Helm implements Deployment {
             script.echo "Copying extra resources from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}'"
             script.sh "cp -a ${script.env.WORKSPACE}/${sourcePath}/${stage}/. ${stage}/${application}/ || true"
 
-            script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", createFromFileValues(stage))
+            script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease2(helmConfig, application, "fluxv1-${stage}", createFromFileValues(stage, gitopsConfig))
             script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
 
             script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
 
-            creatFileConfigmaps(stage)
+            creatFileConfigmaps(stage, application, sourcePath, gitopsConfig)
         }
     }
 
@@ -130,7 +130,7 @@ spec:
 
 /////////////////////////////////////////////////////// helm type //////////////////////////////////////////////////////
 
-    private String createHelmRelease(Map helmConfig, String namespace, String extraValues) {
+    private String createHelmRelease2(Map helmConfig, String application, String namespace, String extraValues) {
         return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
@@ -144,7 +144,6 @@ spec:
     repository: ${helmConfig.repoUrl}
     name: ${helmConfig.chartName}
     version: ${helmConfig.version}
-    
   valuesFrom:
   - configMapKeyRef:
       name: ${application}-shared-helm-operator-values
@@ -159,24 +158,24 @@ spec:
 """
     }
 
-    private String createFromFileValues(String stage) {
+    private String createFromFileValues(String stage, Map gitopsConfig) {
         String values = ""
 
-//        helmValuesFromFile.each {
-//            if (stage in it['stage']) {
-//                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
-//            }
-//        }
+        gitopsConfig.helmValuesFromFile.each {
+            if (stage in it['stage']) {
+                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
+            }
+        }
         return values
     }
 
-    private void creatFileConfigmaps(String stage) {
-//        fileConfigmaps.each {
-//            if(stage in it['stage']) {
-//                String key = it['file'].split('/').last()
-//                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${env.WORKSPACE}/k8s/${it['file']}", it['name'], "fluxv1-${stage}")
-//            }
-//        }
+    private void creatFileConfigmaps(String stage, String application, String sourcePath, Map gitopsConfig) {
+        gitopsConfig.fileConfigmaps.each {
+            if(stage in it['stage']) {
+                String key = it['file'].split('/').last()
+                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['file']}", it['name'], "fluxv1-${stage}")
+            }
+        }
     }
 
     private String createConfigMap(String key, String filePath, String name, String namespace) {
