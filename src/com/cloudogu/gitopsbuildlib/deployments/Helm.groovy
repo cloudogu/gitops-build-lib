@@ -17,9 +17,9 @@ class Helm implements Deployment {
 
         script.sh "mkdir -p ${stage}/${application}/"
 
-        helmConfig.extraResources.each {
-            script.sh "cp ${script.env.WORKSPACE}/${sourcePath}/${stage}/${it} ${stage}/${application}/ || true"
-        }
+//        helmConfig.extraResources.each {
+//            script.sh "cp ${script.env.WORKSPACE}/${sourcePath}/${stage}/${it} ${stage}/${application}/ || true"
+//        }
 
         if(helmConfig.repoType == 'GIT') {
             // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
@@ -27,8 +27,9 @@ class Helm implements Deployment {
             // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
             script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
         } else if (helmConfig.repoType == 'HELM') {
+            //TODO wenn alle extraresources kopiert werden, warum dann in der gitopsconfig angeben?
             script.echo "Copying extra resources from application repo to gitOps Repo: 'k8s/${stage}/*' to '${stage}/${application}'"
-            script.sh "cp ${script.env.WORKSPACE}/k8s/${stage}/*.yaml ${stage}/${application}/ || true"
+            script.sh "cp -a ${script.env.WORKSPACE}/k8s/${stage}/. ${stage}/${application}/ || true"
 
             script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmChart, "fluxv1-${stage}", createFromFileValues(stage))
             script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/k8s/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
