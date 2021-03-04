@@ -2,6 +2,7 @@ package com.cloudogu.gitopsbuildlib.deployments
 
 class Helm implements Deployment {
 
+    String getKubectlImage() { 'lachlanevenson/k8s-kubectl:v1.19.3' }
     static String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
     private def script
 
@@ -185,7 +186,7 @@ spec:
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"
 
-            configMap = sh returnStdout: true, script: kubeScript
+            configMap = script.sh returnStdout: true, script: kubeScript
         }
         return configMap
     }
@@ -219,7 +220,7 @@ users:
     private void withKubectl(Closure body) {
         script.cesBuildLib.Docker.new(script).image(kubectlImage)
         // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
-            .inside("${pwd().equals(env.WORKSPACE) ? '' : "-v ${env.WORKSPACE}:${env.WORKSPACE}"}") {
+            .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
                 body()
             }
     }
