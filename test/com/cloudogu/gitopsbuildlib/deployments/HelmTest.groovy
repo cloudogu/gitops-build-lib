@@ -51,14 +51,14 @@ class HelmTest {
                         repoType: 'GIT',
                         repoUrl: 'gitRepo',
                         version: 'version',
-                        updateValues  : [[fieldPath: "image.name", newValue: 'imageName']]
+                        updateValues  : [[fieldPath: "to.be.changed", newValue: 'newValue']]
                     ]
                 ]
             ]
         )
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('rm staging/testApp/mergedValues.yaml')
         assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/testApp/mergedValues.yaml]')
-        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/testApp/mergedValues.yaml, data:[image:[name:imageName], spec:[template:[spec:[containers:[[image:oldImageName, name:application]]]]]], overwrite:true]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/testApp/mergedValues.yaml, data:[spec:[template:[spec:[containers:[[image:oldImageName, name:application]]]]], to:[be:[changed:newValue]]], overwrite:true]')
         assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testApp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1\n' +
             'kind: HelmRelease\n' +
             'metadata:\n' +
@@ -74,14 +74,17 @@ class HelmTest {
             '    path: .\n' +
             '  values:\n' +
             '    ---\n' +
+            '    #this part is only for PlainTest regarding updating the image name\n' +
             '    spec:\n' +
             '      template:\n' +
             '        spec:\n' +
             '          containers:\n' +
             '            - name: \'application\'\n' +
             '              image: \'oldImageName\'\n' +
-            '    image:\n' +
-            '      name: \'oldImageName\'\n' +
+            '    #this part is only for HelmTest regarding changing the yaml values\n' +
+            '    to:\n' +
+            '      be:\n' +
+            '        changed: \'oldValue\'\n' +
             ']')
 
     }

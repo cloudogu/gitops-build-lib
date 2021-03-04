@@ -12,14 +12,17 @@ class ScriptMock {
     List<String> actualReadYamlArgs = new LinkedList<>()
     def configYaml = '''\
 ---
+#this part is only for PlainTest regarding updating the image name
 spec:
   template:
     spec:
       containers:
         - name: 'application'
           image: 'oldImageName'
-image:
-  name: 'oldImageName'
+#this part is only for HelmTest regarding changing the yaml values
+to:
+  be:
+    changed: 'oldValue'
 '''
     List<String> actualWriteYamlArgs = new LinkedList<>()
     List<String> actualReadFileArgs = new LinkedList<>()

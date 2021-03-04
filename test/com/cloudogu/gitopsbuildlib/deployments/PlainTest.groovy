@@ -48,7 +48,7 @@ class PlainTest {
             ]
         )
         assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/testApp/deployment.yaml]')
-        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/testApp/deployment.yaml, data:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]]], overwrite:true]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/testApp/deployment.yaml, data:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]], to:[be:[changed:oldValue]]], overwrite:true]')
 
     }
 }

@@ -22,7 +22,6 @@ class HelmKubevalTest {
             [
                 helm: [
                     repoType: 'GIT',
-                    chartPath: 'chart',
                     repoUrl: 'chartRepo/namespace/repoPath',
                     version: 'version'
                 ]
