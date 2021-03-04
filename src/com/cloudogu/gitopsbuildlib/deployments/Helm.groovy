@@ -28,13 +28,13 @@ class Helm implements Deployment {
             script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
         } else if (helmConfig.repoType == 'HELM') {
             //TODO wenn alle extraresources kopiert werden, warum dann in der gitopsconfig angeben?
-            script.echo "Copying extra resources from application repo to gitOps Repo: 'k8s/${stage}/*' to '${stage}/${application}'"
-            script.sh "cp -a ${script.env.WORKSPACE}/k8s/${stage}/. ${stage}/${application}/ || true"
+            script.echo "Copying extra resources from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}'"
+            script.sh "cp -a ${script.env.WORKSPACE}/${sourcePath}/${stage}/. ${stage}/${application}/ || true"
 
-            script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmChart, "fluxv1-${stage}", createFromFileValues(stage))
-            script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/k8s/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
+            script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", createFromFileValues(stage))
+            script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
 
-            script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/k8s/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
+            script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
 
             creatFileConfigmaps(stage)
         }
@@ -129,7 +129,7 @@ spec:
 
 /////////////////////////////////////////////////////// helm type //////////////////////////////////////////////////////
 
-    private String createHelmRelease(Map helmChart, String namespace, String extraValues) {
+    private String createHelmRelease(Map helmConfig, String namespace, String extraValues) {
         return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
@@ -140,9 +140,9 @@ metadata:
 spec:
   releaseName: ${application}
   chart:
-    repository: ${helmChart.repoUrl}
-    name: ${helmChart.chartName}
-    version: ${helmChart.version}
+    repository: ${helmConfig.repoUrl}
+    name: ${helmConfig.chartName}
+    version: ${helmConfig.version}
     
   valuesFrom:
   - configMapKeyRef:
@@ -161,40 +161,40 @@ spec:
     private String createFromFileValues(String stage) {
         String values = ""
 
-        helmValuesFromFile.each {
-            if (stage in it['stage']) {
-                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
-            }
-        }
+//        helmValuesFromFile.each {
+//            if (stage in it['stage']) {
+//                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
+//            }
+//        }
         return values
     }
 
     private void creatFileConfigmaps(String stage) {
-        fileConfigmaps.each {
-            if(stage in it['stage']) {
-                String key = it['file'].split('/').last()
-                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${env.WORKSPACE}/k8s/${it['file']}", it['name'], "fluxv1-${stage}")
-            }
-        }
+//        fileConfigmaps.each {
+//            if(stage in it['stage']) {
+//                String key = it['file'].split('/').last()
+//                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${env.WORKSPACE}/k8s/${it['file']}", it['name'], "fluxv1-${stage}")
+//            }
+//        }
     }
 
     private String createConfigMap(String key, String filePath, String name, String namespace) {
         String configMap = ""
         withKubectl {
-            String script = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
+            String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"
 
-            configMap = sh returnStdout: true, script: script
+            configMap = sh returnStdout: true, script: kubeScript
         }
         return configMap
     }
 
 // Dummy kubeConfig, so we can use `kubectl --dry-run=client`
     private String writeKubeConfig() {
-        String kubeConfigPath = "${pwd()}/.kube/config"
-        echo "Writing $kubeConfigPath"
-        writeFile file: kubeConfigPath, text: """apiVersion: v1
+        String kubeConfigPath = "${script.pwd()}/.kube/config"
+        script.echo "Writing $kubeConfigPath"
+        script.writeFile file: kubeConfigPath, text: """apiVersion: v1
 clusters:
 - cluster:
     certificate-authority-data: DATA+OMITTED
