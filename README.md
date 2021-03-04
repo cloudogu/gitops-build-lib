@@ -72,9 +72,8 @@ gitopsConfig = [
             repoUrl       : "https://git-repo/namespace/name",
             credentialsId : 'creds',
             version       : '1.2.3', // tag, commit or branch
-            //TODO ask when to use chartPath
             chartPath     : 'chart',
-            extraResources: ['config, secrets'], // files or folders relative to deployments.path 
+            extraResources: ['config, secrets'], // files or folders relative to deployments.sourcePath. Default empty array.
             updateValues  : [[fieldPath: "image.name", newValue: imageName]]
         ],
         // Future alternative: Choose between HELM or GIT as chart repo
@@ -84,7 +83,7 @@ gitopsConfig = [
             credentialsId : 'creds',
             version       : '7.1.6',
             chartName     : 'nginx',
-            extraResources: ['config, secrets'], // files or folders relative to deployments.path. Default empty array. 
+            extraResources: ['config, secrets'], // files or folders relative to deployments.sourcePath. Default empty array. 
             updateValues  : [[fieldPath: "image.name", newValue: imageName]]
         ]
         // Additional future alternative
