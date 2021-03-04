@@ -18,7 +18,7 @@ class Helm implements Deployment {
         script.sh "mkdir -p ${stage}/${application}/"
 
         helmConfig.extraResources.each {
-            script.sh "cp ${script.env.WORKSPACE}/k8s/${stage}/${it} ${stage}/${application}/ || true"
+            script.sh "cp ${script.env.WORKSPACE}/${sourcePath}/${stage}/${it} ${stage}/${application}/ || true"
         }
 
         if(helmConfig.repoType == 'GIT') {
