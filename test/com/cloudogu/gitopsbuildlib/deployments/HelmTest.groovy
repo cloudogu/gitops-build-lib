@@ -21,6 +21,7 @@ class HelmTest {
                 deployments: [
                     sourcePath: 'k8s',
                     helm      : [
+                        repoType: 'GIT',
                         repoUrl: 'repoUrl'
                     ]
                 ]
