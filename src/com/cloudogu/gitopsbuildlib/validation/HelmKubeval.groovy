@@ -17,7 +17,7 @@ class HelmKubeval extends Validator {
                 script.sh "rm -rf ${targetDirectory}/chart"
             } else if (deployments.helm.repoType == 'HELM') {
                 withDockerImage(config.image) {
-                    script.sh "helm add repo chartRepo ${deployments.helm.repoUrl}"
+                    script.sh "helm repo add chartRepo ${deployments.helm.repoUrl}"
                     script.sh "helm repo update"
                     script.sh "helm kubeval chartRepo/${deployments.helm.chartName} --version=${deployments.helm.version} -v ${config.k8sSchemaVersion}"
                 }

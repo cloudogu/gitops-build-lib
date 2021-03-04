@@ -52,7 +52,7 @@ class HelmKubevalTest {
             ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm add repo chartRepo chartRepo')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo chartRepo')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm kubeval chartRepo/chart --version=version -v 1.5')
     }

@@ -15,11 +15,13 @@ class Helm implements Deployment {
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath
 
-        script.sh "mkdir -p ${stage}/${gitopsConfig.application}/"
-        // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
-        // This makes it easier to read in and indent for the inline use in the helmRelease.
-        // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
+        if(gitopsConfig.deployments.helm.repoType == 'GIT') {
+            script.sh "mkdir -p ${stage}/${gitopsConfig.application}/"
+            // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
+            // This makes it easier to read in and indent for the inline use in the helmRelease.
+            // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
+            script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
+        }
     }
 
     @Override
