@@ -1,17 +1,21 @@
 package com.cloudogu.gitopsbuildlib.deployments
 
-class Plain implements Deployment{
+class Plain extends Deployment{
 
     static String getConfigDir() { '.config' }
 
-    private def script
-
-    Plain(def script) {
-        this.script = script
+    Plain(def script, def gitopsConfig) {
+        super(script, gitopsConfig)
     }
 
     @Override
-    def prepareApplicationFolders(String stage, Map gitopsConfig) {
+    process(String stage) {
+        prepareApplicationFolders()
+        updateImage(stage)
+        validate(stage)
+    }
+
+    def prepareApplicationFolders() {
         def sourcePath = gitopsConfig.deployments.sourcePath
         script.sh "mkdir -p ${stage}/${gitopsConfig.application}/"
         script.sh "mkdir -p ${configDir}/"
@@ -21,8 +25,7 @@ class Plain implements Deployment{
         script.sh "cp ${script.env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
     }
 
-    @Override
-    def update(String stage, Map gitopsConfig) {
+    def updateImage(String stage) {
         gitopsConfig.deployments.plain.updateImages.each {
             def deploymentFilePath = "${stage}/${gitopsConfig.application}/${it['filename']}"
             def data = script.readYaml file: deploymentFilePath

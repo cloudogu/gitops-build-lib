@@ -57,6 +57,15 @@ gitopsConfig = [
         production: [deployDirectly: false],
         qa        : []
     ],
+    // helmValuesFromFile: [], Optional
+    configMapsFromFiles: [
+                      [name : "index",
+                       sourceFilePath : "../index.html", // relative to deployments.sourcePath
+                       // additional feature in the future. current default folder is '../generated-resources'
+                       // destinationFilePath: "../generated-resources/html/" // realtive to deployments.sourcePath
+                       stage: ["staging", "production"]
+                      ]
+    ],
     deployments           : [
         sourcePath: 'k8s', // path of k8s resources in application repository. Default: 'k8s'
         // Either "plain" or "helm" is mandatory
@@ -72,8 +81,8 @@ gitopsConfig = [
             repoUrl       : "https://git-repo/namespace/name",
             credentialsId : 'creds',
             version       : '1.2.3', // tag, commit or branch
-            chartPath     : 'chart',
-            extraResources: ['config, secrets'], // files or folders relative to deployments.sourcePath. Default empty array.
+            chartPath     : 'chart', // defaults to empty string meaning root directory of repo // TODO refactor helm class
+            // extraResources: [], // convention: ${sourcePath}/stages.it} all files and folders will be copied TODO prosa text for this feature in documentation
             updateValues  : [[fieldPath: "image.name", newValue: imageName]]
         ],
         // Future alternative: Choose between HELM or GIT as chart repo
@@ -83,7 +92,7 @@ gitopsConfig = [
             credentialsId : 'creds',
             version       : '7.1.6',
             chartName     : 'nginx',
-            extraResources: ['config, secrets'], // files or folders relative to deployments.sourcePath. Default empty array. 
+            // extraResources: [], // convention: ${sourcePath}/stages.it} all files and folders will be copied TODO prosa text for this feature in documentation
             updateValues  : [[fieldPath: "image.name", newValue: imageName]]
         ]
         // Additional future alternative
