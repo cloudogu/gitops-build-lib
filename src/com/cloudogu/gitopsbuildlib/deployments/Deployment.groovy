@@ -14,7 +14,7 @@ abstract class Deployment {
 
     abstract process(String stage)
 
-    validate(String stage) {
+    def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
             script.echo "Executing validator ${validatorConfig.key}"
 

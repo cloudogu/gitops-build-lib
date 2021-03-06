@@ -2,8 +2,12 @@ package com.cloudogu.gitopsbuildlib.deployments
 
 class HelmRepo extends RepoType{
 
+    HelmRepo(String stage, Map gitopsConfig) {
+        super(stage, gitopsConfig)
+    }
+
     @Override
-    protected generateFoldersAndFiles(String stage, Map gitopsRepo) {
+    protected generateFoldersAndFiles() {
         def helmConfig = gitopsConfig.deployments.helm
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath

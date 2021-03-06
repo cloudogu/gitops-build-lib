@@ -108,7 +108,7 @@ def validateDeploymentConfig(Map gitopsConfig) {
     }
     if (gitopsConfig.deployments.containsKey('plain')) {
         deployment = new Plain(this, gitopsConfig)
-    } else if (deployments.containsKey('helm')) {
+    } else if (gitopsConfig.deployments.containsKey('helm')) {
         deployment = new Helm(this, gitopsConfig)
     }
 
