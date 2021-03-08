@@ -12,6 +12,7 @@ class HelmKubeval extends Validator {
             if (deployments.helm.repoType == 'GIT') {
                 cloneGitHelmRepo(deployments.helm, targetDirectory)
                 withDockerImage(config.image) {
+                    //TODO implement chartPath
                     script.sh "helm kubeval ${targetDirectory}/chart -v ${config.k8sSchemaVersion}"
                 }
                 script.sh "rm -rf ${targetDirectory}/chart"
@@ -25,7 +26,6 @@ class HelmKubeval extends Validator {
         }
     }
 
-    //TODO implement chartPath
     private void cloneGitHelmRepo(Map helmConfig, String targetDirectory) {
         script.sh "git clone ${helmConfig.repoUrl} ${targetDirectory}/chart || true"
         script.sh "git --git-dir=${targetDirectory}/chart/.git --work-tree=${targetDirectory}/chart checkout ${helmConfig.version}"

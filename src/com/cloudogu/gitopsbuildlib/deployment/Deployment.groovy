@@ -27,11 +27,7 @@ abstract class Deployment {
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
             script.echo "Executing validator ${validatorConfig.key}"
-            def targetDirectory = "${stage}/${gitopsConfig.application}"
-            if(validatorConfig.key.equals('kubeval')) {
-                targetDirectory += "/${gitopsConfig.deployments.sourcePath}"
-            }
-            validatorConfig.value.validator.validate(validatorConfig.value.enabled, targetDirectory, validatorConfig.value.config, gitopsConfig.deployments)
+            validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}", validatorConfig.value.config, gitopsConfig.deployments)
         }
     }
 
