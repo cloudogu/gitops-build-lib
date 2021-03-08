@@ -21,13 +21,17 @@ abstract class Deployment {
     }
 
     abstract processPreValidation(String stage)
+
     abstract processPostValidation(String stage)
 
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
             script.echo "Executing validator ${validatorConfig.key}"
-
-            validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}", validatorConfig.value.config, gitopsConfig.deployments)
+            def targetDirectory = "${stage}/${gitopsConfig.application}"
+            if(validatorConfig.key.equals('kubeval')) {
+                targetDirectory += "/${gitopsConfig.deployments.sourcePath}"
+            }
+            validatorConfig.value.validator.validate(validatorConfig.value.enabled, targetDirectory, validatorConfig.value.config, gitopsConfig.deployments)
         }
     }
 
@@ -38,8 +42,8 @@ abstract class Deployment {
         script.sh "mkdir -p ${stage}/${application}/"
         script.sh "mkdir -p ${configDir}/"
         // copy extra resources like sealed secrets
-        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}'"
-        script.sh "cp ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/ || true"
+        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/${sourcePath}'"
+        script.sh "cp ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/${sourcePath}/ || true"
         script.sh "cp ${script.env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
     }
 }
