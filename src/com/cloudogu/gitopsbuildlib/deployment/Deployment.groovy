@@ -39,7 +39,7 @@ abstract class Deployment {
         def sourcePath = gitopsConfig.deployments.sourcePath
         def application = gitopsConfig.application
 
-        script.sh "mkdir -p ${stage}/${application}/"
+        script.sh "mkdir -p ${stage}/${application}/${sourcePath}/"
         script.sh "mkdir -p ${configDir}/"
         // copy extra resources like sealed secrets
         script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/${sourcePath}'"
