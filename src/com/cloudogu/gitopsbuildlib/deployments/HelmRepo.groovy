@@ -2,8 +2,8 @@ package com.cloudogu.gitopsbuildlib.deployments
 
 class HelmRepo extends RepoType{
 
-    HelmRepo(Map gitopsConfig) {
-        super(gitopsConfig)
+    HelmRepo(def script, Map gitopsConfig) {
+        super(script, gitopsConfig)
     }
 
     @Override

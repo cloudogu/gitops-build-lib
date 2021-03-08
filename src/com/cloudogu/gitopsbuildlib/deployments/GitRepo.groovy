@@ -2,8 +2,8 @@ package com.cloudogu.gitopsbuildlib.deployments
 
 class GitRepo extends RepoType{
 
-    GitRepo(Map gitopsConfig) {
-        super(gitopsConfig)
+    GitRepo(def script, Map gitopsConfig) {
+        super(script, gitopsConfig)
     }
 
     @Override
