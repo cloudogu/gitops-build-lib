@@ -39,7 +39,7 @@ abstract class Deployment {
         script.sh "mkdir -p ${configDir}/"
         // copy extra resources like sealed secrets
         script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/${sourcePath}'"
-        script.sh "cp ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/${sourcePath}/ || true"
+        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/${sourcePath}/ || true"
         script.sh "cp ${script.env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
     }
 }
