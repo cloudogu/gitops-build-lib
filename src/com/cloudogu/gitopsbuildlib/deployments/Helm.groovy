@@ -8,9 +8,9 @@ class Helm extends Deployment {
     Helm(def script, def gitopsConfig) {
         super(script, gitopsConfig)
         if(gitopsConfig.deployments.helm.repoType == 'GIT') {
-            repo = new GitRepo(gitopsConfig)
+            repo = new GitRepo(script, gitopsConfig)
         } else if (gitopsConfig.deployments.helm.repoType == 'HELM') {
-            repo = new HelmRepo(gitopsConfig)
+            repo = new HelmRepo(script, gitopsConfig)
         }
     }
 

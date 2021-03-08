@@ -76,8 +76,8 @@ spec:
     private void creatFileConfigmaps(String stage, String application, String sourcePath, Map gitopsConfig) {
         gitopsConfig.fileConfigmaps.each {
             if(stage in it['stage']) {
-                String key = it['file'].split('/').last()
-                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['file']}", it['name'], "fluxv1-${stage}")
+                String key = it['sourceFilePath'].split('/').last()
+                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['sourceFilePath']}", it['name'], "fluxv1-${stage}")
             }
         }
     }
