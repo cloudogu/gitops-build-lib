@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib.deployments
+package com.cloudogu.gitopsbuildlib.deployment.repotype
 
 abstract class RepoType {
 
@@ -13,5 +13,5 @@ abstract class RepoType {
         this.gitopsConfig = gitopsConfig
     }
 
-    abstract protected generateFoldersAndFiles(String stage)
+    abstract createHelmDeployment(String stage)
 }

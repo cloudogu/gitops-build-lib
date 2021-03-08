@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib.deployments
+package com.cloudogu.gitopsbuildlib.deployment.repotype
 
 class HelmRepo extends RepoType{
 
@@ -7,24 +7,10 @@ class HelmRepo extends RepoType{
     }
 
     @Override
-    protected generateFoldersAndFiles(String stage) {
+    def createHelmDeployment(String stage) {
         def helmConfig = gitopsConfig.deployments.helm
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath
-
-
-
-
-        script.sh "mkdir -p ${stage}/${application}/"
-
-        //TODO extraresources kopieren?
-        script.echo "Copying extra resources from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}'"
-        script.sh "cp -a ${script.env.WORKSPACE}/${sourcePath}/${stage}/. ${stage}/${application}/ || true"
-
-
-
-
-
 
         script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", createFromFileValues(stage, gitopsConfig))
         script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")

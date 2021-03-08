@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib.deployments
+package com.cloudogu.gitopsbuildlib.deployment
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
 import org.junit.Test

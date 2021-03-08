@@ -25,6 +25,7 @@ class HelmKubeval extends Validator {
         }
     }
 
+    //TODO implement chartPath
     private void cloneGitHelmRepo(Map helmConfig, String targetDirectory) {
         script.sh "git clone ${helmConfig.repoUrl} ${targetDirectory}/chart || true"
         script.sh "git --git-dir=${targetDirectory}/chart/.git --work-tree=${targetDirectory}/chart checkout ${helmConfig.version}"

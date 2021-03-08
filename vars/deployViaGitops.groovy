@@ -1,8 +1,8 @@
 #!groovy
 import com.cloudogu.gitopsbuildlib.*
-import com.cloudogu.gitopsbuildlib.deployments.Deployment
-import com.cloudogu.gitopsbuildlib.deployments.Helm
-import com.cloudogu.gitopsbuildlib.deployments.Plain
+import com.cloudogu.gitopsbuildlib.deployment.Deployment
+import com.cloudogu.gitopsbuildlib.deployment.Helm
+import com.cloudogu.gitopsbuildlib.deployment.Plain
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
@@ -188,7 +188,7 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
 }
 
 protected String syncGitopsRepo(String stage, String branch, def git, Map gitRepo, Map gitopsConfig) {
-    deployment.process(stage)
+    deployment.deploy(stage)
     return commitAndPushToStage(stage, branch, git, gitRepo)
 }
 
