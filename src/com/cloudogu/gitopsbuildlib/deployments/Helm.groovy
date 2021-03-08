@@ -8,15 +8,15 @@ class Helm extends Deployment {
     Helm(def script, def gitopsConfig) {
         super(script, gitopsConfig)
         if(gitopsConfig.deployments.helm.repoType == 'GIT') {
-            repo = new GitRepo()
+            repo = new GitRepo(gitopsConfig)
         } else if (gitopsConfig.deployments.helm.repoType == 'HELM') {
-            repo = new HelmRepo()
+            repo = new HelmRepo(gitopsConfig)
         }
     }
 
     @Override
     process(String stage) {
-        repo.generateFoldersAndFiles(stage, gitopsConfig)
+        repo.generateFoldersAndFiles(stage)
         validate(stage)
     }
 }
