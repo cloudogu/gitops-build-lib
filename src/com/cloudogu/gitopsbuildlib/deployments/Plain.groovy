@@ -10,12 +10,12 @@ class Plain extends Deployment{
 
     @Override
     process(String stage) {
-        prepareApplicationFolders()
+        prepareApplicationFolders(stage)
         updateImage(stage)
         validate(stage)
     }
 
-    def prepareApplicationFolders() {
+    def prepareApplicationFolders(String stage) {
         def sourcePath = gitopsConfig.deployments.sourcePath
         script.sh "mkdir -p ${stage}/${gitopsConfig.application}/"
         script.sh "mkdir -p ${configDir}/"
