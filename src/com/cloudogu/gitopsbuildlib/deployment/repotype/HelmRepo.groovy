@@ -13,11 +13,11 @@ class HelmRepo extends RepoType{
         def sourcePath = gitopsConfig.deployments.sourcePath
 
         script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", createFromFileValues(stage, gitopsConfig))
-        script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
 
+        script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
         script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
 
-        creatFileConfigmaps(stage, application, sourcePath, gitopsConfig)
+        createFileConfigmaps(stage, application, sourcePath, gitopsConfig)
     }
 
     private String createHelmRelease(Map helmConfig, String application, String namespace, String extraValues) {
@@ -48,6 +48,7 @@ spec:
 """
     }
 
+    //TODO not yet implemented
     private String createFromFileValues(String stage, Map gitopsConfig) {
         String values = ""
 
@@ -59,7 +60,7 @@ spec:
         return values
     }
 
-    private void creatFileConfigmaps(String stage, String application, String sourcePath, Map gitopsConfig) {
+    private void createFileConfigmaps(String stage, String application, String sourcePath, Map gitopsConfig) {
         gitopsConfig.fileConfigmaps.each {
             if(stage in it['stage']) {
                 String key = it['sourceFilePath'].split('/').last()

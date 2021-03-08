@@ -7,13 +7,13 @@ class Plain extends Deployment{
     }
 
     @Override
-    processPostValidation(String stage) {
+    preparePostValidation(String stage) {
         updateImage(stage)
     }
 
     def updateImage(String stage) {
         gitopsConfig.deployments.plain.updateImages.each {
-            def deploymentFilePath = "${stage}/${gitopsConfig.application}/${gitopsConfig.sourcePath}/${it['filename']}"
+            def deploymentFilePath = "${stage}/${gitopsConfig.application}/${gitopsConfig.deployments.sourcePath}/${it['filename']}"
             def data = script.readYaml file: deploymentFilePath
             def containers = data.spec.template.spec.containers
             def containerName = it['containerName']
@@ -24,6 +24,6 @@ class Plain extends Deployment{
     }
 
     @Override
-    def processPreValidation(String stage) {
+    def preparePreValidation(String stage) {
     }
 }

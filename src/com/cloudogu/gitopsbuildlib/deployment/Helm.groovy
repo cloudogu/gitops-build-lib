@@ -18,11 +18,11 @@ class Helm extends Deployment {
     }
 
     @Override
-    processPreValidation(String stage) {
+    preparePreValidation(String stage) {
         helmRepo.createHelmDeployment(stage)
     }
 
     @Override
-    def processPostValidation(String stage) {
+    def preparePostValidation(String stage) {
     }
 }

@@ -188,7 +188,7 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
 }
 
 protected String syncGitopsRepo(String stage, String branch, def git, Map gitRepo, Map gitopsConfig) {
-    deployment.deploy(stage)
+    deployment.prepare(stage)
     return commitAndPushToStage(stage, branch, git, gitRepo)
 }
 
