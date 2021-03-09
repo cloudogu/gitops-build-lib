@@ -5,7 +5,6 @@ abstract class Deployment {
     static String getConfigDir() { '.config' }
 
     protected script
-    protected stage
     protected gitopsConfig
 
     Deployment(def script, def gitopsConfig) {
