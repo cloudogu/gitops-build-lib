@@ -21,7 +21,7 @@ class HelmRepo extends RepoType{
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
 
 
-        script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", createFromFileValues(stage, gitopsConfig))
+        script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
 
 //        script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
 //        script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
@@ -60,6 +60,8 @@ class HelmRepo extends RepoType{
             merge = script.sh returnStdout: true, script: helmScript
         }
 
+        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
+
         return merge
     }
 
@@ -71,7 +73,8 @@ class HelmRepo extends RepoType{
         }
     }
 
-    private String createHelmRelease(Map helmConfig, String application, String namespace, String values) {
+    private String createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
+        def values = fileToInlineYaml(valuesFile)
         return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
@@ -90,7 +93,13 @@ spec:
 """
     }
 
-
+    private String fileToInlineYaml(String fileContents) {
+        String values = ""
+        String indent = "    "
+        def fileContent = script.readFile fileContents
+        values += fileContent.split("\\n").join("\n" + indent)
+        return values
+    }
 
     private void createFileConfigmaps(String stage, String application, String sourcePath, Map gitopsConfig) {
         gitopsConfig.fileConfigmaps.each {
