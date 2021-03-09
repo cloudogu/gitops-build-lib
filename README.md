@@ -53,8 +53,14 @@ gitopsConfig = [
     // deployDirectly: false -> creates a PR (default)
     // TODO use two stages as default?
     stages                : [
-        staging   : [deployDirectly: true],
-        production: [deployDirectly: false],
+        staging   : [
+            namespace: 'xxx-staging', // Default: key-name. e.g. staging
+            deployDirectly: true
+        ],
+        production: [
+            namespace: 'xxx-production', // Default: key-name. e.g. production
+            deployDirectly: false
+        ],
         qa        : []
     ],
     // helmValuesFromFile: [], Optional
@@ -76,6 +82,12 @@ gitopsConfig = [
                  imageName    : 'imageName']
             ]
         ],
+        // you can deploy additional k8s resources like secrets or configmaps etc. Just put the files in the following folder structure:
+        // ${sourcePath}
+        //      |_ ${namespcae} e.g. staging
+        //          |_ 'put k8s resources here' 
+        //      |_ ${namespcae} e.g. production
+        //          |_ 'put k8s resources here'
         helm      : [
             repoType      : 'GIT',
             repoUrl       : "https://git-repo/namespace/name",
