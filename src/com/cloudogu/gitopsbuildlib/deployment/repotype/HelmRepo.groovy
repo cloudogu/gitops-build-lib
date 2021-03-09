@@ -12,19 +12,13 @@ class HelmRepo extends RepoType{
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath
 
-
-        // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
-        // This makes it easier to read in and indent for the inline use in the helmRelease.
-        // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
         script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
 
-
         script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
 
-//        script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
-//        script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
+        script.sh "rm ${stage}/${application}/mergedValues.yaml"
 
         createFileConfigmaps(stage, application, sourcePath, gitopsConfig)
     }
@@ -96,8 +90,12 @@ spec:
     private String fileToInlineYaml(String fileContents) {
         String values = ""
         String indent = "    "
-        def fileContent = script.readFile fileContents
-        values += fileContent.split("\\n").join("\n" + indent)
+        String fileContent = script.readFile fileContents
+        fileContent.eachLine({ line ->
+            values += line + "\n" + indent
+        })
+        script.echo "fileContent: ${values}"
+//        values += fileContent.split("\\n").join("\n" + indent).stripTrailing()
         return values
     }
 
