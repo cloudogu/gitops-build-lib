@@ -7,7 +7,7 @@ class GitRepo extends RepoType{
     }
 
     @Override
-    def createHelmDeployment(String stage) {
+    def createRelease(String stage) {
         def helmConfig = gitopsConfig.deployments.helm
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath

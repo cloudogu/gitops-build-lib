@@ -7,20 +7,71 @@ class HelmRepo extends RepoType{
     }
 
     @Override
-    def createHelmDeployment(String stage) {
+    def createRelease(String stage) {
         def helmConfig = gitopsConfig.deployments.helm
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath
 
+
+        // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
+        // This makes it easier to read in and indent for the inline use in the helmRelease.
+        // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
+        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String)
+
+        updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
+
+
         script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", createFromFileValues(stage, gitopsConfig))
 
-        script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
-        script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
+//        script.writeFile file: "${stage}/${application}/valuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${application}-helm-operator-values", "fluxv1-${stage}")
+//        script.writeFile file: "${stage}/${application}/sharedValuesMap.yaml", text: createConfigMap("values.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml", "${application}-shared-helm-operator-values", "fluxv1-${stage}")
 
         createFileConfigmaps(stage, application, sourcePath, gitopsConfig)
     }
 
-    private String createHelmRelease(Map helmConfig, String application, String namespace, String extraValues) {
+    private void updateYamlValue(String yamlFilePath, Map helmConfig) {
+        def data = script.readYaml file: yamlFilePath
+        helmConfig.updateValues.each {
+            String[] paths = it["fieldPath"].split("\\.")
+            def _tmp = data
+            paths.eachWithIndex { String p, int i ->
+                def tmp = _tmp.get(p)
+                if (i == paths.length - 1 && tmp != null) {
+                    _tmp.put(p, it["newValue"])
+                }
+                _tmp = tmp
+            }
+        }
+        script.writeYaml file: yamlFilePath, data: data, overwrite: true
+    }
+
+    private String mergeValues(Map helmConfig, String[] files) {
+        String merge = ""
+        String _files = ""
+        files.each {
+            _files += "-f $it "
+        }
+
+        script.sh "helm repo add chartRepo ${helmConfig.repoUrl}"
+        script.sh "helm repo update"
+
+        withHelm {
+            String helmScript = "helm values chartRepo/${helmConfig.chartName} --version=${helmConfig.version} ${_files}"
+            merge = script.sh returnStdout: true, script: helmScript
+        }
+
+        return merge
+    }
+
+    private void withHelm(Closure body) {
+        script.cesBuildLib.Docker.new(script).image(helmImage).inside(
+            "${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}"
+        ) {
+            body()
+        }
+    }
+
+    private String createHelmRelease(Map helmConfig, String application, String namespace, String values) {
         return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
@@ -34,31 +85,12 @@ spec:
     repository: ${helmConfig.repoUrl}
     name: ${helmConfig.chartName}
     version: ${helmConfig.version}
-  valuesFrom:
-  - configMapKeyRef:
-      name: ${application}-shared-helm-operator-values
-      namespace: ${namespace}
-      key: values.yaml
-      optional: false
-  - configMapKeyRef:
-      name: ${application}-helm-operator-values
-      namespace: ${namespace}
-      key: values.yaml
-      optional: false
+  values:
+    ${values}
 """
     }
 
-    //TODO not yet implemented
-    private String createFromFileValues(String stage, Map gitopsConfig) {
-        String values = ""
 
-        gitopsConfig.helmValuesFromFile.each {
-            if (stage in it['stage']) {
-                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
-            }
-        }
-        return values
-    }
 
     private void createFileConfigmaps(String stage, String application, String sourcePath, Map gitopsConfig) {
         gitopsConfig.fileConfigmaps.each {
@@ -115,14 +147,26 @@ users:
             }
     }
 
-    private String fileToInlineYaml(String key, String filePath) {
-        String values = ""
-        String indent = "        "
-
-        def fileContent = readFile filePath
-        values += "\n    ${key}: |\n${indent}"
-        values += fileContent.split("\\n").join("\n" + indent)
-
-        return values
-    }
+    //TODO helmValuesFromFile not yet implemented
+//    private String createFromFileValues(String stage, Map gitopsConfig) {
+//        String values = ""
+//
+//        gitopsConfig.helmValuesFromFile.each {
+//            if (stage in it['stage']) {
+//                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
+//            }
+//        }
+//        return values
+//    }
+//
+//    private String fileToInlineYaml(String key, String filePath) {
+//        String values = ""
+//        String indent = "        "
+//
+//        def fileContent = readFile filePath
+//        values += "\n    ${key}: |\n${indent}"
+//        values += fileContent.split("\\n").join("\n" + indent)
+//
+//        return values
+//    }
 }

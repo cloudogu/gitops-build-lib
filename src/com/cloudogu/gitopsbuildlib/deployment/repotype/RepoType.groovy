@@ -13,5 +13,5 @@ abstract class RepoType {
         this.gitopsConfig = gitopsConfig
     }
 
-    abstract createHelmDeployment(String stage)
+    abstract createRelease(String stage)
 }

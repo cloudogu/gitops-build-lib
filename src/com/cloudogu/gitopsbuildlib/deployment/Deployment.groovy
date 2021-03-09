@@ -13,16 +13,16 @@ abstract class Deployment {
         this.gitopsConfig = gitopsConfig
     }
 
-    def prepare(String stage) {
+    def create(String stage) {
         createFoldersAndCopyK8sResources(stage)
-        preparePreValidation(stage)
+        createPreValidation(stage)
         validate(stage)
-        preparePostValidation(stage)
+        createPostValidation(stage)
     }
 
-    abstract preparePreValidation(String stage)
+    abstract createPreValidation(String stage)
 
-    abstract preparePostValidation(String stage)
+    abstract createPostValidation(String stage)
 
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->

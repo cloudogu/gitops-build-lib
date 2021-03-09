@@ -7,11 +7,11 @@ class Plain extends Deployment{
     }
 
     @Override
-    preparePostValidation(String stage) {
+    def createPostValidation(String stage) {
         updateImage(stage)
     }
 
-    def updateImage(String stage) {
+    private updateImage(String stage) {
         gitopsConfig.deployments.plain.updateImages.each {
             def deploymentFilePath = "${stage}/${gitopsConfig.application}/${gitopsConfig.deployments.sourcePath}/${it['filename']}"
             def data = script.readYaml file: deploymentFilePath
@@ -24,6 +24,6 @@ class Plain extends Deployment{
     }
 
     @Override
-    def preparePreValidation(String stage) {
+    def createPreValidation(String stage) {
     }
 }
