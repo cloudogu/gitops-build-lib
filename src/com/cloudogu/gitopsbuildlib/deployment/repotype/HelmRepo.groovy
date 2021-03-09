@@ -91,11 +91,18 @@ spec:
         String values = ""
         String indent = "    "
         String fileContent = script.readFile fileContents
+        boolean first = true
         fileContent.eachLine({ line ->
-            values += line + "\n" + indent
+            if(line.size() > 0) {
+                if(first) {
+                    values += line + "\n"
+                } else {
+                    values += indent + line + "\n"
+                }
+            } else {
+                value += line + "\n"
+            }
         })
-        script.echo "fileContent: ${values}"
-//        values += fileContent.split("\\n").join("\n" + indent).stripTrailing()
         return values
     }
 
