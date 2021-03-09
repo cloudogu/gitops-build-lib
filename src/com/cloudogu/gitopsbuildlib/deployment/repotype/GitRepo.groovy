@@ -2,44 +2,32 @@ package com.cloudogu.gitopsbuildlib.deployment.repotype
 
 class GitRepo extends RepoType{
 
-    GitRepo(def script, Map gitopsConfig) {
-        super(script, gitopsConfig)
+    GitRepo(def script) {
+        super(script)
     }
 
     @Override
-    def createRelease(String stage) {
-        def helmConfig = gitopsConfig.deployments.helm
-        def application = gitopsConfig.application
-        def sourcePath = gitopsConfig.deployments.sourcePath
-
-        // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
-        // This makes it easier to read in and indent for the inline use in the helmRelease.
-        // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig.repoUrl, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
-
-        updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
-        script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: createHelmRelease(helmConfig, application, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
-        // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
-        script.sh "rm ${stage}/${application}/mergedValues.yaml"
-    }
-
-    private void updateYamlValue(String yamlFilePath, Map helmConfig) {
-        def data = script.readYaml file: yamlFilePath
-        helmConfig.updateValues.each {
-            String[] paths = it["fieldPath"].split("\\.")
-            def _tmp = data
-            paths.eachWithIndex { String p, int i ->
-                def tmp = _tmp.get(p)
-                if (i == paths.length - 1 && tmp != null) {
-                    _tmp.put(p, it["newValue"])
-                }
-                _tmp = tmp
-            }
+    String mergeValues(Map helmConfig, String[] files) {
+        String merge = ""
+        String _files = ""
+        files.each {
+            _files += "-f $it "
         }
-        script.writeYaml file: yamlFilePath, data: data, overwrite: true
+
+        script.sh "git clone ${helmConfig.repoUrl} ${script.env.WORKSPACE}/chart || true"
+
+        withHelm {
+            String helmScript = "helm values ${script.env.WORKSPACE}/chart ${_files}"
+            merge = script.sh returnStdout: true, script: helmScript
+        }
+
+        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
+
+        return merge
     }
 
-    private String createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
+    @Override
+    String createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
         def values = fileToInlineYaml(valuesFile)
         return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
@@ -57,52 +45,5 @@ spec:
   values:
     ${values}
 """
-    }
-
-    private String fileToInlineYaml(String fileContents) {
-        String values = ""
-        String indent = "    "
-        String fileContent = script.readFile fileContents
-        boolean first = true
-        fileContent.split("\n").each { line ->
-            if(line.size() > 0) {
-                if(first) {
-                    values += line + "\n"
-                    first = false
-                } else {
-                    values += indent + line + "\n"
-                }
-            } else {
-                values += line + "\n"
-            }
-        }
-        return values
-    }
-
-    private String mergeValues(String chart, String[] files) {
-        String merge = ""
-        String _files = ""
-        files.each {
-            _files += "-f $it "
-        }
-
-        script.sh "git clone ${chart} ${script.env.WORKSPACE}/chart || true"
-
-        withHelm {
-            String helmScript = "helm values ${script.env.WORKSPACE}/chart ${_files}"
-            merge = script.sh returnStdout: true, script: helmScript
-        }
-
-        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
-
-        return merge
-    }
-
-    private void withHelm(Closure body) {
-        script.cesBuildLib.Docker.new(script).image(helmImage).inside(
-            "${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}"
-        ) {
-            body()
-        }
     }
 }
