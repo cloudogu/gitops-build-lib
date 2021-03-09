@@ -96,11 +96,12 @@ spec:
             if(line.size() > 0) {
                 if(first) {
                     values += line + "\n"
+                    first = false
                 } else {
                     values += indent + line + "\n"
                 }
             } else {
-                value += line + "\n"
+                values += line + "\n"
             }
         }
         return values
