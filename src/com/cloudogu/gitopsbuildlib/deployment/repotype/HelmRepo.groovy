@@ -16,7 +16,7 @@ class HelmRepo extends RepoType{
         // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
         // This makes it easier to read in and indent for the inline use in the helmRelease.
         // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String)
+        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
 
@@ -52,11 +52,11 @@ class HelmRepo extends RepoType{
             _files += "-f $it "
         }
 
-        script.sh "helm repo add chartRepo ${helmConfig.repoUrl}"
-        script.sh "helm repo update"
-
         withHelm {
-            String helmScript = "helm values chartRepo/${helmConfig.chartName} --version=${helmConfig.version} ${_files}"
+            script.sh "helm repo add chartRepo ${helmConfig.repoUrl}"
+            script.sh "helm repo update"
+            script.sh "helm pull chartRepo/${helmConfig.chartName} --version=${helmConfig.version} --untar --untardir=${script.env.WORKSPACE}/chart"
+            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${helmConfig.chartName} ${_files}"
             merge = script.sh returnStdout: true, script: helmScript
         }
 
