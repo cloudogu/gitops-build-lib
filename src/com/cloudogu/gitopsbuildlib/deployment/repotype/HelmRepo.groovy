@@ -92,7 +92,7 @@ spec:
         String indent = "    "
         String fileContent = script.readFile fileContents
         boolean first = true
-        fileContent.eachLine({ line ->
+        fileContent.split("\n").each { line ->
             if(line.size() > 0) {
                 if(first) {
                     values += line + "\n"
@@ -102,7 +102,7 @@ spec:
             } else {
                 value += line + "\n"
             }
-        })
+        }
         return values
     }
 
