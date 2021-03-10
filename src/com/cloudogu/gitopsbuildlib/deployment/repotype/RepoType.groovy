@@ -24,7 +24,8 @@ abstract class RepoType {
                 values += line + "\n"
             }
         }
-        return values
+        // remove unnecessary last blank line
+        return values.substring(0, values.lastIndexOf('\n'))
     }
 
     void withHelm(Closure body) {

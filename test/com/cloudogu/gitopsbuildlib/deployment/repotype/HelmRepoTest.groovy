@@ -65,7 +65,6 @@ spec:
     to:
       be:
         changed: 'oldValue'
-
 ''')
     }
 

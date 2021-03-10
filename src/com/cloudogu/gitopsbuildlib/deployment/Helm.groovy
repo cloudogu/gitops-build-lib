@@ -62,7 +62,7 @@ class Helm extends Deployment {
         gitopsConfig.fileConfigmaps.each {
             if(stage in it['stage']) {
                 String key = it['sourceFilePath'].split('/').last()
-                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
+                script.writeFile file: "${stage}/${application}/generatedResources/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
             }
         }
     }

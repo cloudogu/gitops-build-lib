@@ -25,8 +25,7 @@ class RepoTypeTest {
     #this part is only for HelmTest regarding changing the yaml values
     to:
       be:
-        changed: 'oldValue'
-''')
+        changed: 'oldValue\'''')
     }
 
     class RepoTypeUnderTest extends RepoType {
