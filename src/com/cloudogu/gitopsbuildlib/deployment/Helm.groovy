@@ -31,7 +31,7 @@ class Helm extends Deployment {
         script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: helm.mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
-        script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: helm.createHelmRelease(helmConfig, application, "fluxv1-${stage}", "${stage}/${application}/mergedValues.yaml")
+        script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: helm.createHelmRelease(helmConfig, application, getNamespace(stage), "${stage}/${application}/mergedValues.yaml")
         // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
         script.sh "rm ${stage}/${application}/mergedValues.yaml"
 
@@ -62,7 +62,7 @@ class Helm extends Deployment {
         gitopsConfig.fileConfigmaps.each {
             if(stage in it['stage']) {
                 String key = it['sourceFilePath'].split('/').last()
-                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['sourceFilePath']}", it['name'], "fluxv1-${stage}")
+                script.writeFile file: "${stage}/${application}/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
             }
         }
     }
@@ -111,6 +111,16 @@ users:
     token: DATA+OMITTED"""
 
         return kubeConfigPath
+    }
+
+    String getNamespace(String stage) {
+        def namespace
+        if (gitopsConfig.stages.${stage}.containsKey('namespace')) {
+            namespace = gitopsConfig.stages.${stage}.namespace
+        } else {
+            namespace = stage
+        }
+        return namespace
     }
 
     //TODO helmValuesFromFile not yet implemented
