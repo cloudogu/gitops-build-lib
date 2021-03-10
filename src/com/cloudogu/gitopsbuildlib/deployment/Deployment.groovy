@@ -2,10 +2,12 @@ package com.cloudogu.gitopsbuildlib.deployment
 
 abstract class Deployment {
 
+    protected static String getKubectlImage() { 'lachlanevenson/k8s-kubectl:v1.19.3' }
+
     static String getConfigDir() { '.config' }
 
     protected script
-    protected gitopsConfig
+    protected Map gitopsConfig
 
     Deployment(def script, def gitopsConfig) {
         this.script = script
@@ -21,7 +23,6 @@ abstract class Deployment {
     }
 
     abstract createPreValidation(String stage)
-
     abstract createPostValidation(String stage)
 
     def validate(String stage) {
@@ -63,7 +64,8 @@ abstract class Deployment {
         }
         return configMap
     }
-    private void withKubectl(Closure body) {
+
+    void withKubectl(Closure body) {
         script.cesBuildLib.Docker.new(script).image(kubectlImage)
         // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
             .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
@@ -72,7 +74,7 @@ abstract class Deployment {
     }
 
     // Dummy kubeConfig, so we can use `kubectl --dry-run=client`
-    private String writeKubeConfig() {
+    String writeKubeConfig() {
         String kubeConfigPath = "${script.pwd()}/.kube/config"
         script.echo "Writing $kubeConfigPath"
         script.writeFile file: kubeConfigPath, text: """apiVersion: v1
@@ -95,5 +97,15 @@ users:
     token: DATA+OMITTED"""
 
         return kubeConfigPath
+    }
+
+    String getNamespace(String stage) {
+        def namespace
+        if (gitopsConfig.stages."${stage}".containsKey('namespace')) {
+            namespace = gitopsConfig.stages."${stage}".namespace
+        } else {
+            namespace = stage
+        }
+        return namespace
     }
 }

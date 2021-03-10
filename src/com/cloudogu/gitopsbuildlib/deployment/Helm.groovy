@@ -6,8 +6,6 @@ import com.cloudogu.gitopsbuildlib.deployment.repotype.RepoType
 
 class Helm extends Deployment {
 
-    protected static String getKubectlImage() { 'lachlanevenson/k8s-kubectl:v1.19.3' }
-
     protected RepoType helm
 
     Helm(def script, def gitopsConfig) {
@@ -56,15 +54,7 @@ class Helm extends Deployment {
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
     }
 
-    String getNamespace(String stage) {
-        def namespace
-        if (gitopsConfig.stages."${stage}".containsKey('namespace')) {
-            namespace = gitopsConfig.stages."${stage}".namespace
-        } else {
-            namespace = stage
-        }
-        return namespace
-    }
+
 
     //TODO helmValuesFromFile not yet implemented
 //    private String createFromFileValues(String stage, Map gitopsConfig) {
