@@ -17,15 +17,9 @@ abstract class RepoType {
         String values = ""
         String indent = "    "
         String fileContent = script.readFile fileContents
-        boolean first = true
         fileContent.split("\n").each { line ->
             if(line.size() > 0) {
-                if(first) {
-                    values += line + "\n"
-                    first = false
-                } else {
-                    values += indent + line + "\n"
-                }
+               values += indent + line + "\n"
             } else {
                 values += line + "\n"
             }

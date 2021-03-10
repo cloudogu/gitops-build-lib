@@ -45,7 +45,7 @@ spec:
     name: ${helmConfig.chartName}
     version: ${helmConfig.version}
   values:
-    ${values}
+${values}
 """
     }
 }

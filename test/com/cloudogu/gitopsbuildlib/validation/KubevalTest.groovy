@@ -17,23 +17,14 @@ class KubevalTest {
             'target',
             [image           : 'img',
             k8sSchemaVersion: '1.5'],
-            [plain: []]
+            [
+                sourcePath: 'k8s',
+                plain: []
+            ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(
-            'kubeval -d target -v 1.5 --strict'
+            'kubeval -d target/k8s -v 1.5 --strict'
         )
-    }
-
-    @Test
-    void 'is not executed on helm deployment'() {
-        kubeval.validate(
-            'target',
-            [image           : 'img',
-             k8sSchemaVersion: '1.5'],
-            [helm: []]
-        )
-        assertThat(dockerMock.actualImages[0]).isEqualTo(null)
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo(null)
     }
 }

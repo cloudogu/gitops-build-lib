@@ -16,8 +16,13 @@ class GitRepo extends RepoType{
 
         script.sh "git clone ${helmConfig.repoUrl} ${script.env.WORKSPACE}/chart || true"
 
+        def chartPath = ''
+        if(helmConfig.containsKey('chartPath')) {
+            chartPath = helmConfig.chartPath
+        }
+
         withHelm {
-            String helmScript = "helm values ${script.env.WORKSPACE}/chart ${_files}"
+            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${chartPath} ${_files}"
             merge = script.sh returnStdout: true, script: helmScript
         }
 
@@ -43,7 +48,7 @@ spec:
     ref: ${helmConfig.version}
     path: .
   values:
-    ${values}
+${values}
 """
     }
 }
