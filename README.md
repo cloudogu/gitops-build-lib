@@ -26,7 +26,7 @@ with the complete infrastructure for a gitops deep dive.
         - [Conventions](#conventions-1)
 - [Validators](#validators)
     - [Custom validators](#custom-validators)
-- [Extra Files](#fileconfigmaps)
+- [Extra Files](#extra-files)
 - [Examples](#examples)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -346,7 +346,7 @@ because the library is loaded after the class is evaluated.
 
 ---
 
-## fileConfigMaps
+## Extra Files
 
 If extra files are needed and are not k8s resources there is the `fileConfigMaps` property.
 
