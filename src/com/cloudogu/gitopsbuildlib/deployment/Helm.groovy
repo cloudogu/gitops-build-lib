@@ -115,8 +115,8 @@ users:
 
     String getNamespace(String stage) {
         def namespace
-        if (gitopsConfig.stages.${stage}.containsKey('namespace')) {
-            namespace = gitopsConfig.stages.${stage}.namespace
+        if (gitopsConfig.stages."${stage}".containsKey('namespace')) {
+            namespace = gitopsConfig.stages."${stage}".namespace
         } else {
             namespace = stage
         }
