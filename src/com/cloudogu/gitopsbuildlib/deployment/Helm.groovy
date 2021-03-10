@@ -34,8 +34,6 @@ class Helm extends Deployment {
         script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: helm.createHelmRelease(helmConfig, application, getNamespace(stage), "${stage}/${application}/mergedValues.yaml")
         // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
         script.sh "rm ${stage}/${application}/mergedValues.yaml"
-
-        createFileConfigmaps(stage, application, sourcePath, gitopsConfig)
     }
 
     @Override
@@ -56,61 +54,6 @@ class Helm extends Deployment {
             }
         }
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
-    }
-
-    private void createFileConfigmaps(String stage, String application, String sourcePath, Map gitopsConfig) {
-        gitopsConfig.fileConfigmaps.each {
-            if(stage in it['stage']) {
-                String key = it['sourceFilePath'].split('/').last()
-                script.writeFile file: "${stage}/${application}/generatedResources/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
-            }
-        }
-    }
-
-    private String createConfigMap(String key, String filePath, String name, String namespace) {
-        String configMap = ""
-        withKubectl {
-            String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
-                "--from-file=${key}=${filePath} " +
-                "--dry-run=client -o yaml -n ${namespace}"
-
-            configMap = script.sh returnStdout: true, script: kubeScript
-        }
-        return configMap
-    }
-
-    private void withKubectl(Closure body) {
-        script.cesBuildLib.Docker.new(script).image(kubectlImage)
-        // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
-            .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
-                body()
-            }
-    }
-
-    // Dummy kubeConfig, so we can use `kubectl --dry-run=client`
-    private String writeKubeConfig() {
-        String kubeConfigPath = "${script.pwd()}/.kube/config"
-        script.echo "Writing $kubeConfigPath"
-        script.writeFile file: kubeConfigPath, text: """apiVersion: v1
-clusters:
-- cluster:
-    certificate-authority-data: DATA+OMITTED
-    server: https://localhost
-  name: self-hosted-cluster
-contexts:
-- context:
-    cluster: self-hosted-cluster
-    user: svcs-acct-dply
-  name: svcs-acct-context
-current-context: svcs-acct-context
-kind: Config
-preferences: {}
-users:
-- name: svcs-acct-dply
-  user:
-    token: DATA+OMITTED"""
-
-        return kubeConfigPath
     }
 
     String getNamespace(String stage) {

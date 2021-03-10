@@ -7,6 +7,10 @@ class Plain extends Deployment{
     }
 
     @Override
+    def createPreValidation(String stage) {
+    }
+
+    @Override
     def createPostValidation(String stage) {
         updateImage(stage)
     }
@@ -21,9 +25,5 @@ class Plain extends Deployment{
             updateContainer.image = it['imageName']
             script.writeYaml file: deploymentFilePath, data: data, overwrite: true
         }
-    }
-
-    @Override
-    def createPreValidation(String stage) {
     }
 }
