@@ -3,9 +3,9 @@ package com.cloudogu.gitopsbuildlib
 import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.ces.cesbuildlib.SCMManager
-import com.cloudogu.gitopsbuildlib.GitRepo
-import com.cloudogu.gitopsbuildlib.Kubeval
-import com.cloudogu.gitopsbuildlib.Yamllint
+import com.cloudogu.gitopsbuildlib.deployments.Plain
+import com.cloudogu.gitopsbuildlib.validation.Kubeval
+import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
 import groovy.mock.interceptor.StubFor
 import groovy.yaml.YamlSlurper
@@ -27,7 +27,6 @@ class DeployViaGitopsTest extends BasePipelineTest {
         def SCMManager = [:]
     }
 
-    //TODO naming mock?
     def git
     def docker
     def scmm
@@ -41,55 +40,61 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
 
-    Map gitopsConfig(Map stages) {
+    Map gitopsConfig(Map stages, Map deployments) {
         return [
-                scmmCredentialsId       : 'scmManagerCredentials',
-                scmmConfigRepoUrl       : 'configRepositoryUrl',
-                scmmPullRequestBaseUrl  : 'http://scmm-scm-manager/scm',
-                scmmPullRequestRepo     : 'fluxv1/gitops',
-                cesBuildLibRepo         : 'cesBuildLibRepo',
-                cesBuildLibVersion      : 'cesBuildLibVersion',
-                application             : 'application',
-                mainBranch              : 'main',
-                updateImages            : [
-                    [deploymentFilename : "deployment.yaml",
-                     containerName       : 'application',
-                     imageName           : 'newImageName']
-                ],
-                validators: [
-                    kubeval: [
-                        validator   : new Kubeval(deployViaGitops),
-                        enabled     : true,
-                        config      : [
-                            // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
-                            image: helmImage,
-                            k8sSchemaVersion: '1.18.1'
-                        ]
-                    ],
-                    yamllint: [
-                        validator   : new Yamllint(deployViaGitops),
-                        enabled     : true,
-                        config      : [
-                            image: 'cytopia/yamllint:1.25-0.7',
-                            // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
-                            // It still fails on syntax errors.
-                            profile: 'relaxed'
-                        ]
+            scmmCredentialsId     : 'scmManagerCredentials',
+            scmmConfigRepoUrl     : 'configRepositoryUrl',
+            scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm',
+            scmmPullRequestRepo   : 'fluxv1/gitops',
+            cesBuildLibRepo       : 'cesBuildLibRepo',
+            cesBuildLibVersion    : 'cesBuildLibVersion',
+            application           : 'application',
+            mainBranch            : 'main',
+            deployments           : deployments,
+            validators            : [
+                kubeval : [
+                    validator: new Kubeval(deployViaGitops),
+                    enabled  : true,
+                    config   : [
+                        // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
+                        image           : helmImage,
+                        k8sSchemaVersion: '1.18.1'
                     ]
                 ],
-                stages            : stages
+                yamllint: [
+                    validator: new Yamllint(deployViaGitops),
+                    enabled  : true,
+                    config   : [
+                        image  : 'cytopia/yamllint:1.25-0.7',
+                        // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
+                        // It still fails on syntax errors.
+                        profile: 'relaxed'
+                    ]
+                ]
+            ],
+            stages                : stages
         ]
     }
 
+    def plainDeployment = [
+        sourcePath: 'k8s',
+        plain             : [
+            updateImages          : [
+                [deploymentFilename: "deployment.yaml",
+                 containerName     : 'application',
+                 imageName         : 'newImageName']
+            ]
+        ]
+    ]
 
     def singleStages = [
-            staging   : [deployDirectly: true]
+        staging: [deployDirectly: true]
     ]
 
     def multipleStages = [
-            staging   : [deployDirectly: true],
-            production: [deployDirectly: false],
-            qa        : []
+        staging   : [deployDirectly: true],
+        production: [deployDirectly: false],
+        qa        : []
     ]
 
     @BeforeAll
@@ -209,6 +214,7 @@ spec:
 
         deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
             assertThat(actualGitOpsConfig.validators.kubeval.enabled).isEqualTo(false)
+            assertThat(actualGitOpsConfig.validators.kubeval.validator).isNotNull()
             assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
         }
 
@@ -233,9 +239,9 @@ spec:
         deployViaGitops([
             validators: [
                 myVali: [
-                    validator: { },
-                    enabled: true,
-                    config: [
+                    validator: {},
+                    enabled  : true,
+                    config   : [
                         a: 'b'
                     ]
                 ]
@@ -249,11 +255,11 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(true)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(singleStages))
+            deployViaGitops.call(gitopsConfig(singleStages, plainDeployment))
         }
 
         // testing deploy
-        assertThat(helper.callStack.findAll { call -> call.methodName == "dir"}.any { call ->
+        assertThat(helper.callStack.findAll { call -> call.methodName == "dir" }.any { call ->
             callArgsToString(call).contains(".configRepoTempDir")
         }).isTrue()
 
@@ -263,46 +269,12 @@ spec:
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
-        assertThat(helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+        assertThat(helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
             callArgsToString(call).equals("rm -rf .configRepoTempDir")
         }).isTrue()
 
         // testing syncGitopsRepoPerStage
         verify(git, times(1)).checkoutOrCreate('main')
-
-        // testing createApplicationFolders
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("mkdir -p staging")
-        }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("mkdir -p .config")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("cp null/k8s/staging")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("cp null/*.yamllint.yaml")
-            }).isTrue()
-
-        // testing validation
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1 --strict")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application/")
-            }).isTrue()
-
-        //testing updateImageVersion
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
-                callArgsToString(call).contains("newImageName")
-            }).isTrue()
 
         // testing commitAndPushToStage
         verify(git, times(1)).add('.')
@@ -324,11 +296,11 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(true)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(multipleStages))
+            deployViaGitops.call(gitopsConfig(multipleStages, plainDeployment))
         }
 
         // testing deploy
-        assertThat(helper.callStack.findAll { call -> call.methodName == "dir"}.any { call ->
+        assertThat(helper.callStack.findAll { call -> call.methodName == "dir" }.any { call ->
             callArgsToString(call).contains(".configRepoTempDir")
         }).isTrue()
 
@@ -338,7 +310,7 @@ spec:
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
-        assertThat(helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
+        assertThat(helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
             callArgsToString(call).equals("rm -rf .configRepoTempDir")
         }).isTrue()
 
@@ -347,55 +319,6 @@ spec:
         verify(git, times(1)).checkoutOrCreate('production_application')
         verify(git, times(1)).checkoutOrCreate('qa_application')
 
-        // testing createApplicationFolders
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("mkdir -p staging")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("mkdir -p production")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("mkdir -p qa")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("mkdir -p .config")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("cp null/k8s/staging")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("cp null/k8s/production")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("cp null/k8s/qa")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh"}.any { call ->
-                callArgsToString(call).contains("cp null/*.yamllint.yaml")
-            }).isTrue()
-
-        // testing validation
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("kubeval -d staging/application/ -v 1.18.1 --strict")
-            }).isTrue()
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "sh" }.any { call ->
-                callArgsToString(call).equals("yamllint -d relaxed -f standard staging/application/")
-            }).isTrue()
-
-        //testing updateImageVersion
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
-                callArgsToString(call).contains("newImageName")
-            }).isTrue()
 
         // testing commitAndPushToStage
         verify(git, times(3)).add('.')
@@ -424,13 +347,13 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(false)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(multipleStages))
+            deployViaGitops.call(gitopsConfig(multipleStages, plainDeployment))
         }
 
         List<String> stringArgs = []
-            helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
-                stringArgs += callArgsToString(call)
-            }
+        helper.callStack.findAll { call -> call.methodName == "echo" }.any { call ->
+            stringArgs += callArgsToString(call)
+        }
         assertThat(stringArgs.contains('No changes on gitOps repo for staging (branch: main)'))
         assertThat(stringArgs.contains('No changes on gitOps repo for staging (branch: production_application)'))
         assertThat(stringArgs.contains('No changes on gitOps repo for staging (branch: qa_application)'))
@@ -441,7 +364,7 @@ spec:
         when(git.areChangesStagedForCommit()).thenReturn(false)
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfig(singleStages))
+            deployViaGitops.call(gitopsConfig(singleStages, plainDeployment))
         }
 
         assertThat(
@@ -473,9 +396,21 @@ spec:
     }
 
     @Test
+    void 'returns correct build description without imageName'() {
+        def output = deployViaGitops.createBuildDescription('changes')
+        assert output == 'GitOps commits: changes'
+    }
+
+    @Test
     void 'return No Changes if no changes are present'() {
         def output = deployViaGitops.createBuildDescription('', 'imageName')
         assert output == 'GitOps commits: No changes\nImage: imageName'
+    }
+
+    @Test
+    void 'return No Changes if no changes are present without imageName'() {
+        def output = deployViaGitops.createBuildDescription('')
+        assert output == 'GitOps commits: No changes'
     }
 
     @Test
@@ -489,11 +424,21 @@ spec:
     void 'error on single missing mandatory field'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmConfigRepoUrl : 'configRepositoryUrl',
+            scmmConfigRepoUrl     : 'configRepositoryUrl',
             scmmPullRequestBaseUrl: 'configRepositoryPRBaseUrl',
-            scmmPullRequestRepo: 'scmmPullRequestRepo',
-            application       : 'application',
-            stages            : [
+            scmmPullRequestRepo   : 'scmmPullRequestRepo',
+            application           : 'application',
+            deployments           : [
+                sourcePath: 'k8s',
+                plain     : [
+                    updateImages: [
+                        [filename     : "deployment.yaml",
+                         containerName: 'application',
+                         imageName    : 'imageName']
+                    ]
+                ]
+            ],
+            stages                : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
                 qa        : []
@@ -514,13 +459,23 @@ spec:
     void 'error on single non valid mandatory field'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmCredentialsId : 'scmManagerCredentials',
-            scmmConfigRepoUrl : 'configRepositoryUrl',
+            scmmCredentialsId     : 'scmManagerCredentials',
+            scmmConfigRepoUrl     : 'configRepositoryUrl',
             scmmPullRequestBaseUrl: '',
-            scmmPullRequestRepo: 'scmmPullRequestRepo',
-            scmmPullRequestUrl: 'configRepositoryPRUrl',
-            application       : 'application',
-            stages            : [
+            scmmPullRequestRepo   : 'scmmPullRequestRepo',
+            scmmPullRequestUrl    : 'configRepositoryPRUrl',
+            application           : 'application',
+            deployments           : [
+                sourcePath: 'k8s',
+                plain     : [
+                    updateImages: [
+                        [filename     : "deployment.yaml",
+                         containerName: 'application',
+                         imageName    : 'imageName']
+                    ]
+                ]
+            ],
+            stages                : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
                 qa        : []
@@ -542,8 +497,8 @@ spec:
 
         def gitopsConfigMissingMandatoryField = [
             scmmPullRequestBaseUrl: null,
-            application       : '',
-            stages            : []
+            application           : '',
+            stages                : []
         ]
 
         gitRepo.use {

@@ -11,7 +11,7 @@ class DockerMock {
 
     List<String> actualInsideArgs = new LinkedList<>()
     List<String> actualImages = new LinkedList<>()
-    
+
     Docker createMock() {
         Docker dockerMock = mock(Docker.class)
         Docker.Image imageMock = mock(Docker.Image.class)
@@ -22,7 +22,7 @@ class DockerMock {
                 return imageMock
             }
         })
-        
+
         when(imageMock.mountJenkinsUser()).thenReturn(imageMock)
         when(imageMock.mountJenkinsUser(anyBoolean())).thenReturn(imageMock)
         when(imageMock.mountDockerSocket()).thenReturn(imageMock)
