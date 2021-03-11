@@ -124,7 +124,7 @@ gitOpsBuildLib = library(identifier: "gitops-build-lib@<gitOpsBuildLibVersion>",
 
 If you can access the internet or just dont want to mirror the repo you can just import it directly from github using the [pipeline-github-lib plugin](https://plugins.jenkins.io/pipeline-github-lib/) plugin.
 ```groovy
-@Library('github.com/cloudogu/gitops-build-lib@0.0.7')
+@Library('github.com/cloudogu/gitops-build-lib@0.0.8')
 import com.cloudogu.gitops.gitopsbuildlib.*
 ```
 

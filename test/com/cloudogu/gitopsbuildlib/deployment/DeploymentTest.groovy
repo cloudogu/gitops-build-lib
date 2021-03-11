@@ -13,6 +13,11 @@ class DeploymentTest {
 
     Deployment deploymentUnderTest = new DeploymentUnderTest(scriptMock.mock, [
         application: 'app',
+        stages: [
+            staging: [
+                namespace: 'fluxv1-staging'
+            ]
+        ],
         deployments: [
             sourcePath: 'k8s'
         ],
@@ -38,8 +43,15 @@ class DeploymentTest {
                     image: 'img'
                 ]
             ]
+        ],
+        fileConfigmaps: [
+            [
+                name : "index",
+                sourceFilePath : "../index.html",
+                stage: ["staging"]
+            ]
         ]
-    ])
+    ] as Map)
 
     @Test
     void 'creating folders for plain deployment'() {
@@ -57,6 +69,34 @@ class DeploymentTest {
         assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Executing validator yamllint')
         assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Executing validator kubeval')
         assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Executing validator helmKubeval')
+    }
+
+    @Test
+    void 'create configmaps from files'() {
+
+        deploymentUnderTest.createFileConfigmaps('staging')
+
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:KUBECONFIG=pwd/.kube/config kubectl create configmap index --from-file=index.html=workspace/k8s/../index.html --dry-run=client -o yaml -n fluxv1-staging]')
+
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:pwd/.kube/config, text:apiVersion: v1\n' +
+            'clusters:\n' +
+            '- cluster:\n' +
+            '    certificate-authority-data: DATA+OMITTED\n' +
+            '    server: https://localhost\n' +
+            '  name: self-hosted-cluster\n' +
+            'contexts:\n' +
+            '- context:\n' +
+            '    cluster: self-hosted-cluster\n' +
+            '    user: svcs-acct-dply\n' +
+            '  name: svcs-acct-context\n' +
+            'current-context: svcs-acct-context\n' +
+            'kind: Config\n' +
+            'preferences: {}\n' +
+            'users:\n' +
+            '- name: svcs-acct-dply\n' +
+            '  user:\n' +
+            '    token: DATA+OMITTED]')
+        assertThat(scriptMock.actualWriteFileArgs[1]).contains('[file:staging/app/generatedResources/index.yaml')
     }
 
     class DeploymentUnderTest extends Deployment {
