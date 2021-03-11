@@ -94,7 +94,7 @@ in a folder. This specific resources folder (here k8s) will later be specified b
 #### FluxV1
 
 #### Plain-k8s
-```bash
+```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
@@ -108,7 +108,7 @@ in a folder. This specific resources folder (here k8s) will later be specified b
 ```
 
 #### Helm
-```bash
+```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
@@ -140,7 +140,7 @@ The gitops config is basically a groovy map following conventions to have a desc
 ### Properties
 First of all there are some mandatory properties e.g. the information about your gitops repository and the application repository.
 
-```groovy
+```
 scmmCredentialsId:      '<scmManagerCredentialsId>',
 scmmConfigRepoUrl:      '<configRepositoryUrl>',        # this is your full gitops repo url e.g. http://scmm-scm-manager/scm/repo/fluxv1/gitops
 scmmPullRequestBaseUrl: '<configRepositoryPRBaseUrl>',  # this is your gitops base url      e.g. http://scmm-scm-manager/scm
@@ -149,7 +149,7 @@ application:            '<applicationName>'
 ```
 
 and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:
-```groovy
+```
 cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib',
 cesBuildLibVersion: '1.45.0',
 mainBranch:         'main'
@@ -161,15 +161,17 @@ The GitOps-build-lib supports builds on multiple stages. A stage is defined by a
 generate the resources) and a deployment-flag.
 
 ```groovy
-stages: [
-    staging: [
-        namespace: 'staging',
-        deployDirectly: true
-    ],
-    production: [
-        namespace: 'production',
-        deployDirectly: false
-    ]
+def gitopsConfig = [
+        stages: [
+            staging: [
+                namespace: 'staging',
+                deployDirectly: true
+            ],
+            production: [
+                namespace: 'production',
+                deployDirectly: false
+            ]
+        ]
 ]
 ```
 
@@ -216,7 +218,7 @@ def gitopsConfig = [
 ```
 Then your folder structure has to look like:
 For Plain:
-```bash
+```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
@@ -230,7 +232,7 @@ For Plain:
 ```
 
 For Helm:
-```bash
+```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
@@ -260,7 +262,7 @@ def gitopsConfig = [
 Then your folder structure has to look like:
 
 For Plain:
-```bash
+```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
@@ -274,7 +276,7 @@ For Plain:
 ```
 
 For Helm
-```bash
+```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
@@ -298,26 +300,31 @@ For Helm
 The deployment has to contain the path of your k8s resources within the application and either a config section for `plain-k8s` resources or for `helm` resources.
 
 ```groovy
-deployments: [
-    sourcePath: 'k8s', // path of k8s resources in application repository. Default: 'k8s'
-    // Either "plain" or "helm" is mandatory
-    plain: [], // use plain if you only have, as the name suggests, plain k8s resources
-    helm: [] // or if you want to deploy a helm release use `helm`
-]
+def gitopsConfig = [
+        deployments: [
+            sourcePath: 'k8s', // path of k8s resources in application repository. Default: 'k8s'
+            // Either "plain" or "helm" is mandatory
+            plain: [], // use plain if you only have, as the name suggests, plain k8s resources
+            helm: [] // or if you want to deploy a helm release use `helm`
+        ]
 ```
 
 ### Plain k8s deployment
 You can utilize the build-lib to enable builds based on plain k8s resources
 
 ```groovy
-plain: [
-    updateImages: [
-        [
-            filename: "deployment.yaml", // the files need to be in the gitopsConfig.deployments.sourcePath folder and in each of their own namespace folder e.g. k8s/staging/deployment.yaml
-            containerName: 'application',
-            imageName: 'imageName'
+def gitopsConfig = [
+        deployments: [
+                plain: [
+                    updateImages: [
+                        [
+                            filename: "deployment.yaml", // the files need to be in the gitopsConfig.deployments.sourcePath folder and in each of their own namespace folder e.g. k8s/staging/deployment.yaml
+                            containerName: 'application',
+                            imageName: 'imageName'
+                        ]
+                    ]
+                ]
         ]
-    ]
 ]
 ```
 
@@ -330,26 +337,34 @@ Besides plain k8s resources you can also use helm charts to generate the resourc
 helm-repository-types. First of all there is the `repoType: HELM`, which is used to load tgz from helm-repositories.
 
 ```groovy
-helm: [
-    repoType: 'HELM',
-    repoUrl: 'https://charts.bitnami.com/bitnami',
-    credentialsId: 'creds',
-    version: '7.1.6',
-    chartName: 'nginx',
-    updateValues: [[fieldPath: "image.name", newValue: imageName]]
+def gitopsConfig = [
+        deployments: [
+                helm: [
+                    repoType: 'HELM',
+                    repoUrl: 'https://charts.bitnami.com/bitnami',
+                    credentialsId: 'creds',
+                    version: '7.1.6',
+                    chartName: 'nginx',
+                    updateValues: [[fieldPath: "image.name", newValue: imageName]]
+                ]
+        ]
 ]
 ```
 
 Then there is `repoType: GIT` - which can be used to load charts from a specific Git-Repository.
 
 ```groovy
-helm: [
-    repoType: 'GIT',
-    repoUrl: "https://git-repo/namespace/name",
-    credentialsId: 'creds',
-    version: '1.2.3', // tag, commit or branch
-    chartPath: 'chart', // defaults to empty string meaning root directory of repo
-    updateValues: [[fieldPath: "image.name", newValue: imageName]]
+def gitopsConfig = [
+        deployments: [
+                helm: [
+                    repoType: 'GIT',
+                    repoUrl: "https://git-repo/namespace/name",
+                    credentialsId: 'creds',
+                    version: '1.2.3', // tag, commit or branch
+                    chartPath: 'chart', // defaults to empty string meaning root directory of repo
+                    updateValues: [[fieldPath: "image.name", newValue: imageName]]
+                ]
+        ]
 ]
 ```
 
@@ -428,11 +443,13 @@ because the library is loaded after the class is evaluated.
 If extra files are needed and are not k8s resources there is the `fileConfigMaps` property.
 
 ```groovy
-fileConfigmaps: [ 
-        [
-            name : "index",
-            sourceFilePath : "../index.html", // relative to deployments.sourcePath
-            stage: ["staging", "production"] // these have to match the `gitopsConfig.stages` 
+def gitopsConfig = [
+        fileConfigmaps: [ 
+                [
+                    name : "index",
+                    sourceFilePath : "../index.html", // relative to deployments.sourcePath
+                    stage: ["staging", "production"] // these have to match the `gitopsConfig.stages` 
+                ]
         ]
 ]
 ```
