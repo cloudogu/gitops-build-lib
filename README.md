@@ -20,7 +20,7 @@ with the complete infrastructure for a gitops deep dive.
 - [GitOps-Config](#gitops-config)
     - [Properties](#properties)
 - [Stages](#stages)
-      - [Namespaces](#namespaces)
+    - [Namespaces](#namespaces)
         - [Important Note](#important-note)
     - [Conventions](#conventions)
 - [Deployment](#deployment)
