@@ -11,8 +11,14 @@ class HelmKubeval extends Validator {
         if (deployments.containsKey('helm')) {
             if (deployments.helm.repoType == 'GIT') {
                 cloneGitHelmRepo(deployments.helm, targetDirectory)
+
+                def chartPath = ''
+                if(deployments.helm.containsKey('chartPath')) {
+                    chartPath = deployments.helm.chartPath
+                }
+
                 withDockerImage(config.image) {
-                    script.sh "helm kubeval ${targetDirectory}/chart -v ${config.k8sSchemaVersion}"
+                    script.sh "helm kubeval ${targetDirectory}/chart/${chartPath} -v ${config.k8sSchemaVersion}"
                 }
                 script.sh "rm -rf ${targetDirectory}/chart"
             } else if (deployments.helm.repoType == 'HELM') {

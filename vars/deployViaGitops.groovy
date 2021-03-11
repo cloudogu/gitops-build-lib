@@ -1,8 +1,8 @@
 #!groovy
 import com.cloudogu.gitopsbuildlib.*
-import com.cloudogu.gitopsbuildlib.deployments.Deployment
-import com.cloudogu.gitopsbuildlib.deployments.Helm
-import com.cloudogu.gitopsbuildlib.deployments.Plain
+import com.cloudogu.gitopsbuildlib.deployment.Deployment
+import com.cloudogu.gitopsbuildlib.deployment.Helm
+import com.cloudogu.gitopsbuildlib.deployment.Plain
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
@@ -78,7 +78,7 @@ def mergeMaps(Map a, Map b) {
 
 def validateConfig(Map gitopsConfig) {
     validateMandatoryFields(gitopsConfig)
-    validateDeploymentConfig(gitopsConfig.deployments)
+    validateDeploymentConfig(gitopsConfig)
 }
 
 def validateMandatoryFields(Map gitopsConfig) {
@@ -100,16 +100,16 @@ def validateMandatoryFields(Map gitopsConfig) {
     }
 }
 
-def validateDeploymentConfig(Map deployments) {
-    if (deployments.containsKey('plain') && deployments.containsKey('helm')) {
+def validateDeploymentConfig(Map gitopsConfig) {
+    if (gitopsConfig.deployments.containsKey('plain') && gitopsConfig.deployments.containsKey('helm')) {
         error 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
-    } else if (!deployments.containsKey('plain') && !deployments.containsKey('helm')) {
+    } else if (!gitopsConfig.deployments.containsKey('plain') && !gitopsConfig.deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
     }
-    if (deployments.containsKey('plain')) {
-        deployment = new Plain(this)
-    } else if (deployments.containsKey('helm')) {
-        deployment = new Helm(this)
+    if (gitopsConfig.deployments.containsKey('plain')) {
+        deployment = new Plain(this, gitopsConfig)
+    } else if (gitopsConfig.deployments.containsKey('helm')) {
+        deployment = new Helm(this, gitopsConfig)
     }
 
 }
@@ -188,17 +188,7 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
 }
 
 protected String syncGitopsRepo(String stage, String branch, def git, Map gitRepo, Map gitopsConfig) {
-
-    deployment.prepareApplicationFolders(stage, gitopsConfig)
-
-    gitopsConfig.validators.each { validatorConfig ->
-        echo "Executing validator ${validatorConfig.key}"
-
-        validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}", validatorConfig.value.config, gitopsConfig.deployments)
-    }
-
-    deployment.update(stage, gitopsConfig)
-
+    deployment.create(stage)
     return commitAndPushToStage(stage, branch, git, gitRepo)
 }
 
