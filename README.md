@@ -124,7 +124,7 @@ gitOpsBuildLib = library(identifier: "gitops-build-lib@<gitOpsBuildLibVersion>",
 
 If you can access the internet or just dont want to mirror the repo you can just import it directly from github using the [pipeline-github-lib plugin](https://plugins.jenkins.io/pipeline-github-lib/) plugin.
 ```groovy
-@Library('github.com/cloudogu/gitops-build-lib@0.0.5')
+@Library('github.com/cloudogu/gitops-build-lib@0.0.7')
 import com.cloudogu.gitops.gitopsbuildlib.*
 ```
 
@@ -413,7 +413,7 @@ def gitopsConfig = [
                     repoUrl: "https://git-repo/namespace/name",
                     credentialsId: 'creds',
                     version: '1.2.3', // tag, commit or branch
-                    chartPath: 'chart', // defaults to empty string meaning root directory of repo
+                    chartPath: 'chart', // the path relative to root in the git repo. If the chart is at root level you can ommit this property
                     updateValues: [[fieldPath: "image.name", newValue: imageName]]
                 ]
         ]
