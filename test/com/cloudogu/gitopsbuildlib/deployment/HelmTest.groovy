@@ -70,7 +70,6 @@ class HelmTest {
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf workspace/chart || true')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('rm staging/testapp/mergedValues.yaml')
-        assertThat(scriptMock.actualShArgs[4]).isEqualTo('[returnStdout:true, script:KUBECONFIG=pwd/.kube/config kubectl create configmap index --from-file=index.html=workspace/k8s/../index.html --dry-run=client -o yaml -n fluxv1-staging]')
         assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, ' +
             'text:[git clone repoUrl workspace/chart || true, ' +
             '[returnStdout:true, ' +
@@ -102,25 +101,6 @@ class HelmTest {
             '      be:\n' +
             '        changed: \'oldValue\'\n' +
             ']')
-        assertThat(scriptMock.actualWriteFileArgs[2]).isEqualTo('[file:pwd/.kube/config, text:apiVersion: v1\n' +
-            'clusters:\n' +
-            '- cluster:\n' +
-            '    certificate-authority-data: DATA+OMITTED\n' +
-            '    server: https://localhost\n' +
-            '  name: self-hosted-cluster\n' +
-            'contexts:\n' +
-            '- context:\n' +
-            '    cluster: self-hosted-cluster\n' +
-            '    user: svcs-acct-dply\n' +
-            '  name: svcs-acct-context\n' +
-            'current-context: svcs-acct-context\n' +
-            'kind: Config\n' +
-            'preferences: {}\n' +
-            'users:\n' +
-            '- name: svcs-acct-dply\n' +
-            '  user:\n' +
-            '    token: DATA+OMITTED]')
-        assertThat(scriptMock.actualWriteFileArgs[3]).contains('[file:staging/testapp/generatedResources/index.yaml')
     }
 
     @Test
@@ -134,7 +114,6 @@ class HelmTest {
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualShArgs[4]).isEqualTo('rm -rf workspace/chart || true')
         assertThat(scriptMock.actualShArgs[5]).isEqualTo('rm staging/testapp/mergedValues.yaml')
-        assertThat(scriptMock.actualShArgs[6]).isEqualTo('[returnStdout:true, script:KUBECONFIG=pwd/.kube/config kubectl create configmap index --from-file=index.html=workspace/k8s/../index.html --dry-run=client -o yaml -n fluxv1-staging]')
         assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, ' +
             'text:[helm repo add chartRepo repoUrl, helm repo update, ' +
             'helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/chart, ' +
@@ -166,24 +145,5 @@ class HelmTest {
             '      be:\n' +
             '        changed: \'oldValue\'\n' +
             ']')
-        assertThat(scriptMock.actualWriteFileArgs[2]).isEqualTo('[file:pwd/.kube/config, text:apiVersion: v1\n' +
-            'clusters:\n' +
-            '- cluster:\n' +
-            '    certificate-authority-data: DATA+OMITTED\n' +
-            '    server: https://localhost\n' +
-            '  name: self-hosted-cluster\n' +
-            'contexts:\n' +
-            '- context:\n' +
-            '    cluster: self-hosted-cluster\n' +
-            '    user: svcs-acct-dply\n' +
-            '  name: svcs-acct-context\n' +
-            'current-context: svcs-acct-context\n' +
-            'kind: Config\n' +
-            'preferences: {}\n' +
-            'users:\n' +
-            '- name: svcs-acct-dply\n' +
-            '  user:\n' +
-            '    token: DATA+OMITTED]')
-        assertThat(scriptMock.actualWriteFileArgs[3]).contains('[file:staging/testapp/generatedResources/index.yaml')
     }
 }
