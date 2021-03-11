@@ -13,17 +13,20 @@ with the complete infrastructure for a gitops deep dive.
 - [Usage](#usage)
 - [Default Structure](#default-structure)
     - [FluxV1](#fluxv1)
-    - [Plain-k8s](#plain-k8s)
-    - [Helm](#helm)
+        - [Plain-k8s](#plain-k8s)
+        - [Helm](#helm)
+    - [Flux V2 (Upcoming)](#fluxv2-upcoming)    
     - [ArgoCD (Upcoming)](#argocd-upcoming)
 - [GitOps-Config](#gitops-config)
     - [Properties](#properties)
 - [Stages](#stages)
+      - [Namespaces](#namespaces)
+        - [Important Note](#important-note)
     - [Conventions](#conventions)
 - [Deployment](#deployment)
-    - [Plain k8s](#plain-k8s)
-    - [Helm](#helm-1)
-        - [Conventions](#conventions-1)
+    - [Plain k8s](#plain-k8s-deployment)
+    - [Helm](#helm-deployment)
+        - [Conventions](#conventions-for-helm-deployment)
 - [Validators](#validators)
     - [Custom validators](#custom-validators)
 - [Extra Files](#extra-files)
@@ -39,9 +42,9 @@ with the complete infrastructure for a gitops deep dive.
     * Push to main branch (e.g. "main") directly for staging deployment
 * Deployment methods
     * Plain Kubernetes resources - write image tag into kubernetes deployments dynamically
+        * add files to deployment which will be generated to a configmap
     * Helm deployments - set values (e.g. image tag) dynamically
         * add custom k8s resources
-        * add files to deployment which will be generated to a configmap
 
 * Support for different Helm-Repository types
     * Helm
@@ -77,7 +80,7 @@ To utilize the library itself, there is little to do:
 - Setup a `gitopsConfig` containing the following sections
     - properties (e.g. remote urls to scm, application etc.)
     - stages
-    - deployment
+    - deployments
     - validators
     - fileConfigMaps
 - Call `deployViaGitops(gitopsConfig)`
@@ -86,14 +89,14 @@ To utilize the library itself, there is little to do:
 
 ## Default Structure
 A default project structure could look like the examples below. Make sure you have your k8s and/or helm resources bundled
-in a folder. This specific resources folder will later be specified by the `sourcePath` within the deployments section of your `gitopsConfig`.
+in a folder. This specific resources folder (here k8s) will later be specified by the `sourcePath` within the deployments section of your `gitopsConfig`.
 
 #### FluxV1
 
 #### Plain-k8s
 ```bash
-├── src
-    ├── config.yamllint.yaml
+├── application
+    ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
     └── k8s
         ├── production
@@ -106,8 +109,8 @@ in a folder. This specific resources folder will later be specified by the `sour
 
 #### Helm
 ```bash
-├── src
-    ├── config.yamllint.yaml
+├── application
+    ├── config.yamllint.yaml // not necessarily needed
     ├── Jenkinsfile
     └── k8s
         ├── production
@@ -125,45 +128,7 @@ in a folder. This specific resources folder will later be specified by the `sour
         └── values-staging.yaml
 ```
 
-### Important
-Under your `gitopsConfig.deployments.sourcePath` (here k8s) the subfolders have to be named exactly as the stages under `gitopsConfig.stages` or if you specified namespaces then the same as `gitopsConfig.stages.${yourStage}.namespace`
-So if you have a config looking like:
-```groovy
-def gitopsConfig = [
-        stages: [
-                staging: [
-                        namespace: 'xx-staging'
-                ],
-                production: [
-                        namespace: 'xx-production'
-                ]
-        ]
-] 
-```
-Then your folder structure has to look like:
-
-```bash
-├── src
-    ├── config.yamllint.yaml
-    ├── Jenkinsfile
-    └── k8s
-        ├── xx-production
-        │   ├── deployment.yaml
-        │   └── service.yaml
-        └── xx-staging
-            ├── deployment.yaml
-            └── service.yaml
-```
-
-If no namespace is specified, the library uses the `gitopsConfig.stages.${yourStage}` as the namespace. But beware if you use special characters then you need to use single ticks:
-```groovy
-def gitopsConfig = [
-        stages: [
-                'xx-staging': [],
-                'xx-production': []
-        ]
-] 
-```
+### FluxV2 (Upcoming)
 
 ### ArgoCD (Upcoming)
 
@@ -209,12 +174,124 @@ stages: [
 ```
 
 If it is set to deploy directly it will commit and push to your desired `gitops-folder` and therefore triggers a deployment. If it is set to false
-it will create a PR on your `gitops-folder`. **Remember** there are [ipmortant](#important) conventions regarding namespaces and the folder structure
+it will create a PR on your `gitops-folder`. **Remember** there are [ipmortant](#important-note) conventions regarding namespaces and the folder structure.
 
-### Conventions
+### Namespaces
+
+You need to specify a namespace for each stage for Helm deployments. For Plain you just need it if you add [extra Files](#extra-files).
+If no namespace is specified, the library uses the `gitopsConfig.stages.${yourStage}` as the namespace. But beware if you use special characters then you need to use single ticks:
+```groovy
+def gitopsConfig = [
+        stages: [
+                'xx-staging': [],
+                'xx-production': []
+        ]
+] 
+```
+
+Otherwise every stage can be defined with an additional `namespace` property:
+```groovy
+def gitopsConfig = [
+        stages: [
+                staging: [
+                        namespace: 'xx-staging'
+                ],
+                production: [
+                        namespace: 'xx-production'
+                ]
+        ]
+] 
+```
+
+#### Important note
+Under your `gitopsConfig.deployments.sourcePath` (here k8s) the subfolders have to be named exactly as the stages under `gitopsConfig.stages`. As well as the values files if you have a Helm application.
+So if you have a config looking like:
+```groovy
+def gitopsConfig = [
+        stages: [
+                'xx-staging': [],
+                'xx-production': []
+        ]
+] 
+```
+Then your folder structure has to look like:
+For Plain:
+```bash
+├── application
+    ├── config.yamllint.yaml // not necessarily needed
+    ├── Jenkinsfile
+    └── k8s
+        ├── xx-production
+        │   ├── deployment.yaml
+        │   └── service.yaml
+        └── xx-staging
+            ├── deployment.yaml
+            └── service.yaml
+```
+
+For Helm:
+```bash
+├── application
+    ├── config.yamllint.yaml // not necessarily needed
+    ├── Jenkinsfile
+    └── k8s
+        ├── xx-production
+        │   ├── {extraResources}
+        └── xx-staging
+            ├── {extraResources}
+        ├── values-shared.yaml
+        ├── values-xx-production.yaml
+        ├── values-xx-staging.yaml
+```
+
+Or if you use namespaces:
+```groovy
+def gitopsConfig = [
+        stages: [
+                staging: [
+                        namespace: 'xx-staging'
+                ],
+                production: [
+                        namespace: 'xx-production'
+                ]
+        ]
+] 
+```
+Then your folder structure has to look like:
+
+For Plain:
+```bash
+├── application
+    ├── config.yamllint.yaml // not necessarily needed
+    ├── Jenkinsfile
+    └── k8s
+        ├── production
+        │   ├── deployment.yaml
+        │   └── service.yaml
+        └── staging
+            ├── deployment.yaml
+            └── service.yaml
+```
+
+For Helm
+```bash
+├── application
+    ├── config.yamllint.yaml // not necessarily needed
+    ├── Jenkinsfile
+    └── k8s
+        ├── production
+        │   ├── {extraResources}
+        └── staging
+            ├── {extraResources}
+        ├── values-shared.yaml
+        ├── values-production.yaml
+        ├── values-staging.yaml
+```
+
+### Conventions for stages
 - Stage name is used to identify the yamls to be used:
-  > `${deployments.sourcePath}/values-<namespace>.yaml` + `${deployments.sourcePath}/values-shared.yaml`
-  For now we only support one `values-shared.yaml` which will be used for all namespaces and one additional values file for each namespace `values-${namespace}.yaml`
+  > `${deployments.sourcePath}/values-<stage>.yaml` + `${deployments.sourcePath}/values-shared.yaml`
+  For now we only support one `values-shared.yaml` which will be used for all namespaces and one additional values file for each namespace `values-${stage}.yaml`
 ---
 
 ## Deployment
@@ -229,7 +306,7 @@ deployments: [
 ]
 ```
 
-### Plain k8s
+### Plain k8s deployment
 You can utilize the build-lib to enable builds based on plain k8s resources
 
 ```groovy
@@ -248,7 +325,7 @@ In plain pipelines, the library creates the deployment resources by updating the
 
 ---
 
-### Helm
+### Helm deployment
 Besides plain k8s resources you can also use helm charts to generate the resources. You can choose between two types of
 helm-repository-types. First of all there is the `repoType: HELM`, which is used to load tgz from helm-repositories.
 
@@ -276,12 +353,12 @@ helm: [
 ]
 ```
 
-#### Conventions
+#### Conventions for helm deployment
 - Application name is used as the release-name in Flux (not for argo, argo creates plain resources using `helm template`)
   > Helm Release name = `${application}`
 - Extra k8s resources can also be deployed if you choose to have a Helm deployment
   > extraResources get copied into the gitops folder without being changed - can be used e.g. sealed-secrets
-  > extraResources are always relative to the `${gitopsConfig.deployments.sourcePath}/${namespace}`, you can specify files or directories
+  > extraResources are always relative to the `${gitopsConfig.deployments.sourcePath}/${stage}`, you can specify files or directories
 
   e.g. in stage production =>
 
@@ -355,7 +432,7 @@ fileConfigmaps: [
         [
             name : "index",
             sourceFilePath : "../index.html", // relative to deployments.sourcePath
-            stage: ["staging", "production"]
+            stage: ["staging", "production"] // these have to match the `gitopsConfig.stages` 
         ]
 ]
 ```
