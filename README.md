@@ -10,6 +10,7 @@ with the complete infrastructure for a gitops deep dive.
 
 ---
 - [Features](#features)
+- [Examples](#examples)
 - [Usage](#usage)
 - [Default Structure](#default-structure)
     - [FluxV1](#fluxv1)
@@ -30,7 +31,7 @@ with the complete infrastructure for a gitops deep dive.
 - [Validators](#validators)
     - [Custom validators](#custom-validators)
 - [Extra Files](#extra-files)
-- [Examples](#examples)
+
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -55,6 +56,57 @@ with the complete infrastructure for a gitops deep dive.
     * SCM-Manager
     * Abstraction for others is WIP
 
+---
+
+## Examples
+
+Example of a small and yet complete **gitops-config** for a helm-deployment of an application. This would lead to a deployment of your staging environment
+by updating the resources of "staging" folder within your gitops-folder in git. For production it will open a PR with the changes.
+Detailed instructions about the attributes can be found [here](#gitops-config).
+
+```groovy
+def gitopsConfig = [
+    scmmCredentialsId : <scmCredentialsId>,
+    scmmConfigRepoUrl : <configRepositoryUrl>,
+    scmmPullRequestBaseUrl: <configRepositoryPRBaseUrl>,
+    scmmPullRequestRepo: <configRepositoryPRRepo>,
+    cesBuildLibRepo: <cesBuildLibRepo>,
+    cesBuildLibVersion: <cesBuildLibVersion>,
+    application: <applicationName>,
+    mainBranch: <branchName>,
+    deployments: [
+        sourcePath: 'k8s',
+        helm : [
+            repoType : 'HELM',
+            credentialsId : 'creds',
+            repoUrl  : <helmChartRepository>,
+            chartName: <helmChartName>,
+            version  : <helmChartVersion>,
+            updateValues  : [[fieldPath: "image.name", newValue: imageName]]
+        ]
+    ],
+    stages: [
+        staging: [ 
+            namespace: 'my-staging',
+            deployDirectly: true
+        ],
+        production: [
+            namespace: 'my-production',
+            deployDirectly: false 
+        ],
+    ]
+]
+
+deployViaGitops(gitopsConfig)
+```
+
+**FluxV1:**
+* [using petclinic  with helm and no validators](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/helm/Jenkinsfile)
+* [using petclinic with plain-k8s and no validators](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile)
+* [using helm with nginx and extra resources](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/nginx/fluxv1/Jenkinsfile)
+
+---
+
 ## Usage
 
 At first you have to import the library. You can either use one of the following options:
@@ -77,7 +129,7 @@ import com.cloudogu.gitops.gitopsbuildlib.*
 ```
 
 To utilize the library itself, there is little to do:
-- Setup a `gitopsConfig` containing the following sections
+- Setup a [`gitopsConfig`](#examples) containing the following sections
     - properties (e.g. remote urls to scm, application etc.)
     - stages
     - deployments
@@ -475,51 +527,3 @@ index.html:
 </body>
 </html>
 ```
-
----
-
-## Examples
-
-Example of a small and yet complete gitops-config for a helm-deployment of an application. This would lead to a deployment of your staging environment
-by updating the resources of "staging" folder within your gitops-folder in git. For production it will open a PR with the changes.
-
-```groovy
-def gitopsConfig = [
-    scmmCredentialsId : <scmCredentialsId>,
-    scmmConfigRepoUrl : <configRepositoryUrl>,
-    scmmPullRequestBaseUrl: <configRepositoryPRBaseUrl>,
-    scmmPullRequestRepo: <configRepositoryPRRepo>,
-    cesBuildLibRepo: <cesBuildLibRepo>,
-    cesBuildLibVersion: <cesBuildLibVersion>,
-    application: <applicationName>,
-    mainBranch: <branchName>,
-    deployments: [
-        sourcePath: 'k8s',
-        helm : [
-            repoType : 'HELM',
-            credentialsId : 'creds',
-            repoUrl  : <helmChartRepository>,
-            chartName: <helmChartName>,
-            version  : <helmChartVersion>,
-            updateValues  : [[fieldPath: "image.name", newValue: imageName]]
-        ]
-    ],
-    stages: [
-        staging: [ 
-            namespace: 'my-staging',
-            deployDirectly: true
-        ],
-        production: [
-            namespace: 'my-production',
-            deployDirectly: false 
-        ],
-    ]
-]
-
-deployViaGitops(gitopsConfig)
-```
-
-**FluxV1:**
-* [using petclinic  with helm and no validators](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/helm/Jenkinsfile)
-* [using petclinic with plain-k8s and no validators](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile)
-* [using helm with nginx and extra resources](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/nginx/fluxv1/Jenkinsfile)
