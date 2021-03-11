@@ -10,53 +10,53 @@ class HelmTest {
     def scriptMock = new ScriptMock()
     def dockerMock = scriptMock.dockerMock
     def helmGit = new Helm(scriptMock.mock, [
-        application: 'testapp',
-        stages: [
+        application   : 'testapp',
+        stages        : [
             staging: [
                 namespace: 'fluxv1-staging'
             ]
         ],
-        deployments: [
+        deployments   : [
             sourcePath: 'k8s',
             helm      : [
-                repoType: 'GIT',
-                repoUrl: 'repoUrl',
+                repoType : 'GIT',
+                repoUrl  : 'repoUrl',
                 chartPath: 'chartPath'
             ]
         ],
         fileConfigmaps: [
             [
-                name : "index",
-                sourceFilePath : "../index.html", // relative to deployments.sourcePath
+                name          : "index",
+                sourceFilePath: "../index.html", // relative to deployments.sourcePath
                 // additional feature in the future. current default folder is '../generated-resources'
                 // destinationFilePath: "../generated-resources/html/" // realtive to deployments.sourcePath
-                stage: ["staging"]
+                stage         : ["staging"]
             ]
         ]
     ])
     def helmHelm = new Helm(scriptMock.mock, [
-        application: 'testapp',
-        stages: [
+        application   : 'testapp',
+        stages        : [
             staging: [
                 namespace: 'fluxv1-staging'
             ]
         ],
-        deployments: [
+        deployments   : [
             sourcePath: 'k8s',
             helm      : [
-                repoType: 'HELM',
-                repoUrl: 'repoUrl',
+                repoType : 'HELM',
+                repoUrl  : 'repoUrl',
                 chartName: 'chartName',
-                version: '1.0'
+                version  : '1.0'
             ]
         ],
         fileConfigmaps: [
             [
-                name : "index",
-                sourceFilePath : "../index.html", // relative to deployments.sourcePath
+                name          : "index",
+                sourceFilePath: "../index.html", // relative to deployments.sourcePath
                 // additional feature in the future. current default folder is '../generated-resources'
                 // destinationFilePath: "../generated-resources/html/" // realtive to deployments.sourcePath
-                stage: ["staging"]
+                stage         : ["staging"]
             ]
         ]
     ])
@@ -145,5 +145,28 @@ class HelmTest {
             '      be:\n' +
             '        changed: \'oldValue\'\n' +
             ']')
+    }
+
+    @Test
+    void 'testi'() {
+        def map1 = [
+            map: [
+                map: 'hallo'
+            ]
+        ]
+
+        def map2 = [
+            map: [:]
+        ]
+
+        def stage = 'map'
+
+        if (map1[stage].containsKey('map')) {
+            println('yes 1')
+        }
+
+        if (map2[stage].containsKey('map')) {
+            println('yes 2')
+        }
     }
 }

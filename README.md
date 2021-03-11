@@ -228,7 +228,9 @@ def gitopsConfig = [
 ```
 
 If it is set to deploy directly it will commit and push to your desired `gitops-folder` and therefore triggers a deployment. If it is set to false
-it will create a PR on your `gitops-folder`. **Remember** there are [ipmortant](#important-note) conventions regarding namespaces and the folder structure.
+it will create a PR on your `gitops-folder`. If no `deployDirectly` property is set the library will create a PR for this stage. 
+
+**Remember** there are [ipmortant](#important-note) conventions regarding namespaces and the folder structure.
 
 ### Namespaces
 
