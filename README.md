@@ -142,7 +142,7 @@ First of all there are some mandatory properties e.g. the information about your
 
 ```groovy
 scmmCredentialsId:      '<scmManagerCredentialsId>',
-scmmConfigRepoUrl:      '<configRepositoryUrl>',        # this is your gitops repo          e.g. http://scmm-scm-manager/scm/repo/fluxv1/gitops
+scmmConfigRepoUrl:      '<configRepositoryUrl>',        # this is your full gitops repo url e.g. http://scmm-scm-manager/scm/repo/fluxv1/gitops
 scmmPullRequestBaseUrl: '<configRepositoryPRBaseUrl>',  # this is your gitops base url      e.g. http://scmm-scm-manager/scm
 scmmPullRequestRepo:    '<configRepositoryPRRepo>',     # this is the gitops repo           e.g. fluxv1/gitops
 application:            '<applicationName>'
