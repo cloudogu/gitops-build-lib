@@ -1,43 +1,55 @@
 # gitops-build-lib
 
-Jenkins pipeline shared library for automating deployments via GitOps. Take a look at
-[cloudogu/k8s-gitops-playground](https://github.com/cloudogu/k8s-gitops-playground) to see a fully working example bundled
-with the complete infrastructure for a gitops deep dive.
+Jenkins pipeline shared library for automating deployments via GitOps.   
+Take a look at [cloudogu/k8s-gitops-playground](https://github.com/cloudogu/k8s-gitops-playground) to see a fully 
+working example bundled with the complete infrastructure for a gitops deep dive.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-# Table of contents
 
----
+
+- [Use Case](#use-case)
 - [Features](#features)
 - [Examples](#examples)
+  - [Minimal](#minimal)
+  - [More options](#more-options)
+  - [Real life examples](#real-life-examples)
 - [Usage](#usage)
 - [Default Structure](#default-structure)
-    - [FluxV1](#fluxv1)
-        - [Plain-k8s](#plain-k8s)
-        - [Helm](#helm)
-    - [Flux V2 (Upcoming)](#fluxv2-upcoming)    
-    - [ArgoCD (Upcoming)](#argocd-upcoming)
+  - [FluxV1](#fluxv1)
+    - [Plain-k8s](#plain-k8s)
+    - [Helm](#helm)
+  - [FluxV2](#fluxv2)
+  - [ArgoCD](#argocd)
 - [GitOps-Config](#gitops-config)
-    - [Properties](#properties)
 - [Stages](#stages)
-    - [Namespaces](#namespaces)
-        - [Important Note](#important-note)
-    - [Conventions](#conventions)
+  - [Namespaces](#namespaces)
+  - [Conventions for stages](#conventions-for-stages)
 - [Deployment](#deployment)
-    - [Plain k8s](#plain-k8s-deployment)
-    - [Helm](#helm-deployment)
-        - [Conventions](#conventions-for-helm-deployment)
+  - [Plain k8s deployment](#plain-k8s-deployment)
+  - [Helm deployment](#helm-deployment)
+    - [Conventions for helm deployment](#conventions-for-helm-deployment)
 - [Validators](#validators)
-    - [Custom validators](#custom-validators)
+  - [Custom validators](#custom-validators)
 - [Extra Files](#extra-files)
-
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+## Use Case
+
+Use Case realised by this library:
+
+![](https://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/cloudogu/k8s-diagrams/master/diagrams/gitops-with-app-repo.puml&fmt=svg)
+
+* Separation of app repo and GitOps repo
+* Infrastructure as Code is maintained  in app repo,
+* CI Server writes to GitOps repo and creates PullRequests.
+* Lots of convenience features
+
 ## Features
 
-* Write Kubernetes resources to a git repo (for a GitOps operator to pick them up)
+* Write Kubernetes resources to a git repo (for a GitOps operator to pick them up) and creates PRs.
+* Opinionated conventions for folder structures and workflows.
 * Support for multiple stages within the same gitOps Repo
     * Push to application branch and create PR (production) or
     * Push to main branch (e.g. "main") directly for staging deployment
@@ -46,7 +58,6 @@ with the complete infrastructure for a gitops deep dive.
         * add files to deployment which will be generated to a configmap
     * Helm deployments - set values (e.g. image tag) dynamically
         * add custom k8s resources
-
 * Support for different Helm-Repository types
     * Helm
     * Git
@@ -60,22 +71,54 @@ with the complete infrastructure for a gitops deep dive.
 
 ## Examples
 
-Example of a small and yet complete **gitops-config** for a helm-deployment of an application. This would lead to a deployment of your staging environment
-by updating the resources of "staging" folder within your gitops-folder in git. For production it will open a PR with the changes.
+The following examples range from simple to real-life and should help you get started.
+
 Detailed instructions about the attributes can be found [here](#gitops-config).
+
+### Minimal
+
+This will simply [validate](#validators) and deploy the resources from the source repo's `k8s` folder into the
+`fluxv1/gitops` repo.
 
 ```groovy
 def gitopsConfig = [
-    scmmCredentialsId : <scmCredentialsId>,
-    scmmConfigRepoUrl : <configRepositoryUrl>,
-    scmmPullRequestBaseUrl: <configRepositoryPRBaseUrl>,
-    scmmPullRequestRepo: <configRepositoryPRRepo>,
-    cesBuildLibRepo: <cesBuildLibRepo>,
-    cesBuildLibVersion: <cesBuildLibVersion>,
-    application: <applicationName>,
-    mainBranch: <branchName>,
+    scmmCredentialsId : 'scmm-user',
+    scmmConfigRepoUrl : 'http://scmm-scm-manager/scm/repo/fluxv1/gitops',
+    scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm'',
+    scmmPullRequestRepo: 'fluxv1/gitops',
+    application: 'spring-petclinic',
+    stages: [
+        staging: [ 
+            deployDirectly: true
+        ],
+        production: [
+            deployDirectly: false 
+        ],
+    ]
+]
+
+deployViaGitops(gitopsConfig)
+```
+
+### More options
+
+Example of a small and yet complete **gitops-config** for a helm-deployment of an application. This would lead to a 
+deployment of your staging environment by updating the resources of "staging" folder within your gitops-folder in git.
+For production it will open a PR with the changes.
+
+```groovy
+def gitopsConfig = [
+    scmmCredentialsId : 'scmm-user',
+    scmmConfigRepoUrl : 'http://scmm-scm-manager/scm/repo/fluxv1/gitops',
+    scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm'',
+    scmmPullRequestRepo: 'fluxv1/gitops',
+    cesBuildLibRepo: <cesBuildLibRepo> /* Default: 'https://github.com/cloudogu/ces-build-lib' */ ,
+    cesBuildLibVersion: <cesBuildLibVersion> /* Default: a recent cesBuildLibVersion see deployViaGitops.groovy */ ,
+    application: 'spring-petclinic',
+    mainBranch: 'master' /* Default: 'main' */, 
     deployments: [
-        sourcePath: 'k8s',
+        sourcePath: 'k8s' /* Default: 'k8s' */,
+        /* See docs for helm or plain k8s deployment options */
         helm : [
             repoType : 'HELM',
             credentialsId : 'creds',
@@ -94,15 +137,23 @@ def gitopsConfig = [
             namespace: 'my-production',
             deployDirectly: false 
         ],
-    ]
+    ],
+    validators        : [
+        /* Enalbed by default. Example on how to deactivate one.
+         * See docs for more info on validators  */
+        yamllint: [
+            enabled  : false
+        ]
 ]
 
 deployViaGitops(gitopsConfig)
 ```
 
+### Real life examples
+
 **FluxV1:**
-* [using petclinic  with helm and no validators](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/helm/Jenkinsfile)
-* [using petclinic with plain-k8s and no validators](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile)
+* [using petclinic  with helm](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/helm/Jenkinsfile)
+* [using petclinic with plain-k8s](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile)
 * [using helm with nginx and extra resources](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/nginx/fluxv1/Jenkinsfile)
 
 ---
@@ -139,11 +190,13 @@ To utilize the library itself, there is little to do:
 
 ---
 
-## Default Structure
-A default project structure could look like the examples below. Make sure you have your k8s and/or helm resources bundled
-in a folder. This specific resources folder (here k8s) will later be specified by the `sourcePath` within the deployments section of your `gitopsConfig`.
+## Default Folder Structure 
 
-#### FluxV1
+A default project structure in your application repo could look like the examples below. Make sure you have your k8s 
+and/or helm resources bundled in a folder. This specific resources folder (here `k8s`) will later be specified by the 
+`sourcePath` within the deployments section of your `gitopsConfig`.
+
+### FluxV1
 
 #### Plain-k8s
 ```
@@ -180,24 +233,30 @@ in a folder. This specific resources folder (here k8s) will later be specified b
         └── values-staging.yaml
 ```
 
-### FluxV2 (Upcoming)
+### FluxV2
 
-### ArgoCD (Upcoming)
+Upcoming
+
+### ArgoCD
+
+Upcoming
 
 ---
 
 ## GitOps-Config
-The gitops config is basically a groovy map following conventions to have a descriptive way of defining deployments. You can find a complete yet simple example [here](#examples).
+The gitops config is basically a groovy map following conventions to have a descriptive way of defining deployments. 
+You can find a complete yet simple example [here](#examples).
 
-### Properties
+**Properties**
+
 First of all there are some mandatory properties e.g. the information about your gitops repository and the application repository.
 
 ```
-scmmCredentialsId:      '<scmManagerCredentialsId>',
-scmmConfigRepoUrl:      '<configRepositoryUrl>',        # this is your full gitops repo url e.g. http://scmm-scm-manager/scm/repo/fluxv1/gitops
-scmmPullRequestBaseUrl: '<configRepositoryPRBaseUrl>',  # this is your gitops base url      e.g. http://scmm-scm-manager/scm
-scmmPullRequestRepo:    '<configRepositoryPRRepo>',     # this is the gitops repo           e.g. fluxv1/gitops
-application:            '<applicationName>'
+scmmCredentialsId:      'scmm-user', // ID of credentials defined in Jenkins used to authenticated with SCMM
+scmmConfigRepoUrl:      'http://scmm-scm-manager/scm/repo/fluxv1/gitops',        // this is your full gitops repo url e.g. 
+scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm',   // this is your gitops base url  
+scmmPullRequestRepo:    'fluxv1/gitops',     // this is the gitops repo     
+application:            'spring-petclinic' // Name of the application. Used as a folder in GitOps repo
 ```
 
 and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:
@@ -257,8 +316,11 @@ def gitopsConfig = [
 ] 
 ```
 
-#### Important note
-Under your `gitopsConfig.deployments.sourcePath` (here k8s) the subfolders have to be named exactly as the stages under `gitopsConfig.stages`. As well as the values files if you have a Helm application.
+**Important note**
+
+Under your `gitopsConfig.deployments.sourcePath` (here `k8s`) the subfolders have to be named exactly as the stages
+under `gitopsConfig.stages`. The same applies to the `values-*` files if you have a Helm application.
+
 So if you have a config looking like:
 ```groovy
 def gitopsConfig = [
@@ -327,7 +389,7 @@ For Plain:
             └── service.yaml
 ```
 
-For Helm
+For Helm:
 ```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
