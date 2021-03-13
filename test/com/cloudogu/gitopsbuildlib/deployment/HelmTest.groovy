@@ -146,27 +146,4 @@ class HelmTest {
             '        changed: \'oldValue\'\n' +
             ']')
     }
-
-    @Test
-    void 'testi'() {
-        def map1 = [
-            map: [
-                map: 'hallo'
-            ]
-        ]
-
-        def map2 = [
-            map: [:]
-        ]
-
-        def stage = 'map'
-
-        if (map1[stage].containsKey('map')) {
-            println('yes 1')
-        }
-
-        if (map2[stage].containsKey('map')) {
-            println('yes 2')
-        }
-    }
 }
