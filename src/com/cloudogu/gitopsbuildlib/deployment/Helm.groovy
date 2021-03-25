@@ -10,7 +10,7 @@ class Helm extends Deployment {
 
     Helm(def script, def gitopsConfig) {
         super(script, gitopsConfig)
-        if(gitopsConfig.deployments.helm.repoType == 'GIT') {
+        if (gitopsConfig.deployments.helm.repoType == 'GIT') {
             helm = new GitRepo(script)
         } else if (gitopsConfig.deployments.helm.repoType == 'HELM') {
             helm = new HelmRepo(script)
@@ -53,7 +53,6 @@ class Helm extends Deployment {
         }
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
     }
-
 
 
     //TODO helmValuesFromFile not yet implemented

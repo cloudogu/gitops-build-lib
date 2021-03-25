@@ -48,6 +48,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
             scmmPullRequestRepo   : 'fluxv1/gitops',
             cesBuildLibRepo       : 'cesBuildLibRepo',
             cesBuildLibVersion    : 'cesBuildLibVersion',
+            cesBuildLibCredentialsId: 'cesBuildLibCredentialsId',
             application           : 'application',
             mainBranch            : 'main',
             deployments           : deployments,
@@ -164,7 +165,7 @@ spec:
             getCommitHash { '1234abcd' }
         }
 
-        deployViaGitops.metaClass.initCesBuildLib = { String repo, String version ->
+        deployViaGitops.metaClass.initCesBuildLib = { String repo, String version, String credentialsId ->
             return cesBuildLibMock
         }
 
@@ -204,9 +205,10 @@ spec:
 
         deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
             assertThat(actualGitOpsConfig.cesBuildLibRepo).isEqualTo('abc')
+            assertThat(actualGitOpsConfig.cesBuildLibCredentialsId).isEqualTo('testuser')
         }
 
-        deployViaGitops([cesBuildLibRepo: 'abc'])
+        deployViaGitops([cesBuildLibRepo: 'abc', cesBuildLibCredentialsId: 'testuser'])
     }
 
     @Test

@@ -20,6 +20,7 @@ Map getDefaultConfig() {
     return [
         cesBuildLibRepo   : 'https://github.com/cloudogu/ces-build-lib',
         cesBuildLibVersion: '1.45.0',
+        cesBuildLibCredentialsId: '',
         mainBranch        : 'main',
         deployments       : [
             sourcePath: 'k8s',
@@ -61,7 +62,7 @@ void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
     gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
     validateConfig(gitopsConfig)
-    cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
+    cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
     deploy(gitopsConfig)
 }
 
@@ -114,9 +115,14 @@ def validateDeploymentConfig(Map gitopsConfig) {
 
 }
 
-protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
+protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion, credentialsId) {
+    Map retrieverParams = [$class: 'GitSCMSource', remote: cesBuildLibRepo]
+    if(credentialsId?.trim()) {
+        retrieverParams << [credentialsId: credentialsId]
+    }
+
     return library(identifier: "ces-build-lib@${cesBuildLibVersion}",
-        retriever: modernSCM([$class: 'GitSCMSource', remote: cesBuildLibRepo])
+        retriever: modernSCM(retrieverParams)
     ).com.cloudogu.ces.cesbuildlib
 }
 

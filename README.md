@@ -114,6 +114,7 @@ def gitopsConfig = [
     scmmPullRequestRepo: 'fluxv1/gitops',
     cesBuildLibRepo: <cesBuildLibRepo> /* Default: 'https://github.com/cloudogu/ces-build-lib' */ ,
     cesBuildLibVersion: <cesBuildLibVersion> /* Default: a recent cesBuildLibVersion see deployViaGitops.groovy */ ,
+    cesBuildLibCredentialsId: <cesBuildLibCredentialsId> /* Default: '', empty due to default public github repo */,
     application: 'spring-petclinic',
     mainBranch: 'master' /* Default: 'main' */, 
     deployments: [
