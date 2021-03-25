@@ -116,13 +116,13 @@ def validateDeploymentConfig(Map gitopsConfig) {
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion, credentialsId) {
-    Map config = [$class: 'GitSCMSource', remote: cesBuildLibRepo]
+    Map retrieverParams = [$class: 'GitSCMSource', remote: cesBuildLibRepo]
     if(credentialsId?.trim()) {
-        config << [credentialsId: credentialsId]
+        retrieverParams << [credentialsId: credentialsId]
     }
 
     return library(identifier: "ces-build-lib@${cesBuildLibVersion}",
-        retriever: modernSCM(config)
+        retriever: modernSCM(retrieverParams)
     ).com.cloudogu.ces.cesbuildlib
 }
 

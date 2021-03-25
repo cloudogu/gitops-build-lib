@@ -10,16 +10,23 @@ class HelmKubeval extends Validator {
     void validate(String targetDirectory, Map config, Map deployments) {
         if (deployments.containsKey('helm')) {
             if (deployments.helm.repoType == 'GIT') {
-                cloneGitHelmRepo(deployments.helm, targetDirectory)
+                script.dir("${targetDirectory}/chart") {
+                    def git = (deployments.helm.containsKey('credentialsId'))
+                        ? script.cesBuildLib.Git.new(script, deployments.helm.credentialsId)
+                        : script.cesBuildLib.Git.new(script)
+                    git url: deployments.helm.repoUrl, branch: 'main', changelog: false, poll: false
+                    git.checkout(deployments.helm.version)
+                }
 
                 def chartPath = ''
-                if(deployments.helm.containsKey('chartPath')) {
+                if (deployments.helm.containsKey('chartPath')) {
                     chartPath = deployments.helm.chartPath
                 }
 
                 withDockerImage(config.image) {
                     script.sh "helm kubeval ${targetDirectory}/chart/${chartPath} -v ${config.k8sSchemaVersion}"
                 }
+
                 script.sh "rm -rf ${targetDirectory}/chart"
             } else if (deployments.helm.repoType == 'HELM') {
                 withDockerImage(config.image) {
@@ -29,10 +36,5 @@ class HelmKubeval extends Validator {
                 }
             }
         }
-    }
-
-    private void cloneGitHelmRepo(Map helmConfig, String targetDirectory) {
-        script.sh "git clone ${helmConfig.repoUrl} ${targetDirectory}/chart || true"
-        script.sh "git --git-dir=${targetDirectory}/chart/.git --work-tree=${targetDirectory}/chart checkout ${helmConfig.version}"
     }
 }

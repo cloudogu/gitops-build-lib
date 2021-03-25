@@ -1,6 +1,6 @@
 package com.cloudogu.gitopsbuildlib.deployment.repotype
 
-class GitRepo extends RepoType{
+class GitRepo extends RepoType {
 
     GitRepo(def script) {
         super(script)
@@ -14,10 +14,16 @@ class GitRepo extends RepoType{
             _files += "-f $it "
         }
 
-        script.sh "git clone ${helmConfig.repoUrl} ${script.env.WORKSPACE}/chart || true"
+        script.dir("${script.env.WORKSPACE}/chart") {
+            if (helmConfig.containsKey('credentialsId')) {
+                script.git credentialsId: helmConfig.credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+            } else {
+                script.git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+            }
+        }
 
         def chartPath = ''
-        if(helmConfig.containsKey('chartPath')) {
+        if (helmConfig.containsKey('chartPath')) {
             chartPath = helmConfig.chartPath
         }
 
