@@ -42,17 +42,17 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     Map gitopsConfig(Map stages, Map deployments) {
         return [
-            scmmCredentialsId     : 'scmManagerCredentials',
-            scmmConfigRepoUrl     : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm',
-            scmmPullRequestRepo   : 'fluxv1/gitops',
-            cesBuildLibRepo       : 'cesBuildLibRepo',
-            cesBuildLibVersion    : 'cesBuildLibVersion',
+            scmmCredentialsId       : 'scmManagerCredentials',
+            scmmConfigRepoUrl       : 'configRepositoryUrl',
+            scmmPullRequestBaseUrl  : 'http://scmm-scm-manager/scm',
+            scmmPullRequestRepo     : 'fluxv1/gitops',
+            cesBuildLibRepo         : 'cesBuildLibRepo',
+            cesBuildLibVersion      : 'cesBuildLibVersion',
             cesBuildLibCredentialsId: 'cesBuildLibCredentialsId',
-            application           : 'application',
-            mainBranch            : 'main',
-            deployments           : deployments,
-            validators            : [
+            application             : 'application',
+            mainBranch              : 'main',
+            deployments             : deployments,
+            validators              : [
                 kubeval : [
                     validator: new Kubeval(deployViaGitops),
                     enabled  : true,
@@ -73,14 +73,14 @@ class DeployViaGitopsTest extends BasePipelineTest {
                     ]
                 ]
             ],
-            stages                : stages
+            stages                  : stages
         ]
     }
 
     def plainDeployment = [
         sourcePath: 'k8s',
-        plain             : [
-            updateImages          : [
+        plain     : [
+            updateImages: [
                 [deploymentFilename: "deployment.yaml",
                  containerName     : 'application',
                  imageName         : 'newImageName']
@@ -95,7 +95,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
     def multipleStages = [
         staging   : [deployDirectly: true],
         production: [deployDirectly: false],
-        qa        : []
+        qa        : [deployDirectly: false]
     ]
 
     @BeforeAll
@@ -212,6 +212,29 @@ spec:
     }
 
     @Test
+    void 'default stages defined as staging and production'() {
+        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+            assertThat(actualGitOpsConfig.stages.containsKey('staging')).isEqualTo(true)
+            assertThat(actualGitOpsConfig.stages.containsKey('production')).isEqualTo(true)
+            assertThat(actualGitOpsConfig.stages.staging.deployDirectly).isEqualTo(true)
+            assertThat(actualGitOpsConfig.stages.production.deployDirectly).isEqualTo(false)
+        }
+
+        deployViaGitops([:])
+    }
+
+    @Test
+    void 'stages definition gets overwritten rather than merged'() {
+        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+            assertThat(actualGitOpsConfig.stages.containsKey('staging')).isEqualTo(true)
+            assertThat(actualGitOpsConfig.stages.containsKey('production')).isEqualTo(false)
+            assertThat(actualGitOpsConfig.stages.staging.deployDirectly).isEqualTo(true)
+        }
+
+        deployViaGitops(gitopsConfig(singleStages, plainDeployment))
+    }
+
+    @Test
     void 'default validator can be disabled'() {
 
         deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
@@ -259,6 +282,8 @@ spec:
         gitRepo.use {
             deployViaGitops.call(gitopsConfig(singleStages, plainDeployment))
         }
+
+        println(gitopsConfig(singleStages, plainDeployment))
 
         // testing deploy
         assertThat(helper.callStack.findAll { call -> call.methodName == "dir" }.any { call ->

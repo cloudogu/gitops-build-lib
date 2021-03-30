@@ -31,10 +31,8 @@ class HelmKubevalTest {
             ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
-        //assertThat(scriptMock.actualShArgs[0]).isEqualTo('git clone chartRepo/namespace/repoPath target/chart || true')
-        //assertThat(scriptMock.actualShArgs[1]).isEqualTo('git --git-dir=target/chart/.git --work-tree=target/chart checkout version')
-        //assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm kubeval target/chart/chartPath -v 1.5')
-        //assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf target/chart')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chartPath -v 1.5')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm -rf target/chart')
     }
 
     @Test
