@@ -283,8 +283,6 @@ spec:
             deployViaGitops.call(gitopsConfig(singleStages, plainDeployment))
         }
 
-        println(gitopsConfig(singleStages, plainDeployment))
-
         // testing deploy
         assertThat(helper.callStack.findAll { call -> call.methodName == "dir" }.any { call ->
             callArgsToString(call).contains(".configRepoTempDir")
@@ -352,9 +350,7 @@ spec:
 
         ArgumentCaptor<String> argumentCaptor2 = ArgumentCaptor.forClass(String.class)
         verify(git).commit(argumentCaptor2.capture(), eq('staging'), anyString())
-        println("before argument get value")
         assertThat(argumentCaptor2.getValue()).isEqualTo('[staging] #0001 backend/k8s-gitops@1234abcd')
-        println("after argument get value")
 
         argumentCaptor2 = ArgumentCaptor.forClass(String.class)
         verify(git).commit(argumentCaptor2.capture(), eq('production'), anyString())
