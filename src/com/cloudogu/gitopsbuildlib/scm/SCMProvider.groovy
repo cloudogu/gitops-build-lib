@@ -15,6 +15,7 @@ abstract class SCMProvider {
         this.script = script
     }
 
+    // TODO: check if implementation has to be done within the implementation itself or can be achieved like this in the base class
     void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl }
 
     void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl }

@@ -87,11 +87,13 @@ def mergeMaps(Map a, Map b) {
     }
 }
 
+// Note: had to do this little hack because groovy tests do not care about 'error' class
 def validateConfig(Map gitopsConfig) {
     return validateMandatoryFields(gitopsConfig) && validateDeploymentConfig(gitopsConfig)
 }
 
 // recursive call used to find keys that are not toplevel declarations inside the map
+// TODO: refactor to return Pair<boolean, String> -> false, '' || true, 'http://scm..'
 boolean findMandatoryFieldKey(def config, List<String> keys) {
     for (String key : keys) {
         if (config.containsKey(key))
@@ -103,7 +105,7 @@ boolean findMandatoryFieldKey(def config, List<String> keys) {
             return false
     }
 }
-
+// Fails are: key does not exist or value is empty / null
 def validateMandatoryFields(Map gitopsConfig) {
     def nonValidFields = []
     for (String mandatoryField : mandatoryFields) {
@@ -129,6 +131,7 @@ def validateMandatoryFields(Map gitopsConfig) {
     return true
 }
 
+// TODO: return true OK but no false??
 def validateDeploymentConfig(Map gitopsConfig) {
     if (gitopsConfig.deployments.containsKey('plain') && gitopsConfig.deployments.containsKey('helm')) {
         error 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
@@ -162,7 +165,7 @@ protected void deploy(Map gitopsConfig) {
     try {
         dir(gitRepo.configRepoTempDir) {
 
-            git url: gitopsConfig.scm.provider.repositoryUrl ?: '', branch: gitopsConfig.mainBranch, changelog: false, poll: false
+            git url: gitopsConfig.scm.provider.repositoryUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
             git.fetch()
 
             changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(syncGitopsRepoPerStage(gitopsConfig, git, gitRepo))
@@ -218,8 +221,9 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
                 def title = 'created by service \'' + gitopsConfig.application + '\' for stage \'' + stage + '\''
                 //TODO description functionality needs to be implemented
                 def description = ''
-                if (gitopsConfig.scm != null)
-                    gitopsConfig.scm.provider.createOrUpdatePullRequest("", stageBranch, gitopsConfig.mainBranch, title, description)
+
+                // TODO: pass in correct pr url
+                gitopsConfig.scm.provider.createOrUpdatePullRequest("", stageBranch, gitopsConfig.mainBranch, title, description)
                 allRepoChanges += repoChanges
             }
         }

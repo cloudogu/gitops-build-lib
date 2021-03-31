@@ -6,6 +6,8 @@ class SCMManager extends SCMProvider {
         super(script)
     }
 
+
+    // TODO: refactor!
     @Override
     String getRepositoryUrl() {
         if (!this.baseUrl || this.repositoryUrl)
@@ -14,6 +16,7 @@ class SCMManager extends SCMProvider {
             return "${this.baseUrl}/repo/${this.repositoryUrl}"
     }
 
+    // TODO: PR-Url could be something different dependant on implementation and is not passed in anymore via gitopsconfig map
     @Override
     void createOrUpdatePullRequest(String pullRequestRepo, String stageBranch, String mainBranch, String title, String description) {
         def scmm = script.cesBuildLib.SCMManager.new(this, "scmmPullRequestBaseUrl", this.credentials)
