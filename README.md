@@ -270,7 +270,8 @@ mainBranch:         'main'
 
 ## Stages
 The GitOps-build-lib supports builds on multiple stages. A stage is defined by a name and contains a namespace (used to
-generate the resources) and a deployment-flag.
+generate the resources) and a deployment-flag. If no stages is passed into the gitops-config by the user, the default
+is set to:
 
 ```groovy
 def gitopsConfig = [
@@ -287,8 +288,9 @@ def gitopsConfig = [
 ]
 ```
 
+The defaults above can be overwritten by providing an entry for 'stages' within your config.
 If it is set to deploy directly it will commit and push to your desired `gitops-folder` and therefore triggers a deployment. If it is set to false
-it will create a PR on your `gitops-folder`. **Remember** there are [ipmortant](#important-note) conventions regarding namespaces and the folder structure.
+it will create a PR on your `gitops-folder`. **Remember** there are [important](#important-note) conventions regarding namespaces and the folder structure.
 
 ### Namespaces
 
