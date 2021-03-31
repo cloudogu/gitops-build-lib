@@ -41,23 +41,19 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     Map gitopsConfig(Map stages, Map deployments) {
         return [
-            scm: [
-                provider:        new SCMManager(deployViaGitops),
-                credentialsId:  'scmManagerCredentials',
-                baseUrl:        'http://scmm-scm-manager/scm',
-                repository:     'fluxv1/gitops'
+            scm                     : [
+                provider     : new SCMManager(deployViaGitops),
+                credentialsId: 'scmManagerCredentials',
+                baseUrl      : 'http://scmm-scm-manager/scm',
+                repositoryUrl   : 'fluxv1/gitops'
             ],
-            scmmCredentialsId     : 'scmManagerCredentials',
-            scmmConfigRepoUrl     : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm',
-            scmmPullRequestRepo   : 'fluxv1/gitops',
-            cesBuildLibRepo       : 'cesBuildLibRepo',
-            cesBuildLibVersion    : 'cesBuildLibVersion',
+            cesBuildLibRepo         : 'cesBuildLibRepo',
+            cesBuildLibVersion      : 'cesBuildLibVersion',
             cesBuildLibCredentialsId: 'cesBuildLibCredentialsId',
-            application           : 'application',
-            mainBranch            : 'main',
-            deployments           : deployments,
-            validators            : [
+            application             : 'application',
+            mainBranch              : 'main',
+            deployments             : deployments,
+            validators              : [
                 kubeval : [
                     validator: new Kubeval(deployViaGitops),
                     enabled  : true,
@@ -295,7 +291,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('configRepositoryUrl')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
@@ -336,7 +332,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('configRepositoryUrl')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
@@ -452,11 +448,12 @@ spec:
     void 'error on single missing mandatory field'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmConfigRepoUrl     : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl: 'configRepositoryPRBaseUrl',
-            scmmPullRequestRepo   : 'scmmPullRequestRepo',
-            application           : 'application',
-            deployments           : [
+            scm        : [
+                baseUrl   : 'http://scmm-scm-manager/scm',
+                repositoryUrl: 'fluxv1/gitops',
+            ],
+            application: 'application',
+            deployments: [
                 sourcePath: 'k8s',
                 plain     : [
                     updateImages: [
@@ -466,7 +463,7 @@ spec:
                     ]
                 ]
             ],
-            stages                : [
+            stages     : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
                 qa        : []
@@ -479,7 +476,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scm]")
+                callArgsToString(call).contains("[scm.provider]")
             }).isTrue()
     }
 
@@ -487,13 +484,13 @@ spec:
     void 'error on single non valid mandatory field'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmCredentialsId     : 'scmManagerCredentials',
-            scmmConfigRepoUrl     : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl: '',
-            scmmPullRequestRepo   : 'scmmPullRequestRepo',
-            scmmPullRequestUrl    : 'configRepositoryPRUrl',
-            application           : 'application',
-            deployments           : [
+            scm        : [
+                provider  : new SCMManager(this),
+                baseUrl   : 'http://scmm-scm-manager/scm',
+                repositoryUrl: 'fluxv1/gitops',
+            ],
+            application: '',
+            deployments: [
                 sourcePath: 'k8s',
                 plain     : [
                     updateImages: [
@@ -503,7 +500,7 @@ spec:
                     ]
                 ]
             ],
-            stages                : [
+            stages     : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
                 qa        : []
@@ -516,7 +513,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scm]")
+                callArgsToString(call).contains("[application]")
             }).isTrue()
     }
 
@@ -524,9 +521,13 @@ spec:
     void 'error on missing or non valid values on mandatory fields'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmPullRequestBaseUrl: null,
-            application           : '',
-            stages                : []
+            scm        : [
+                credentialsId: 'scmManagerCredentials',
+                baseUrl      : 'http://scmm-scm-manager/scm',
+                repositoryUrl   : 'fluxv1/gitops',
+            ],
+            application: '',
+            stages     : []
         ]
 
         gitRepo.use {
@@ -535,7 +536,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scm, application, stages]")
+                callArgsToString(call).contains("[scm.provider, application, stages]")
             }).isTrue()
     }
 

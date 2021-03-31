@@ -8,7 +8,10 @@ class SCMManager extends SCMProvider {
 
     @Override
     String getRepositoryUrl() {
-        return "${this.baseUrl}/repo/${this.repository}"
+        if (!this.baseUrl || this.repositoryUrl)
+            return ""
+        else
+            return "${this.baseUrl}/repo/${this.repositoryUrl}"
     }
 
     @Override

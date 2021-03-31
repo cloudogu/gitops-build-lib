@@ -7,7 +7,7 @@ abstract class SCMProvider {
 
     // scm
     protected String baseUrl
-    protected String repository
+    protected String repositoryUrl
 
 
 
@@ -17,7 +17,7 @@ abstract class SCMProvider {
 
     void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl }
 
-    void setRepository(String repository) { this.repository = repository }
+    void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl }
 
     void setCredentials(String credentialsId) { this.credentials = credentialsId }
 
