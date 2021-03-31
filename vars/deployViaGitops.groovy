@@ -3,6 +3,7 @@ import com.cloudogu.gitopsbuildlib.*
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
 import com.cloudogu.gitopsbuildlib.deployment.Helm
 import com.cloudogu.gitopsbuildlib.deployment.Plain
+import com.cloudogu.gitopsbuildlib.scm.SCMProvider
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
@@ -11,7 +12,7 @@ String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
 
 List getMandatoryFields() {
     return [
-        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestBaseUrl', 'scmmPullRequestRepo', 'application', 'stages'
+        'scm', 'application', 'stages'
     ]
 }
 
@@ -63,6 +64,7 @@ void call(Map gitopsConfig) {
     gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
     validateConfig(gitopsConfig)
     cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
+
     deploy(gitopsConfig)
 }
 
@@ -82,9 +84,11 @@ def validateConfig(Map gitopsConfig) {
     validateDeploymentConfig(gitopsConfig)
 }
 
+// TODO: this does only work for toplevel declarations
 def validateMandatoryFields(Map gitopsConfig) {
     def nonValidFields = []
     for (String mandatoryField : mandatoryFields) {
+
         // Note: "[]" syntax (and also getProperty()) leads to
         // Scripts not permitted to use staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getAt
         if (!gitopsConfig.containsKey(mandatoryField)) {
@@ -98,6 +102,11 @@ def validateMandatoryFields(Map gitopsConfig) {
     }
     if (nonValidFields) {
         error 'The following fields in the gitops config are mandatory but were not set or have invalid values: ' + nonValidFields
+    } else {
+        // TODO: this is only done because 'call' method does not exit on error when running tests - scm is no default -> errors
+        gitopsConfig.scm.provider.setCredentials(gitopsConfig.scm.credentialsId)
+        gitopsConfig.scm.provider.setBaseUrl(gitopsConfig.scm.baseUrl)
+        gitopsConfig.scm.provider.setRepository(gitopsConfig.scm.repository)
     }
 }
 

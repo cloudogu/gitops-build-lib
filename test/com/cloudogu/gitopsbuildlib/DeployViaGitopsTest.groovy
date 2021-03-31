@@ -2,8 +2,7 @@ package com.cloudogu.gitopsbuildlib
 
 import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
-import com.cloudogu.ces.cesbuildlib.SCMManager
-
+import com.cloudogu.gitopsbuildlib.scm.SCMManager
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
@@ -42,6 +41,12 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     Map gitopsConfig(Map stages, Map deployments) {
         return [
+            scm: [
+                provider:        new SCMManager(deployViaGitops),
+                credentialsId:  'scmManagerCredentials',
+                baseUrl:        'http://scmm-scm-manager/scm',
+                repository:     'fluxv1/gitops'
+            ],
             scmmCredentialsId     : 'scmManagerCredentials',
             scmmConfigRepoUrl     : 'configRepositoryUrl',
             scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm',
@@ -113,7 +118,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
         cesBuildLibMock = new CesBuildLibMock()
         git = mock(Git.class)
         docker = new DockerMock().createMock()
-        scmm = mock(SCMManager.class)
+        scmm = mock(com.cloudogu.ces.cesbuildlib.SCMManager.class)
 
         cesBuildLibMock.Docker.new = {
             return docker
@@ -453,7 +458,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmCredentialsId]")
+                callArgsToString(call).contains("[scm]")
             }).isTrue()
     }
 
@@ -490,7 +495,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmPullRequestBaseUrl]")
+                callArgsToString(call).contains("[scm]")
             }).isTrue()
     }
 
@@ -509,7 +514,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmCredentialsId, scmmConfigRepoUrl, scmmPullRequestBaseUrl, scmmPullRequestRepo, application, stages]")
+                callArgsToString(call).contains("[scm, application, stages]")
             }).isTrue()
     }
 
