@@ -42,10 +42,10 @@ class DeployViaGitopsTest extends BasePipelineTest {
     Map gitopsConfig(Map stages, Map deployments) {
         return [
             scm                     : [
-                provider     : new SCMManager(deployViaGitops),
+                provider     : 'SCMManager',
                 credentialsId: 'scmManagerCredentials',
                 baseUrl      : 'http://scmm-scm-manager/scm',
-                repositoryUrl   : 'fluxv1/gitops'
+                repositoryUrl   : 'fluxv1/gitops',
             ],
             cesBuildLibRepo         : 'cesBuildLibRepo',
             cesBuildLibVersion      : 'cesBuildLibVersion',
@@ -291,7 +291,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('fluxv1/gitops')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
@@ -332,7 +332,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('fluxv1/gitops')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
@@ -485,7 +485,7 @@ spec:
 
         def gitopsConfigMissingMandatoryField = [
             scm        : [
-                provider  : new SCMManager(this),
+                provider  : 'SCMManager',
                 baseUrl   : 'http://scmm-scm-manager/scm',
                 repositoryUrl: 'fluxv1/gitops',
             ],
@@ -524,7 +524,7 @@ spec:
             scm        : [
                 credentialsId: 'scmManagerCredentials',
                 baseUrl      : 'http://scmm-scm-manager/scm',
-                repositoryUrl   : 'fluxv1/gitops',
+                repositoryUrl   : '',
             ],
             application: '',
             stages     : []
@@ -536,7 +536,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scm.provider, application, stages]")
+                callArgsToString(call).contains("[scm.provider, scm.repositoryUrl, application, stages]")
             }).isTrue()
     }
 

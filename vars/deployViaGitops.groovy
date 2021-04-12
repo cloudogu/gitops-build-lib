@@ -3,6 +3,8 @@ import com.cloudogu.gitopsbuildlib.*
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
 import com.cloudogu.gitopsbuildlib.deployment.Helm
 import com.cloudogu.gitopsbuildlib.deployment.Plain
+import com.cloudogu.gitopsbuildlib.scm.SCMManager
+import com.cloudogu.gitopsbuildlib.scm.SCMProvider
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
@@ -92,28 +94,29 @@ def validateConfig(Map gitopsConfig) {
     return validateMandatoryFields(gitopsConfig) && validateDeploymentConfig(gitopsConfig)
 }
 
-// recursive call used to find keys that are not toplevel declarations inside the map
-// TODO: refactor to return Pair<boolean, String> -> false, '' || true, 'http://scm..'
-boolean findMandatoryFieldKey(def config, List<String> keys) {
+// recursive call used to find keys and values that are not toplevel declarations inside the map
+Map findMandatoryFieldKeyValue(def config, List<String> keys) {
     for (String key : keys) {
         if (config.containsKey(key))
             if (keys.size() == 1)
-                return true
+                return [first: true, second: (String) config.get(key)]
             else
-                return findMandatoryFieldKey(config.get(key), keys - key)
+                return this.findMandatoryFieldKeyValue(config.get(key), keys - key)
+
         else
-            return false
+            return [first: false, second: '']
     }
 }
-// Fails are: key does not exist or value is empty / null
+
 def validateMandatoryFields(Map gitopsConfig) {
     def nonValidFields = []
     for (String mandatoryField : mandatoryFields) {
         if (mandatoryField.contains('.')) {
-            if (!findMandatoryFieldKey(gitopsConfig, mandatoryField.tokenize('.')))
+            Map<Boolean, String> mandatoryFieldKeyValue = findMandatoryFieldKeyValue(gitopsConfig, mandatoryField.tokenize('.'))
+            if (!mandatoryFieldKeyValue.get('first') || (mandatoryFieldKeyValue.get('first') && !mandatoryFieldKeyValue.get('second'))) {
                 nonValidFields += mandatoryField
+            }
 
-            // TODO: see the note below, we are currently not able to find a 'missing value' when a nested key is defined but with empty value
             // Note: "[]" syntax (and also getProperty()) leads to
             // Scripts not permitted to use staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getAt
         } else if (!gitopsConfig.containsKey(mandatoryField)) {
@@ -124,6 +127,7 @@ def validateMandatoryFields(Map gitopsConfig) {
                 nonValidFields += mandatoryField
         }
     }
+
     if (nonValidFields) {
         error 'The following fields in the gitops config are mandatory but were not set or have invalid values: ' + nonValidFields
         return false
@@ -131,19 +135,34 @@ def validateMandatoryFields(Map gitopsConfig) {
     return true
 }
 
-// TODO: return true OK but no false??
 def validateDeploymentConfig(Map gitopsConfig) {
+    // choose whether to execute plain or helm deployments
     if (gitopsConfig.deployments.containsKey('plain') && gitopsConfig.deployments.containsKey('helm')) {
         error 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
+        return false
     } else if (!gitopsConfig.deployments.containsKey('plain') && !gitopsConfig.deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
+        return false
     }
     if (gitopsConfig.deployments.containsKey('plain')) {
         deployment = new Plain(this, gitopsConfig)
     } else if (gitopsConfig.deployments.containsKey('helm')) {
         deployment = new Helm(this, gitopsConfig)
     }
-    return true
+
+    // load the scm-provider that got selected
+    switch (gitopsConfig.scm.provider) {
+        case 'SCMManager':
+            provider = new SCMManager(this)
+            provider.setCredentials(gitopsConfig.scm.credentialsId)
+            provider.setBaseUrl(gitopsConfig.scm.baseUrl)
+            provider.setRepositoryUrl(gitopsConfig.scm.repositoryUrl)
+            return true
+
+        default:
+            error 'The given scm-provider seems to be invalid. Please choose one of the following: \'SCMManager\'.'
+            return false
+    }
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion, credentialsId) {
@@ -165,7 +184,7 @@ protected void deploy(Map gitopsConfig) {
     try {
         dir(gitRepo.configRepoTempDir) {
 
-            git url: gitopsConfig.scm.provider.repositoryUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
+            git url: gitopsConfig.scm.repositoryUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
             git.fetch()
 
             changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(syncGitopsRepoPerStage(gitopsConfig, git, gitRepo))
@@ -198,14 +217,7 @@ protected Map prepareGitRepo(def git) {
 }
 
 protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map gitRepo) {
-
     HashSet<String> allRepoChanges = new HashSet<String>()
-
-    if (gitopsConfig.scm != null) {
-        gitopsConfig.scm.provider.setCredentials(gitopsConfig.scm.credentialsId)
-        gitopsConfig.scm.provider.setBaseUrl(gitopsConfig.scm.baseUrl)
-        gitopsConfig.scm.provider.setRepositoryUrl(gitopsConfig.scm.repositoryUrl)
-    }
 
     gitopsConfig.stages.each { stage, config ->
         //checkout the main_branch before creating a new stage_branch. so it won't be branched off of an already checked out stage_branch
@@ -222,8 +234,7 @@ protected HashSet<String> syncGitopsRepoPerStage(Map gitopsConfig, def git, Map 
                 //TODO description functionality needs to be implemented
                 def description = ''
 
-                // TODO: pass in correct pr url
-                gitopsConfig.scm.provider.createOrUpdatePullRequest("", stageBranch, gitopsConfig.mainBranch, title, description)
+                provider.createOrUpdatePullRequest(stageBranch, gitopsConfig.mainBranch, title, description)
                 allRepoChanges += repoChanges
             }
         }
@@ -289,3 +300,4 @@ protected String createBuildDescription(String pushedChanges) {
 
 def cesBuildLib
 Deployment deployment
+SCMProvider provider

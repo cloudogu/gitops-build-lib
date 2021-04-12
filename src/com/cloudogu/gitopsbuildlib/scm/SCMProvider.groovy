@@ -6,24 +6,21 @@ abstract class SCMProvider {
     protected String credentials = ''
 
     // scm
-    protected String baseUrl
-    protected String repositoryUrl
-
+    protected String baseUrl = ''
+    protected String repositoryUrl = ''
 
 
     SCMProvider(def script) {
         this.script = script
     }
 
-    // TODO: check if implementation has to be done within the implementation itself or can be achieved like this in the base class
-    void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl }
+    abstract void setBaseUrl(String baseUrl)
 
-    void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl }
+    abstract void setRepositoryUrl(String repositoryUrl)
 
-    void setCredentials(String credentialsId) { this.credentials = credentialsId }
-
+    abstract void setCredentials(String credentialsId)
 
     abstract String getRepositoryUrl()
 
-    abstract void createOrUpdatePullRequest(String pullRequestRepo, String stageBranch, String mainBranch, String title, String description)
+    abstract void createOrUpdatePullRequest(String stageBranch, String mainBranch, String title, String description)
 }
