@@ -18,14 +18,15 @@ List getMandatoryFields() {
 Map getDefaultConfig() {
 
     return [
-        cesBuildLibRepo   : 'https://github.com/cloudogu/ces-build-lib',
-        cesBuildLibVersion: '1.45.0',
-        mainBranch        : 'main',
-        deployments       : [
+        cesBuildLibRepo         : 'https://github.com/cloudogu/ces-build-lib',
+        cesBuildLibVersion      : '1.45.0',
+        cesBuildLibCredentialsId: '',
+        mainBranch              : 'main',
+        deployments             : [
             sourcePath: 'k8s',
         ],
-        validators        : [
-            kubeval : [
+        validators              : [
+            kubeval    : [
                 validator: new Kubeval(this),
                 enabled  : true,
                 config   : [
@@ -43,7 +44,7 @@ Map getDefaultConfig() {
                     k8sSchemaVersion: '1.18.1'
                 ]
             ],
-            yamllint: [
+            yamllint   : [
                 validator: new Yamllint(this),
                 enabled  : true,
                 config   : [
@@ -53,6 +54,10 @@ Map getDefaultConfig() {
                     profile: 'relaxed'
                 ]
             ]
+        ],
+        stages                  : [
+            staging   : [deployDirectly: true],
+            production: [deployDirectly: false],
         ]
     ]
 }
@@ -61,14 +66,19 @@ void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
     gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
     validateConfig(gitopsConfig)
-    cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion)
+    cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
     deploy(gitopsConfig)
 }
 
 def mergeMaps(Map a, Map b) {
     return b.inject(a.clone()) { map, entry ->
         if (map[entry.key] instanceof Map && entry.value instanceof Map) {
-            map[entry.key] = mergeMaps(map[entry.key], entry.value)
+
+            // due to the stages being the definition of the environment its not a merge but overwriting
+            if (entry.key == 'stages')
+                map[entry.key] = entry.value
+            else
+                map[entry.key] = mergeMaps(map[entry.key], entry.value)
         } else {
             map[entry.key] = entry.value
         }
@@ -114,9 +124,14 @@ def validateDeploymentConfig(Map gitopsConfig) {
 
 }
 
-protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion) {
+protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion, credentialsId) {
+    Map retrieverParams = [$class: 'GitSCMSource', remote: cesBuildLibRepo]
+    if (credentialsId?.trim()) {
+        retrieverParams << [credentialsId: credentialsId]
+    }
+
     return library(identifier: "ces-build-lib@${cesBuildLibVersion}",
-        retriever: modernSCM([$class: 'GitSCMSource', remote: cesBuildLibRepo])
+        retriever: modernSCM(retrieverParams)
     ).com.cloudogu.ces.cesbuildlib
 }
 
