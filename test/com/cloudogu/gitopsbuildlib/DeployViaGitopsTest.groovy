@@ -51,6 +51,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
             cesBuildLibCredentialsId: 'cesBuildLibCredentialsId',
             application             : 'application',
             mainBranch              : 'main',
+            gitopsTool              : 'FLUX_V1',
             deployments             : deployments,
             validators              : [
                 kubeval : [
@@ -451,6 +452,7 @@ spec:
             scmmPullRequestBaseUrl: 'configRepositoryPRBaseUrl',
             scmmPullRequestRepo   : 'scmmPullRequestRepo',
             application           : 'application',
+            gitopsTool            : 'FLUX_V1',
             deployments           : [
                 sourcePath: 'k8s',
                 plain     : [
@@ -488,6 +490,7 @@ spec:
             scmmPullRequestRepo   : 'scmmPullRequestRepo',
             scmmPullRequestUrl    : 'configRepositoryPRUrl',
             application           : 'application',
+            gitopsTool            : 'FLUX_V1',
             deployments           : [
                 sourcePath: 'k8s',
                 plain     : [
@@ -521,6 +524,7 @@ spec:
         def gitopsConfigMissingMandatoryField = [
             scmmPullRequestBaseUrl: null,
             application           : '',
+            gitopsTool            : 'FLUX_V1',
             stages                : []
         ]
 
@@ -531,6 +535,43 @@ spec:
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
                 callArgsToString(call).contains("[scmmCredentialsId, scmmConfigRepoUrl, scmmPullRequestBaseUrl, scmmPullRequestRepo, application, stages]")
+            }).isTrue()
+    }
+
+    @Test
+    void 'error on missing tooling'() {
+        def gitopsConfigMissingTooling = [
+            scmmCredentialsId     : 'scmManagerCredentials',
+            scmmConfigRepoUrl     : 'configRepositoryUrl',
+            scmmPullRequestBaseUrl: 'scmmPullRequestBaseUrl',
+            scmmPullRequestRepo   : 'scmmPullRequestRepo',
+            scmmPullRequestUrl    : 'configRepositoryPRUrl',
+            application           : 'application',
+            gitopsTool            : 'FLUX_V1',
+            deployments           : [
+                sourcePath: 'k8s',
+                plain     : [
+                    updateImages: [
+                        [filename     : "deployment.yaml",
+                         containerName: 'application',
+                         imageName    : 'imageName']
+                    ]
+                ]
+            ],
+            stages                : [
+                staging   : [deployDirectly: true],
+                production: [deployDirectly: false],
+                qa        : []
+            ]
+        ]
+
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfigMissingTooling)
+        }
+
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
+                callArgsToString(call).contains("[scmmPullRequestBaseUrl]")
             }).isTrue()
     }
 

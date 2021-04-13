@@ -11,7 +11,7 @@ String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
 
 List getMandatoryFields() {
     return [
-        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestBaseUrl', 'scmmPullRequestRepo', 'application', 'stages'
+        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestBaseUrl', 'scmmPullRequestRepo', 'application', 'stages', 'gitopsTool'
     ]
 }
 
@@ -111,6 +111,27 @@ def validateMandatoryFields(Map gitopsConfig) {
 }
 
 def validateDeploymentConfig(Map gitopsConfig) {
+    // switch based on the given tooling
+    switch (gitopsConfig.gitopsTool) {
+        case 'FLUX_V1':
+            validateDeploymentType(gitopsConfig)
+            break
+
+        case 'FLUX_V2':
+            validateDeploymentType(gitopsConfig)
+            break
+
+        case 'ARGO_CD':
+            validateDeploymentType(gitopsConfig)
+            break
+
+        default:
+            error 'Please provide a valid gitops-tool! The following ones are supported: \'FLUX_V1\', \'FLUX_V2\', \'ARGO_CD\'.'
+    }
+}
+
+// TODO: pass in gitops-tooling type and decide further different actions
+protected void validateDeploymentType(Map gitopsConfig) {
     if (gitopsConfig.deployments.containsKey('plain') && gitopsConfig.deployments.containsKey('helm')) {
         error 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
     } else if (!gitopsConfig.deployments.containsKey('plain') && !gitopsConfig.deployments.containsKey('helm')) {
@@ -121,7 +142,6 @@ def validateDeploymentConfig(Map gitopsConfig) {
     } else if (gitopsConfig.deployments.containsKey('helm')) {
         deployment = new Helm(this, gitopsConfig)
     }
-
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion, credentialsId) {
