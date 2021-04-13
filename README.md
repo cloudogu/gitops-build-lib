@@ -7,7 +7,6 @@ working example bundled with the complete infrastructure for a gitops deep dive.
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-
 - [Use Case](#use-case)
 - [Features](#features)
 - [Examples](#examples)
@@ -15,13 +14,14 @@ working example bundled with the complete infrastructure for a gitops deep dive.
   - [More options](#more-options)
   - [Real life examples](#real-life-examples)
 - [Usage](#usage)
-- [Default Structure](#default-structure)
+- [Default Folder Structure](#default-folder-structure)
   - [FluxV1](#fluxv1)
     - [Plain-k8s](#plain-k8s)
     - [Helm](#helm)
   - [FluxV2](#fluxv2)
   - [ArgoCD](#argocd)
 - [GitOps-Config](#gitops-config)
+- [SCM-Provider](#scm-provider)
 - [Stages](#stages)
   - [Namespaces](#namespaces)
   - [Conventions for stages](#conventions-for-stages)
@@ -82,10 +82,12 @@ This will simply [validate](#validators) and deploy the resources from the sourc
 
 ```groovy
 def gitopsConfig = [
-    scmmCredentialsId : 'scmm-user',
-    scmmConfigRepoUrl : 'http://scmm-scm-manager/scm/repo/fluxv1/gitops',
-    scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm'',
-    scmmPullRequestRepo: 'fluxv1/gitops',
+    scm: [
+        provider:       'SCMManager',
+        credentialsId:  'scmm-user',
+        baseUrl:        'http://scmm-scm-manager/scm',
+        repositoryUrl:  'fluxv1/gitops'
+    ],
     application: 'spring-petclinic',
     stages: [
         staging: [ 
@@ -108,10 +110,12 @@ For production it will open a PR with the changes.
 
 ```groovy
 def gitopsConfig = [
-    scmmCredentialsId : 'scmm-user',
-    scmmConfigRepoUrl : 'http://scmm-scm-manager/scm/repo/fluxv1/gitops',
-    scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm'',
-    scmmPullRequestRepo: 'fluxv1/gitops',
+    scm: [
+        provider:       'SCMManager',
+        credentialsId:  'scmm-user',
+        baseUrl:        'http://scmm-scm-manager/scm',
+        repositoryUrl:  'fluxv1/gitops'
+    ],
     cesBuildLibRepo: <cesBuildLibRepo> /* Default: 'https://github.com/cloudogu/ces-build-lib' */ ,
     cesBuildLibVersion: <cesBuildLibVersion> /* Default: a recent cesBuildLibVersion see deployViaGitops.groovy */ ,
     cesBuildLibCredentialsId: <cesBuildLibCredentialsId> /* Default: '', empty due to default public github repo */,
@@ -253,10 +257,6 @@ You can find a complete yet simple example [here](#examples).
 First of all there are some mandatory properties e.g. the information about your gitops repository and the application repository.
 
 ```
-scmmCredentialsId:      'scmm-user', // ID of credentials defined in Jenkins used to authenticated with SCMM
-scmmConfigRepoUrl:      'http://scmm-scm-manager/scm/repo/fluxv1/gitops',        // this is your full gitops repo url e.g. 
-scmmPullRequestBaseUrl: 'http://scmm-scm-manager/scm',   // this is your gitops base url  
-scmmPullRequestRepo:    'fluxv1/gitops',     // this is the gitops repo     
 application:            'spring-petclinic' // Name of the application. Used as a folder in GitOps repo
 ```
 
@@ -276,17 +276,17 @@ The scm-section defines where your 'gitops-repository' resides (url, provider) a
 def gitopsConfig = [
     ...
     scm: [
-        provider:       'SCMManager',
-        credentialsId:  scmManagerCredentials,
-        baseUrl:        'http://scmm-scm-manager/scm',
-        repositoryUrl:  'fluxv1/gitops'
+        provider:       'SCMManager',   // This is the name of the scm-provider in use, for a list of supported providers watch below!
+        credentialsId:  'scmm-user',    // ID of credentials defined in Jenkins used to authenticated with SCMM
+        baseUrl:        'http://scmm-scm-manager/scm',  // this is your gitops base url 
+        repositoryUrl:  'fluxv1/gitops' // this is the gitops repo
     ],
     ...
 ]
 ```
 It currently supports the following scm-provider:
 
-- [SCM-Manager](https://www.scm-manager.org/)
+- [SCMManager](https://www.scm-manager.org/)
 
 To empower people to participate and encourage the integration of other scm-software (e.g. github), we decided to implement an abstraction for the
 scm-provider. By extending the SCM-Provider class you can integrate your own provider! Please feel free to contribute!
