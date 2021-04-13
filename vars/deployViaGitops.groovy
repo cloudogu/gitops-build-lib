@@ -111,32 +111,13 @@ def validateMandatoryFields(Map gitopsConfig) {
 }
 
 def validateDeploymentConfig(Map gitopsConfig) {
-    // switch based on the given tooling
-    switch (gitopsConfig.gitopsTool) {
-        case 'FLUX_V1':
-            validateDeploymentType(gitopsConfig)
-            break
-
-        case 'FLUX_V2':
-            validateDeploymentType(gitopsConfig)
-            break
-
-        case 'ARGO_CD':
-            validateDeploymentType(gitopsConfig)
-            break
-
-        default:
-            error 'Please provide a valid gitops-tool! The following ones are supported: \'FLUX_V1\', \'FLUX_V2\', \'ARGO_CD\'.'
-    }
-}
-
-// TODO: pass in gitops-tooling type and decide further different actions
-protected void validateDeploymentType(Map gitopsConfig) {
     if (gitopsConfig.deployments.containsKey('plain') && gitopsConfig.deployments.containsKey('helm')) {
         error 'Please choose between \'deployments.plain\' and \'deployments.helm\'. Setting both properties is not possible!'
     } else if (!gitopsConfig.deployments.containsKey('plain') && !gitopsConfig.deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
     }
+
+    // TODO: implement distinction between tools @ helm feature for argo
     if (gitopsConfig.deployments.containsKey('plain')) {
         deployment = new Plain(this, gitopsConfig)
     } else if (gitopsConfig.deployments.containsKey('helm')) {
