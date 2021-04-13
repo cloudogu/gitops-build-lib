@@ -184,7 +184,7 @@ protected void deploy(Map gitopsConfig) {
     try {
         dir(gitRepo.configRepoTempDir) {
 
-            git url: gitopsConfig.scm.repositoryUrl, branch: gitopsConfig.mainBranch, changelog: false, poll: false
+            git url: provider.getRepositoryUrl(), branch: gitopsConfig.mainBranch, changelog: false, poll: false
             git.fetch()
 
             changesOnGitOpsRepo = aggregateChangesOnGitOpsRepo(syncGitopsRepoPerStage(gitopsConfig, git, gitRepo))

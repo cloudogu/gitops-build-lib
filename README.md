@@ -268,6 +268,61 @@ mainBranch:         'main'
 ```
 ---
 
+## SCM-Provider
+
+The scm-section defines where your 'gitops-repository' resides (url, provider) and how to access it (credentials):
+
+```groovy
+def gitopsConfig = [
+    ...
+    scm: [
+        provider:       'SCMManager',
+        credentialsId:  scmManagerCredentials,
+        baseUrl:        'http://scmm-scm-manager/scm',
+        repositoryUrl:  'fluxv1/gitops'
+    ],
+    ...
+]
+```
+It currently supports the following scm-provider:
+
+- [SCM-Manager](https://www.scm-manager.org/)
+
+To empower people to participate and encourage the integration of other scm-software (e.g. github), we decided to implement an abstraction for the
+scm-provider. By extending the SCM-Provider class you can integrate your own provider! Please feel free to contribute!
+
+Example:
+
+```groovy
+import com.cloudogu.gitopsbuildlib.scm.SCMProvider
+
+class GitHub extends SCMProvider {
+    @Override
+    void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl }
+
+    @Override
+    void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl }
+
+    @Override
+    void setCredentials(String credentialsId) { this.credentials = credentialsId }
+
+    @Override
+    String getRepositoryUrl() { return "${this.baseUrl}/${repositoryUrl}"}
+
+    @Override
+    void createOrUpdatePullRequest(String stageBranch, String mainBranch, String title, String description) {
+        // TODO: this is a specific implementation for github
+        // 1. creating a pr on the given repo with the given details
+        // 2. update a pr on the given repo if it already exists
+        //
+        // Note: Credentials given are credentialsId from Jenkins!
+    }
+}
+
+```
+
+---
+
 ## Stages
 The GitOps-build-lib supports builds on multiple stages. A stage is defined by a name and contains a namespace (used to
 generate the resources) and a deployment-flag. If no stages is passed into the gitops-config by the user, the default

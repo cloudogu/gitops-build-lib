@@ -2,7 +2,6 @@ package com.cloudogu.gitopsbuildlib
 
 import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
-import com.cloudogu.gitopsbuildlib.scm.SCMManager
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
@@ -291,7 +290,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('fluxv1/gitops')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('http://scmm-scm-manager/scm/repo/fluxv1/gitops')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
@@ -332,7 +331,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('fluxv1/gitops')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('http://scmm-scm-manager/scm/repo/fluxv1/gitops')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 

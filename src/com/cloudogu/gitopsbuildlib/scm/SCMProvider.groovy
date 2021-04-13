@@ -2,13 +2,7 @@ package com.cloudogu.gitopsbuildlib.scm
 
 abstract class SCMProvider {
 
-    protected def script
-    protected String credentials = ''
-
-    // scm
-    protected String baseUrl = ''
-    protected String repositoryUrl = ''
-
+    protected script
 
     SCMProvider(def script) {
         this.script = script

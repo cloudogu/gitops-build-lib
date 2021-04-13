@@ -1,28 +1,31 @@
 package com.cloudogu.gitopsbuildlib.scm
 
 class SCMManager extends SCMProvider {
+    protected String credentials
+    protected String baseUrl
+    protected String repositoryUrl
+
 
     SCMManager(def script) {
         super(script)
     }
 
     @Override
-    void setBaseUrl(String baseUrl) { super.baseUrl = baseUrl }
+    void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl }
 
     @Override
-    void setRepositoryUrl(String repositoryUrl) { super.repositoryUrl = repositoryUrl }
+    void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl }
 
     @Override
-    void setCredentials(String credentialsId) { super.credentials = credentialsId }
+    void setCredentials(String credentialsId) { this.credentials = credentialsId }
 
     @Override
     String getRepositoryUrl() {
-        return "${super.baseUrl}/repo/${super.repositoryUrl}"
+        return "${this.baseUrl}/repo/${this.repositoryUrl}"
     }
 
     @Override
     void createOrUpdatePullRequest(String stageBranch, String mainBranch, String title, String description) {
-        def scmm = script.cesBuildLib.SCMManager.new(this, super.baseUrl, super.credentials)
-        scmm.createOrUpdatePullRequest(this.repositoryUrl, stageBranch, mainBranch, title, description)
+        script.cesBuildLib.SCMManager.new(script, this.baseUrl, this.credentials).createOrUpdatePullRequest(this.repositoryUrl, stageBranch, mainBranch, title, description)
     }
 }
