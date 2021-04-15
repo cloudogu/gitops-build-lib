@@ -13,7 +13,7 @@ String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
 
 List getMandatoryFields() {
     return [
-        'scm.provider', 'scm.baseUrl', 'scm.repositoryUrl', 'application', 'stages'
+        'scm.provider', 'scm.baseUrl', 'scm.repositoryUrl', 'application', 'stages', 'gitopsTool'
     ]
 }
 
@@ -144,6 +144,8 @@ def validateDeploymentConfig(Map gitopsConfig) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
         return false
     }
+
+    // TODO: implement distinction between tools @ helm feature for argo
     if (gitopsConfig.deployments.containsKey('plain')) {
         deployment = new Plain(this, gitopsConfig)
     } else if (gitopsConfig.deployments.containsKey('helm')) {
