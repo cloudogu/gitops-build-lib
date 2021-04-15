@@ -182,6 +182,10 @@ spec:
             echo "filepath is: ${args.file}, data is: ${args.data}, overwrite is: ${args.overwrite}"
         }
 
+//        deployViaGitops.metaClass.error = { String args ->
+//            echo "${args}"
+//        }
+
         when(git.commitHashShort).thenReturn('1234abcd')
     }
 
@@ -448,14 +452,15 @@ spec:
     void 'error on single missing mandatory field'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scm        : [
+            scm: [
                 baseUrl   : 'http://scmm-scm-manager/scm',
                 repositoryUrl: 'fluxv1/gitops',
             ],
-            gitopsTool            : 'FLUX_V1',
-            deployments           : [
+            application: 'app',
+            gitopsTool: 'FLUX_V1',
+            deployments: [
                 sourcePath: 'k8s',
-                plain     : [
+                plain: [
                     updateImages: [
                         [filename     : "deployment.yaml",
                          containerName: 'application',
@@ -463,7 +468,7 @@ spec:
                     ]
                 ]
             ],
-            stages     : [
+            stages: [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
                 qa        : []
@@ -485,7 +490,7 @@ spec:
 
         def gitopsConfigMissingMandatoryField = [
             scm        : [
-                provider  : 'SCMManager',
+                provider  : 'SCMManagerr',
                 baseUrl   : 'http://scmm-scm-manager/scm',
                 repositoryUrl: 'fluxv1/gitops',
             ],
@@ -513,7 +518,7 @@ spec:
         }
 
         assertThat(
-            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
+            helper.callStack.findAll { call -> println(call.methodName); call.methodName == "error" }.any { call ->
                 callArgsToString(call).contains("[application]")
             }).isTrue()
     }
@@ -543,13 +548,51 @@ spec:
     }
 
     @Test
+    void 'error on non available scm provider'() {
+
+        def gitopsConfigMissingMandatoryField = [
+            scm: [
+                provider: 'nonValid',
+                baseUrl   : 'http://scmm-scm-manager/scm',
+                repositoryUrl: 'fluxv1/gitops',
+            ],
+            application: 'app',
+            gitopsTool: 'FLUX_V1',
+            deployments: [
+                sourcePath: 'k8s',
+                plain: [
+                    updateImages: [
+                        [filename     : "deployment.yaml",
+                         containerName: 'application',
+                         imageName    : 'imageName']
+                    ]
+                ]
+            ],
+            stages: [
+                staging   : [deployDirectly: true],
+                production: [deployDirectly: false],
+                qa        : []
+            ]
+        ]
+
+        gitRepo.use {
+            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+        }
+
+        assertThat(
+            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
+                callArgsToString(call).contains("The given scm-provider seems to be invalid. Please choose one of the following: \'SCMManager\'.")
+            }).isTrue()
+    }
+
+    @Test
     void 'error on missing tooling'() {
         def gitopsConfigMissingTooling = [
-            scmmCredentialsId     : 'scmManagerCredentials',
-            scmmConfigRepoUrl     : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl: 'scmmPullRequestBaseUrl',
-            scmmPullRequestRepo   : 'scmmPullRequestRepo',
-            scmmPullRequestUrl    : 'configRepositoryPRUrl',
+            scm        : [
+                provider  : 'SCMManager',
+                baseUrl   : 'http://scmm-scm-manager/scm',
+                repositoryUrl: 'fluxv1/gitops',
+            ],
             application           : 'application',
             gitopsTool            : '',
             deployments           : [
