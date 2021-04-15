@@ -547,7 +547,7 @@ spec:
             scmmPullRequestRepo   : 'scmmPullRequestRepo',
             scmmPullRequestUrl    : 'configRepositoryPRUrl',
             application           : 'application',
-            gitopsTool            : 'FLUX_V1',
+            gitopsTool            : '',
             deployments           : [
                 sourcePath: 'k8s',
                 plain     : [
@@ -571,7 +571,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmPullRequestBaseUrl]")
+                callArgsToString(call).contains("[gitopsTool]")
             }).isTrue()
     }
 
