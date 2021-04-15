@@ -1,13 +1,8 @@
 package com.cloudogu.gitopsbuildlib.deployment.repotype
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
-import org.junit.Test
+import org.junit.jupiter.api.*
 
-import static org.assertj.core.api.Assertions.assertThat
-import static org.assertj.core.api.Assertions.assertThat
-import static org.assertj.core.api.Assertions.assertThat
-import static org.assertj.core.api.Assertions.assertThat
-import static org.assertj.core.api.Assertions.assertThat
 import static org.assertj.core.api.Assertions.assertThat
 
 class GitRepoTest {
@@ -26,9 +21,9 @@ class GitRepoTest {
             'file2'
         ] as String[])
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('git clone url workspace/chart || true')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f file1 -f file2 ]')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf workspace/chart || true')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f file1 -f file2 ]')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm -rf workspace/chart || true')
+        assertThat(scriptMock.actualGitArgs[0]).isEqualTo('[url:url, branch:main, changelog:false, poll:false]')
     }
 
     @Test

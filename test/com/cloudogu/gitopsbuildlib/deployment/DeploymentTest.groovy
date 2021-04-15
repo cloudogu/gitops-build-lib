@@ -4,7 +4,7 @@ import com.cloudogu.gitopsbuildlib.ScriptMock
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
-import org.junit.Test
+import org.junit.jupiter.api.*
 import static org.assertj.core.api.Assertions.assertThat
 
 class DeploymentTest {
