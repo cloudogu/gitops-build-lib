@@ -452,7 +452,6 @@ spec:
                 baseUrl   : 'http://scmm-scm-manager/scm',
                 repositoryUrl: 'fluxv1/gitops',
             ],
-            deployments: [
             gitopsTool            : 'FLUX_V1',
             deployments           : [
                 sourcePath: 'k8s',
