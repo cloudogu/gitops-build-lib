@@ -11,7 +11,7 @@ String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
 
 List getMandatoryFields() {
     return [
-        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestBaseUrl', 'scmmPullRequestRepo', 'application', 'stages'
+        'scmmCredentialsId', 'scmmConfigRepoUrl', 'scmmPullRequestBaseUrl', 'scmmPullRequestRepo', 'application', 'stages', 'gitopsTool'
     ]
 }
 
@@ -116,12 +116,13 @@ def validateDeploymentConfig(Map gitopsConfig) {
     } else if (!gitopsConfig.deployments.containsKey('plain') && !gitopsConfig.deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
     }
+
+    // TODO: implement distinction between tools @ helm feature for argo
     if (gitopsConfig.deployments.containsKey('plain')) {
         deployment = new Plain(this, gitopsConfig)
     } else if (gitopsConfig.deployments.containsKey('helm')) {
         deployment = new Helm(this, gitopsConfig)
     }
-
 }
 
 protected initCesBuildLib(cesBuildLibRepo, cesBuildLibVersion, credentialsId) {
