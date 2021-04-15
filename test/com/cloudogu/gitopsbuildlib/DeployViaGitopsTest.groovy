@@ -2,8 +2,6 @@ package com.cloudogu.gitopsbuildlib
 
 import com.cloudogu.ces.cesbuildlib.DockerMock
 import com.cloudogu.ces.cesbuildlib.Git
-import com.cloudogu.ces.cesbuildlib.SCMManager
-
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
@@ -42,10 +40,12 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     Map gitopsConfig(Map stages, Map deployments) {
         return [
-            scmmCredentialsId       : 'scmManagerCredentials',
-            scmmConfigRepoUrl       : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl  : 'http://scmm-scm-manager/scm',
-            scmmPullRequestRepo     : 'fluxv1/gitops',
+            scm                     : [
+                provider     : 'SCMManager',
+                credentialsId: 'scmManagerCredentials',
+                baseUrl      : 'http://scmm-scm-manager/scm',
+                repositoryUrl   : 'fluxv1/gitops',
+            ],
             cesBuildLibRepo         : 'cesBuildLibRepo',
             cesBuildLibVersion      : 'cesBuildLibVersion',
             cesBuildLibCredentialsId: 'cesBuildLibCredentialsId',
@@ -114,7 +114,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
         cesBuildLibMock = new CesBuildLibMock()
         git = mock(Git.class)
         docker = new DockerMock().createMock()
-        scmm = mock(SCMManager.class)
+        scmm = mock(com.cloudogu.ces.cesbuildlib.SCMManager.class)
 
         cesBuildLibMock.Docker.new = {
             return docker
@@ -291,7 +291,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('configRepositoryUrl')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('http://scmm-scm-manager/scm/repo/fluxv1/gitops')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
@@ -332,7 +332,7 @@ spec:
 
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class)
         verify(git).call(argumentCaptor.capture())
-        assertThat(argumentCaptor.getValue().url).isEqualTo('configRepositoryUrl')
+        assertThat(argumentCaptor.getValue().url).isEqualTo('http://scmm-scm-manager/scm/repo/fluxv1/gitops')
         assertThat(argumentCaptor.getValue().branch).isEqualTo('main')
         verify(git, times(1)).fetch()
 
@@ -448,10 +448,10 @@ spec:
     void 'error on single missing mandatory field'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmConfigRepoUrl     : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl: 'configRepositoryPRBaseUrl',
-            scmmPullRequestRepo   : 'scmmPullRequestRepo',
-            application           : 'application',
+            scm        : [
+                baseUrl   : 'http://scmm-scm-manager/scm',
+                repositoryUrl: 'fluxv1/gitops',
+            ],
             gitopsTool            : 'FLUX_V1',
             deployments           : [
                 sourcePath: 'k8s',
@@ -463,7 +463,7 @@ spec:
                     ]
                 ]
             ],
-            stages                : [
+            stages     : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
                 qa        : []
@@ -476,7 +476,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmCredentialsId]")
+                callArgsToString(call).contains("[scm.provider]")
             }).isTrue()
     }
 
@@ -484,12 +484,12 @@ spec:
     void 'error on single non valid mandatory field'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmCredentialsId     : 'scmManagerCredentials',
-            scmmConfigRepoUrl     : 'configRepositoryUrl',
-            scmmPullRequestBaseUrl: '',
-            scmmPullRequestRepo   : 'scmmPullRequestRepo',
-            scmmPullRequestUrl    : 'configRepositoryPRUrl',
-            application           : 'application',
+            scm        : [
+                provider  : 'SCMManager',
+                baseUrl   : 'http://scmm-scm-manager/scm',
+                repositoryUrl: 'fluxv1/gitops',
+            ],
+            application           : '',
             gitopsTool            : 'FLUX_V1',
             deployments           : [
                 sourcePath: 'k8s',
@@ -501,7 +501,7 @@ spec:
                     ]
                 ]
             ],
-            stages                : [
+            stages     : [
                 staging   : [deployDirectly: true],
                 production: [deployDirectly: false],
                 qa        : []
@@ -514,7 +514,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmPullRequestBaseUrl]")
+                callArgsToString(call).contains("[application]")
             }).isTrue()
     }
 
@@ -522,8 +522,12 @@ spec:
     void 'error on missing or non valid values on mandatory fields'() {
 
         def gitopsConfigMissingMandatoryField = [
-            scmmPullRequestBaseUrl: null,
-            application           : '',
+            scm        : [
+                credentialsId: 'scmManagerCredentials',
+                baseUrl      : 'http://scmm-scm-manager/scm',
+                repositoryUrl   : '',
+            ],
+            application: '',
             gitopsTool            : 'FLUX_V1',
             stages                : []
         ]
@@ -534,7 +538,7 @@ spec:
 
         assertThat(
             helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scmmCredentialsId, scmmConfigRepoUrl, scmmPullRequestBaseUrl, scmmPullRequestRepo, application, stages]")
+                callArgsToString(call).contains("[scm.provider, scm.repositoryUrl, application, stages]")
             }).isTrue()
     }
 

@@ -12,6 +12,7 @@ class ScriptMock {
     List<String> actualShArgs = new LinkedList<>()
     List<String> actualEchoArgs = new LinkedList<>()
     List<String> actualReadYamlArgs = new LinkedList<>()
+    List<String> actualGitArgs = new LinkedList<>()
     String actualDir
     def configYaml = '''\
 ---
@@ -43,7 +44,7 @@ to:
                     ],
                 ],
             docker: dockerMock.createMock(),
-            git: gitMock.createMock(),
+            git: { args -> actualGitArgs += args.toString() },
             pwd   : { 'pwd' },
             sh    : { args -> actualShArgs += args.toString() },
             echo  : { args -> actualEchoArgs += args.toString() },

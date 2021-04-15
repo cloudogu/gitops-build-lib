@@ -1,7 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment.repotype
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
-import org.junit.Test
+import org.junit.jupiter.api.*
 import static org.assertj.core.api.Assertions.assertThat
 
 class HelmRepoTest {

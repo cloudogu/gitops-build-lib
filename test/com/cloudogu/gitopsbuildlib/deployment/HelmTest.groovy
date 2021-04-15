@@ -1,7 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
-import org.junit.Test
+import org.junit.jupiter.api.*
 
 import static org.assertj.core.api.Assertions.assertThat
 
@@ -66,14 +66,11 @@ class HelmTest {
         helmGit.createPreValidation('staging')
 
         assertThat(dockerMock.actualImages[0]).isEqualTo('ghcr.io/cloudogu/helm:3.4.1-1')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('git clone repoUrl workspace/chart || true')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf workspace/chart || true')
-        assertThat(scriptMock.actualShArgs[3]).isEqualTo('rm staging/testapp/mergedValues.yaml')
-        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, ' +
-            'text:[git clone repoUrl workspace/chart || true, ' +
-            '[returnStdout:true, ' +
-            'script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm -rf workspace/chart || true')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm staging/testapp/mergedValues.yaml')
+        assertThat(scriptMock.actualGitArgs[0]).isEqualTo('[url:repoUrl, branch:main, changelog:false, poll:false]')
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
         assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('[file:staging/testapp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1\n' +
             'kind: HelmRelease\n' +
             'metadata:\n' +
