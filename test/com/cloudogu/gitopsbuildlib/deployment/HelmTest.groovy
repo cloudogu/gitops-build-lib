@@ -12,6 +12,7 @@ class HelmTest {
     def dockerMock = scriptMock.dockerMock
     def helmGit = new Helm(scriptMock.mock, [
         application: 'testapp',
+        gitopsTool: 'FLUX',
         stages: [
             staging: [
                 namespace: 'fluxv1-staging'
@@ -37,6 +38,7 @@ class HelmTest {
     ])
     def helmHelm = new Helm(scriptMock.mock, [
         application: 'testapp',
+        gitopsTool: 'FLUX',
         stages: [
             staging: [
                 namespace: 'fluxv1-staging'
@@ -66,7 +68,7 @@ class HelmTest {
     void 'creating helm release with git repo'() {
         helmGit.createPreValidation('staging')
 
-        assertThat(dockerMock.actualImages[0]).isEqualTo('ghcr.io/cloudogu/helm:3.4.1-1')
+        assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm -rf workspace/chart || true')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm staging/testapp/mergedValues.yaml')
@@ -105,7 +107,7 @@ class HelmTest {
     void 'creating helm release with helm repo'() {
         helmHelm.createPreValidation('staging')
 
-        assertThat(dockerMock.actualImages[0]).isEqualTo('ghcr.io/cloudogu/helm:3.4.1-1')
+        assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo repoUrl')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/chart')
