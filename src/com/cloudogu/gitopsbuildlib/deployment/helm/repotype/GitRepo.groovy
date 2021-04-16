@@ -14,7 +14,7 @@ class GitRepo extends RepoType {
             _files += "-f $it "
         }
 
-        def myGit = script.cesBuildLib.Git.new(this, helmConfig.credentialsId)
+        def myGit = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)
 
         script.dir("${script.env.WORKSPACE}/chart") {
             if (helmConfig.containsKey('credentialsId')) {

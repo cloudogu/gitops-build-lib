@@ -11,22 +11,23 @@ class ArgoCDGitRepoRelease extends HelmRelease{
     @Override
     String create(Map helmConfig, String application, String namespace, String valuesFile) {
         def credentialsId = helmConfig.credentialsId
-        def myGit = script.cesBuildLib.Git.new(this, credentialsId)
+        def myGit = script.cesBuildLib.Git.new(script, credentialsId)
 
         script.dir("${script.env.WORKSPACE}/helmChart") {
-            script.git credentialsId: credentialsId, url: helmConfig.helmChartRepository, branch: 'main', changelog: false, poll: false
+            script.git credentialsId: credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
             if(helmConfig.containsKey('version') && helmConfig.version) {
                 myGit.fetch()
                 myGit.checkout(helmConfig.version)
             }
         }
 
+        String valusFileLocation = "${script.env.WORKSPACE}/.configRepoTempDir/${valuesFile}"
         String helmRelease = ""
 
         withHelm {
             script.dir("${script.env.WORKSPACE}/helmChart") {
                 script.sh "helm dep update ."
-                String templateScript = "helm template ${application} . -f ${valuesFile}"
+                String templateScript = "helm template ${application} . -f ${valusFileLocation}"
                 helmRelease = script.sh returnStdout: true, script: templateScript
             }
         }
