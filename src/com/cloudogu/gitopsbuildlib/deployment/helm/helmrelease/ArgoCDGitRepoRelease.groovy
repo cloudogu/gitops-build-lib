@@ -21,13 +21,13 @@ class ArgoCDGitRepoRelease extends HelmRelease{
             }
         }
 
-        String valusFileLocation = "${script.env.WORKSPACE}/.configRepoTempDir/${valuesFile}"
+        String valuesFileLocation = "${script.env.WORKSPACE}/.configRepoTempDir/${valuesFile}"
         String helmRelease = ""
 
         withHelm {
             script.dir("${script.env.WORKSPACE}/helmChart") {
                 script.sh "helm dep update ."
-                String templateScript = "helm template ${application} . -f ${valusFileLocation}"
+                String templateScript = "helm template ${application} . -f ${valuesFileLocation}"
                 helmRelease = script.sh returnStdout: true, script: templateScript
             }
         }
