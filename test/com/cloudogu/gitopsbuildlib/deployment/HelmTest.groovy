@@ -1,6 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
+import com.cloudogu.gitopsbuildlib.deployment.helm.Helm
 import org.junit.jupiter.api.*
 
 import static org.assertj.core.api.Assertions.assertThat

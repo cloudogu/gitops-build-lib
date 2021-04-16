@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib.deployment.repotype
+package com.cloudogu.gitopsbuildlib.deployment.helm.repotype
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
 import org.junit.jupiter.api.*

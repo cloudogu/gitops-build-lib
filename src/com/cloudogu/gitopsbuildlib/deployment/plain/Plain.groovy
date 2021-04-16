@@ -1,4 +1,6 @@
-package com.cloudogu.gitopsbuildlib.deployment
+package com.cloudogu.gitopsbuildlib.deployment.plain
+
+import com.cloudogu.gitopsbuildlib.deployment.Deployment
 
 class Plain extends Deployment{
 

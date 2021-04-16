@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib.deployment.repotype
+package com.cloudogu.gitopsbuildlib.deployment.helm.repotype
 
 class GitRepo extends RepoType {
 
@@ -14,11 +14,17 @@ class GitRepo extends RepoType {
             _files += "-f $it "
         }
 
+        def myGit = script.cesBuildLib.Git.new(this, helmConfig.credentialsId)
+
         script.dir("${script.env.WORKSPACE}/chart") {
             if (helmConfig.containsKey('credentialsId')) {
                 script.git credentialsId: helmConfig.credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+                myGit.fetch()
+                myGit.checkout(helmConfig.version)
             } else {
                 script.git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+                myGit.fetch()
+                myGit.checkout(helmConfig.version)
             }
         }
 
@@ -35,26 +41,5 @@ class GitRepo extends RepoType {
         script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
 
         return merge
-    }
-
-    @Override
-    String createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
-        def values = fileToInlineYaml(valuesFile)
-        return """apiVersion: helm.fluxcd.io/v1
-kind: HelmRelease
-metadata:
-  name: ${application}
-  namespace: ${namespace}
-  annotations:
-    fluxcd.io/automated: "false"
-spec:
-  releaseName: ${application}
-  chart:
-    git: ${helmConfig.repoUrl}
-    ref: ${helmConfig.version}
-    path: .
-  values:
-${values}
-"""
     }
 }

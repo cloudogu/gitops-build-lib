@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib.deployment.repotype
+package com.cloudogu.gitopsbuildlib.deployment.helm.repotype
 
 class HelmRepo extends RepoType{
 
@@ -25,27 +25,5 @@ class HelmRepo extends RepoType{
         script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
 
         return merge
-    }
-
-
-    @Override
-    String createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
-        def values = fileToInlineYaml(valuesFile)
-        return """apiVersion: helm.fluxcd.io/v1
-kind: HelmRelease
-metadata:
-  name: ${application}
-  namespace: ${namespace}
-  annotations:
-    fluxcd.io/automated: "false"
-spec:
-  releaseName: ${application}
-  chart:
-    repository: ${helmConfig.repoUrl}
-    name: ${helmConfig.chartName}
-    version: ${helmConfig.version}
-  values:
-${values}
-"""
     }
 }
