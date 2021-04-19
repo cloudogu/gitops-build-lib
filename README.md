@@ -15,11 +15,8 @@ working example bundled with the complete infrastructure for a gitops deep dive.
   - [Real life examples](#real-life-examples)
 - [Usage](#usage)
 - [Default Folder Structure](#default-folder-structure)
-  - [FluxV1](#fluxv1)
-    - [Plain-k8s](#plain-k8s)
-    - [Helm](#helm)
-  - [FluxV2](#fluxv2)
-  - [ArgoCD](#argocd)
+  - [Plain-k8s](#plain-k8s)
+  - [Helm](#helm)
 - [GitOps-Config](#gitops-config)
 - [SCM-Provider](#scm-provider)
 - [Stages](#stages)
@@ -120,6 +117,7 @@ def gitopsConfig = [
     cesBuildLibVersion: <cesBuildLibVersion> /* Default: a recent cesBuildLibVersion see deployViaGitops.groovy */ ,
     cesBuildLibCredentialsId: <cesBuildLibCredentialsId> /* Default: '', empty due to default public github repo */,
     application: 'spring-petclinic',
+    gitopsTool: 'FLUX'
     mainBranch: 'master' /* Default: 'main' */, 
     deployments: [
         sourcePath: 'k8s' /* Default: 'k8s' */,
@@ -157,9 +155,14 @@ deployViaGitops(gitopsConfig)
 ### Real life examples
 
 **FluxV1:**
-* [using petclinic  with helm](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/helm/Jenkinsfile)
-* [using petclinic with plain-k8s](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile)
-* [using helm with nginx and extra resources](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/nginx/fluxv1/Jenkinsfile)
+* [using petclinic  with helm and extra k8s-resources and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/helm/Jenkinsfile)
+* [using petclinic with plain-k8s and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/fluxv1/plain-k8s/Jenkinsfile)
+* [using nginx with helm and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/nginx/fluxv1/Jenkinsfile)
+
+**ArgoCD:**
+* [using petclinic with helm and extra k8s-resources and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/argocd/helm/Jenkinsfile)
+* [using petclinic with plain-k8s](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/argocd/plain-k8s/Jenkinsfile)
+
 
 ---
 
@@ -201,9 +204,7 @@ A default project structure in your application repo could look like the example
 and/or helm resources bundled in a folder. This specific resources folder (here `k8s`) will later be specified by the 
 `sourcePath` within the deployments section of your `gitopsConfig`.
 
-### FluxV1
-
-#### Plain-k8s
+### Plain-k8s
 ```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
@@ -217,7 +218,7 @@ and/or helm resources bundled in a folder. This specific resources folder (here 
             └── service.yaml
 ```
 
-#### Helm
+### Helm
 ```
 ├── application
     ├── config.yamllint.yaml // not necessarily needed
@@ -238,14 +239,6 @@ and/or helm resources bundled in a folder. This specific resources folder (here 
         └── values-staging.yaml
 ```
 
-### FluxV2
-
-Upcoming
-
-### ArgoCD
-
-Upcoming
-
 ---
 
 ## GitOps-Config
@@ -254,10 +247,14 @@ You can find a complete yet simple example [here](#examples).
 
 **Properties**
 
-First of all there are some mandatory properties e.g. the information about your gitops repository and the application repository.
+First of all there are some mandatory properties e.g. the information about your gitops repository, the application repository and the gitops tool to be used.
 
 ```
 application:            'spring-petclinic' // Name of the application. Used as a folder in GitOps repo
+```
+
+```
+gitopsTool:            'ARGO' // Name of the gitops tool. Currently supporting 'FLUX' (for now only fluxV1) and 'ARGO' (for now supporting only helm charts from git repos)
 ```
 
 and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:

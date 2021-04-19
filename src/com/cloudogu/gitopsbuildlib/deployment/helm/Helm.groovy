@@ -22,7 +22,7 @@ class Helm extends Deployment {
         }
         if(gitopsConfig.gitopsTool == 'FLUX') {
             helmRelease = new FluxV1Release(script)
-        } else if(gitopsConfig.gitopsTool == 'ARGO_CD') {
+        } else if(gitopsConfig.gitopsTool == 'ARGO') {
             helmRelease = new ArgoCDRelease(script)
         }
     }
