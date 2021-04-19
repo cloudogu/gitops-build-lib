@@ -9,11 +9,11 @@ class Plain extends Deployment{
     }
 
     @Override
-    def createPreValidation(String stage) {
+    def preValidation(String stage) {
     }
 
     @Override
-    def createPostValidation(String stage) {
+    def postValidation(String stage) {
         updateImage(stage)
     }
 

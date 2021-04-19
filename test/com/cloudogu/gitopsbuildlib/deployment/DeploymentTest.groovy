@@ -106,12 +106,12 @@ class DeploymentTest {
         }
 
         @Override
-        def createPreValidation(String stage) {
+        def preValidation(String stage) {
             return null
         }
 
         @Override
-        def createPostValidation(String stage) {
+        def postValidation(String stage) {
             return null
         }
     }

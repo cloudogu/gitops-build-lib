@@ -26,7 +26,7 @@ class PlainTest {
     @Test
     void 'successful update'() {
 
-        plain.createPostValidation('staging')
+        plain.postValidation('staging')
         assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/testApp/k8s/deployment.yaml]')
         assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/testApp/k8s/deployment.yaml, data:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]], to:[be:[changed:oldValue]]], overwrite:true]')
 

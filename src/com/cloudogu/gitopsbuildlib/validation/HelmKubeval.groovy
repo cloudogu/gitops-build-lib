@@ -15,7 +15,10 @@ class HelmKubeval extends Validator {
                         ? script.cesBuildLib.Git.new(script, deployments.helm.credentialsId)
                         : script.cesBuildLib.Git.new(script)
                     git url: deployments.helm.repoUrl, branch: 'main', changelog: false, poll: false
-                    git.checkout(deployments.helm.version)
+
+                    if(deployments.helm.containsKey('version') && deployments.helm.version) {
+                        git.checkout(deployments.helm.version)
+                    }
                 }
 
                 def chartPath = ''
@@ -24,6 +27,7 @@ class HelmKubeval extends Validator {
                 }
 
                 withDockerImage(config.image) {
+                    script.sh "helm dep update ${targetDirectory}/chart/${chartPath}"
                     script.sh "helm kubeval ${targetDirectory}/chart/${chartPath} -v ${config.k8sSchemaVersion}"
                 }
 

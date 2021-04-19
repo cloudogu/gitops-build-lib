@@ -67,7 +67,7 @@ class HelmTest {
 
     @Test
     void 'creating helm release with git repo'() {
-        helmGit.createPreValidation('staging')
+        helmGit.preValidation('staging')
 
         assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
@@ -106,7 +106,7 @@ class HelmTest {
 
     @Test
     void 'creating helm release with helm repo'() {
-        helmHelm.createPreValidation('staging')
+        helmHelm.preValidation('staging')
 
         assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo repoUrl')

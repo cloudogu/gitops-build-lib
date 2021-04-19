@@ -28,7 +28,7 @@ class Helm extends Deployment {
     }
 
     @Override
-    def createPreValidation(String stage) {
+    def preValidation(String stage) {
         def helmConfig = gitopsConfig.deployments.helm
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath
@@ -50,7 +50,7 @@ class Helm extends Deployment {
     }
 
     @Override
-    def createPostValidation(String stage) {
+    def postValidation(String stage) {
     }
 
     private void updateYamlValue(String yamlFilePath, Map helmConfig) {

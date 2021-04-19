@@ -17,13 +17,13 @@ abstract class Deployment {
     def create(String stage) {
         createFoldersAndCopyK8sResources(stage)
         createFileConfigmaps(stage)
-        createPreValidation(stage)
+        preValidation(stage)
         validate(stage)
-        createPostValidation(stage)
+        postValidation(stage)
     }
 
-    abstract createPreValidation(String stage)
-    abstract createPostValidation(String stage)
+    abstract preValidation(String stage)
+    abstract postValidation(String stage)
 
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
