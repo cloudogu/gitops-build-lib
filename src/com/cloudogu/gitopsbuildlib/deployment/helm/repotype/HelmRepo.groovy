@@ -7,18 +7,14 @@ class HelmRepo extends RepoType{
     }
 
     @Override
-    String mergeValues(Map helmConfig, String[] files) {
+    String mergeValues(Map helmConfig, String[] valuesFiles) {
         String merge = ""
-        String _files = ""
-        files.each {
-            _files += "-f $it "
-        }
 
         withHelm {
             script.sh "helm repo add chartRepo ${helmConfig.repoUrl}"
             script.sh "helm repo update"
             script.sh "helm pull chartRepo/${helmConfig.chartName} --version=${helmConfig.version} --untar --untardir=${script.env.WORKSPACE}/chart"
-            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${helmConfig.chartName} ${_files}"
+            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${helmConfig.chartName} ${valuesFilesWithParameter(valuesFiles)}"
             merge = script.sh returnStdout: true, script: helmScript
         }
 

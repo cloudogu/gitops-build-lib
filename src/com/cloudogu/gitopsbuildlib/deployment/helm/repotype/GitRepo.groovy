@@ -7,26 +7,10 @@ class GitRepo extends RepoType {
     }
 
     @Override
-    String mergeValues(Map helmConfig, String[] files) {
+    String mergeValues(Map helmConfig, String[] valuesFiles) {
         String merge = ""
-        String _files = ""
-        files.each {
-            _files += "-f $it "
-        }
 
-        def myGit = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)
-
-        script.dir("${script.env.WORKSPACE}/chart") {
-            if (helmConfig.containsKey('credentialsId')) {
-                script.git credentialsId: helmConfig.credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
-                myGit.fetch()
-                myGit.checkout(helmConfig.version)
-            } else {
-                script.git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
-                myGit.fetch()
-                myGit.checkout(helmConfig.version)
-            }
-        }
+        prepareGitRepo(helmConfig)
 
         def chartPath = ''
         if (helmConfig.containsKey('chartPath')) {
@@ -34,12 +18,28 @@ class GitRepo extends RepoType {
         }
 
         withHelm {
-            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${chartPath} ${_files}"
+            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${chartPath} ${valuesFilesWithParameter(valuesFiles)}"
             merge = script.sh returnStdout: true, script: helmScript
         }
 
-        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
-
         return merge
+    }
+
+    private prepareGitRepo(Map helmConfig) {
+        def myGit
+
+        script.dir("${script.env.WORKSPACE}/chart") {
+            if (helmConfig.containsKey('credentialsId')) {
+                script.git credentialsId: helmConfig.credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+                myGit = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)
+            } else {
+                script.git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+                myGit = script.cesBuildLib.Git.new(script)
+            }
+            if(helmConfig.containsKey('version') && helmConfig.version) {
+                myGit.fetch()
+                myGit.checkout(helmConfig.version)
+            }
+        }
     }
 }

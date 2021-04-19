@@ -19,4 +19,12 @@ abstract class RepoType {
             body()
         }
     }
+
+    protected String valuesFilesWithParameter(String[] valuesFiles) {
+        String valuesFilesWithParameter = ""
+        valuesFiles.each {
+            valuesFilesWithParameter += "-f $it "
+        }
+        return valuesFilesWithParameter
+    }
 }
