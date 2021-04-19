@@ -37,7 +37,7 @@ class ArgoCDRelease extends HelmRelease{
             }
         }
         // this line removes all empty lines since helm template creates some and the helm validator will throw an error if there are emtpy lines present
-        helmRelease.replaceAll("(?m)^[ \t]*\r?\n", "")
+        helmRelease = helmRelease.replaceAll("(?m)^[ \t]*\r?\n", "")
         return helmRelease
     }
 

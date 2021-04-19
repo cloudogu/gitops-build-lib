@@ -29,6 +29,7 @@ class GitRepo extends RepoType {
         def myGit
 
         script.dir("${script.env.WORKSPACE}/chart") {
+
             if (helmConfig.containsKey('credentialsId')) {
                 script.git credentialsId: helmConfig.credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
                 myGit = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)

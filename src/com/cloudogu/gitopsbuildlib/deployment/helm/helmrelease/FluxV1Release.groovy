@@ -19,7 +19,7 @@ metadata:
     fluxcd.io/automated: "false"
 spec:
   releaseName: ${application}
-  chart: ${chart}
+  chart:${chart}
   values:
 ${values}
 """
@@ -29,16 +29,14 @@ ${values}
         return """
     git: ${helmConfig.repoUrl}
     ref: ${helmConfig.version}
-    path: .
-"""
+    path: ."""
     }
 
     private String helmRepoChart(Map helmConfig) {
         return """
     repository: ${helmConfig.repoUrl}
     name: ${helmConfig.chartName}
-    version: ${helmConfig.version}
-"""
+    version: ${helmConfig.version}"""
     }
 
     private String getChart(Map helmConfig) {

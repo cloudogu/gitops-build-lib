@@ -13,7 +13,7 @@ class ScriptMock {
     List<String> actualEchoArgs = new LinkedList<>()
     List<String> actualReadYamlArgs = new LinkedList<>()
     List<String> actualGitArgs = new LinkedList<>()
-    String actualDir
+    List<String> actualDir = new LinkedList<>()
     def configYaml = '''\
 ---
 #this part is only for PlainTest regarding updating the image name
@@ -39,8 +39,9 @@ to:
                     new: { args -> return dockerMock.createMock() }
                     ],
                 Git: [
-                    new: { args, creds -> return gitMock.createMock() },
-                    checkout: { 'checkout' }
+                    new: { args -> return gitMock.createMock() },
+                    fetch: { gitMock.setFetch() },
+                    checkout: { args -> gitMock.actualCheckoutArgs(args) }
                     ],
                 ],
             docker: dockerMock.createMock(),
@@ -55,6 +56,6 @@ to:
             env   : [
                 WORKSPACE: 'workspace'
             ],
-            dir: { dir, closure -> actualDir = dir; return closure.call() }
+            dir: { dir, closure -> println(dir); actualDir += dir.toString(); return closure.call() }
         ]
 }

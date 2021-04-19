@@ -25,7 +25,6 @@ class HelmKubevalTest {
                     repoType: 'GIT',
                     repoUrl: 'chartRepo/namespace/repoPath',
                     chartPath: 'chartPath',
-                    credentialsId: 'creds',
                     version: 'version'
                 ]
             ]
