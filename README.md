@@ -86,6 +86,7 @@ def gitopsConfig = [
         repositoryUrl:  'fluxv1/gitops'
     ],
     application: 'spring-petclinic',
+    gitopsTool: 'FLUX',
     stages: [
         staging: [ 
             deployDirectly: true
