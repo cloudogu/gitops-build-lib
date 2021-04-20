@@ -42,7 +42,7 @@ class ArgoCDReleaseTest {
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update .')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valuesfile]')
-        assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/chartName')
+        assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/')
     }
 
     @Test

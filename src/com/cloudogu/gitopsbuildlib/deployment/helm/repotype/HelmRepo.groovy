@@ -8,20 +8,28 @@ class HelmRepo extends RepoType{
 
     @Override
     String mergeValues(Map helmConfig, String[] valuesFiles) {
-        String merge = ""
 
         if (helmConfig.containsKey('credentialsId') && helmConfig.credentialsId) {
-            withCredentials([usernamePassword(credentialsId: helmConfig.credentialsId, usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                mergeValuesFiles()
+            println "creds exist"
+            script.withCredentials([
+                script.usernamePassword(
+                    credentialsId: helmConfig.credentialsId,
+                    usernameVariable: 'USERNAME',
+                    passwordVariable: 'PASSWORD')
+            ]) {
+                String credentialArgs = " --username ${script.USERNAME} --password ${script.PASSWORD}"
+                return mergeValuesFiles(helmConfig, valuesFiles, credentialArgs)
             }
         } else {
-            mergeValuesFiles()
+            return mergeValuesFiles(helmConfig, valuesFiles)
         }
+    }
+
+    private String mergeValuesFiles(Map helmConfig, String[] valuesFiles, String credentialArgs = "") {
+        String merge = ""
 
         withHelm {
-            script.sh "echo \"$USERNAME\""
-            script.sh "echo \"$Password\""
-            script.sh "helm repo add chartRepo ${helmConfig.repoUrl}"
+            script.sh "helm repo add chartRepo ${helmConfig.repoUrl}${credentialArgs}"
             script.sh "helm repo update"
             script.sh "helm pull chartRepo/${helmConfig.chartName} --version=${helmConfig.version} --untar --untardir=${script.env.WORKSPACE}/chart"
             String helmScript = "helm values ${script.env.WORKSPACE}/chart/${helmConfig.chartName} ${valuesFilesWithParameter(valuesFiles)}"

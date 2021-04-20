@@ -24,6 +24,5 @@ class HelmRepoTest {
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/chart')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartName -f file1 -f file2 ]')
-        assertThat(scriptMock.actualShArgs[4]).isEqualTo('rm -rf workspace/chart || true')
     }
 }
