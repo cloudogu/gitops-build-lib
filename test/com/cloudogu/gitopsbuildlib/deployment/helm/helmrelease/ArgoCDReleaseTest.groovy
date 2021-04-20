@@ -21,10 +21,10 @@ class ArgoCDReleaseTest {
         ],
             'app',
             'namespace',
-            'this/is/a/valusfile')
+            'this/is/a/valuesfile')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update .')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valusfile]')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valuesfile]')
         assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/path')
     }
 
@@ -38,10 +38,27 @@ class ArgoCDReleaseTest {
         ],
             'app',
             'namespace',
-            'this/is/a/valusfile')
+            'this/is/a/valuesfile')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update .')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valusfile]')
-        assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valuesfile]')
+        assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/chartName')
+    }
+
+    @Test
+    void 'correct helm release with helm repo'() {
+        argoCdReleaseTest.create([
+            repoType: 'HELM',
+            repoUrl: 'url',
+            chartName: 'chartName',
+            version: '1.0'
+        ],
+            'app',
+            'namespace',
+            'this/is/a/valuesfile')
+
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update .')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valuesfile]')
+        assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/chartName')
     }
 }

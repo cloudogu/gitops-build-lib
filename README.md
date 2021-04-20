@@ -255,7 +255,7 @@ application:            'spring-petclinic' // Name of the application. Used as a
 ```
 
 ```
-gitopsTool:            'ARGO' // Name of the gitops tool. Currently supporting 'FLUX' (for now only fluxV1) and 'ARGO' (for now supporting only helm charts from git repos)
+gitopsTool:            'ARGO' // Name of the gitops tool. Currently supporting 'FLUX' (for now only fluxV1) and 'ARGO'
 ```
 
 and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:

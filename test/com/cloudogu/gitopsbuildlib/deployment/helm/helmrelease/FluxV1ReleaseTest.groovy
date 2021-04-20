@@ -20,7 +20,7 @@ class FluxV1ReleaseTest {
         ],
         'app',
         'namespace',
-        'this/is/a/valusfile')
+        'this/is/a/valuesfile')
 
         assertThat(output).isEqualTo("""apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
@@ -61,7 +61,7 @@ spec:
         ],
             'app',
             'namespace',
-            'this/is/a/valusfile')
+            'this/is/a/valuesfile')
 
         assertThat(output).isEqualTo("""apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
