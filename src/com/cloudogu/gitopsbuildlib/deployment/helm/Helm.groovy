@@ -43,10 +43,8 @@ class Helm extends Deployment {
 
         // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
         script.sh "rm ${stage}/${application}/mergedValues.yaml"
-        // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
-        if (helmConfig.repoType == 'GIT') {
-            script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
-        }
+        // clean the helm chart folder since the helmRelease.yaml ist now created
+        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
     }
 
     @Override

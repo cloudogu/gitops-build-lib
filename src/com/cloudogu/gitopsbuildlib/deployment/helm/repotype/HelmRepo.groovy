@@ -18,8 +18,6 @@ class HelmRepo extends RepoType{
             merge = script.sh returnStdout: true, script: helmScript
         }
 
-        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
-
         return merge
     }
 }

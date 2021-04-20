@@ -16,19 +16,27 @@ class ArgoCDRelease extends HelmRelease{
         if (helmConfig.repoType == 'GIT') {
             helmRelease = gitRepoRelease(helmConfig, application, valuesFileLocation)
         } else if (helmConfig.repoType == 'HELM') {
-            // TODO not yet implemented
+            helmRelease = helmRepoRelease(helmConfig, application, valuesFileLocation)
         }
         return helmRelease
     }
 
     private String gitRepoRelease(Map helmConfig, String application, String valuesFileLocation) {
-        String helmRelease = ""
 
         def chartPath = ''
         if (helmConfig.containsKey('chartPath')) {
             chartPath = helmConfig.chartPath
         }
 
+        return createHelmRelease(chartPath as String, application, valuesFileLocation)
+    }
+
+    private String helmRepoRelease(Map helmConfig, String application, String valuesFileLocation) {
+        return createHelmRelease(helmConfig.chartName as String, application, valuesFileLocation)
+    }
+
+    private String createHelmRelease(String chartPath, String application, String valuesFileLocation) {
+        String helmRelease = ""
         withHelm {
             script.dir("${script.env.WORKSPACE}/chart/${chartPath}") {
                 script.sh "helm dep update ."
