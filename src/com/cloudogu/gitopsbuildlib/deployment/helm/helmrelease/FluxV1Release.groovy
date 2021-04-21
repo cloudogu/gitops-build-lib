@@ -7,8 +7,8 @@ class FluxV1Release extends HelmRelease{
     }
 
     @Override
-    String create(Map helmConfig, String application, String namespace, String valuesFile) {
-        def values = fileToInlineYaml(valuesFile)
+    String create(Map helmConfig, String application, String namespace, String mergedValuesFile) {
+        def values = fileToInlineYaml(mergedValuesFile)
         def chart = getChart(helmConfig)
         return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease

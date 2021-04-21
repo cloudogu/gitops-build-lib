@@ -1,5 +1,6 @@
-package com.cloudogu.ces.cesbuildlib
+package com.cloudogu.gitopsbuildlib
 
+import com.cloudogu.ces.cesbuildlib.Docker
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 

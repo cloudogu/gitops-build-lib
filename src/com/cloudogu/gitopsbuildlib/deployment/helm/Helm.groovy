@@ -68,28 +68,4 @@ class Helm extends Deployment {
         }
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
     }
-
-
-    //TODO helmValuesFromFile not yet implemented
-//    private String createFromFileValues(String stage, Map gitopsConfig) {
-//        String values = ""
-//
-//        gitopsConfig.helmValuesFromFile.each {
-//            if (stage in it['stage']) {
-//                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
-//            }
-//        }
-//        return values
-//    }
-//
-//    private String fileToInlineYaml(String key, String filePath) {
-//        String values = ""
-//        String indent = "        "
-//
-//        def fileContent = readFile filePath
-//        values += "\n    ${key}: |\n${indent}"
-//        values += fileContent.split("\\n").join("\n" + indent)
-//
-//        return values
-//    }
 }

@@ -9,19 +9,19 @@ class ArgoCDRelease extends HelmRelease{
     }
 
     @Override
-    String create(Map helmConfig, String application, String namespace, String valuesFile) {
+    String create(Map helmConfig, String application, String namespace, String mergedValuesFile) {
 
-        String valuesFileLocation = "${script.env.WORKSPACE}/.configRepoTempDir/${valuesFile}"
+        String mergedValuesFileLocation = "${script.env.WORKSPACE}/.configRepoTempDir/${mergedValuesFile}"
         String helmRelease = ""
         if (helmConfig.repoType == 'GIT') {
-            helmRelease = gitRepoRelease(helmConfig, application, valuesFileLocation)
+            helmRelease = createResourcesFromGitRepo(helmConfig, application, mergedValuesFileLocation)
         } else if (helmConfig.repoType == 'HELM') {
             // TODO not yet implemented
         }
         return helmRelease
     }
 
-    private String gitRepoRelease(Map helmConfig, String application, String valuesFileLocation) {
+    private String createResourcesFromGitRepo(Map helmConfig, String application, String mergedValuesFileLocation) {
         String helmRelease = ""
 
         def chartPath = ''
@@ -32,7 +32,7 @@ class ArgoCDRelease extends HelmRelease{
         withHelm {
             script.dir("${script.env.WORKSPACE}/chart/${chartPath}") {
                 script.sh "helm dep update ."
-                String templateScript = "helm template ${application} . -f ${valuesFileLocation}"
+                String templateScript = "helm template ${application} . -f ${mergedValuesFileLocation}"
                 helmRelease = script.sh returnStdout: true, script: templateScript
             }
         }

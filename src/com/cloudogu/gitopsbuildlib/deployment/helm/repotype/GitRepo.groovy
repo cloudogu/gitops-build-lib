@@ -26,20 +26,21 @@ class GitRepo extends RepoType {
     }
 
     private prepareGitRepo(Map helmConfig) {
-        def myGit
+        def git
 
         script.dir("${script.env.WORKSPACE}/chart") {
 
             if (helmConfig.containsKey('credentialsId')) {
-                script.git credentialsId: helmConfig.credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
-                myGit = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)
+                git = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)
             } else {
-                script.git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
-                myGit = script.cesBuildLib.Git.new(script)
+                git = script.cesBuildLib.Git.new(script)
             }
+
+            git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+
             if(helmConfig.containsKey('version') && helmConfig.version) {
-                myGit.fetch()
-                myGit.checkout(helmConfig.version)
+                git.fetch()
+                git.checkout(helmConfig.version)
             }
         }
     }
