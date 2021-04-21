@@ -10,7 +10,6 @@ class HelmRepo extends RepoType{
     String mergeValues(Map helmConfig, String[] valuesFiles) {
 
         if (helmConfig.containsKey('credentialsId') && helmConfig.credentialsId) {
-            println "creds exist"
             script.withCredentials([
                 script.usernamePassword(
                     credentialsId: helmConfig.credentialsId,
