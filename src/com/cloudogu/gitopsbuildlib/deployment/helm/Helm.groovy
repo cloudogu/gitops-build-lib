@@ -39,18 +39,19 @@ class Helm extends Deployment {
         script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: chartRepo.mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
-        script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${stage}/${application}/mergedValues.yaml")
+
+        script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${stage}/${application}/mergedValues.yaml")
 
         // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
         script.sh "rm ${stage}/${application}/mergedValues.yaml"
-        // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
-        if (helmConfig.repoType == 'GIT') {
-            script.sh "rm -rf ./chart || true"
-        }
     }
 
     @Override
     def postValidation(String stage) {
+        // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
+        if (helmConfig.repoType == 'GIT') {
+            script.sh "rm -rf chart || true"
+        }
     }
 
     private void updateYamlValue(String yamlFilePath, Map helmConfig) {

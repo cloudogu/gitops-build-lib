@@ -29,9 +29,7 @@ class HelmTest {
         fileConfigmaps: [
             [
                 name : "index",
-                sourceFilePath : "../index.html", // relative to deployments.sourcePath
-                // additional feature in the future. current default folder is '../generated-resources'
-                // destinationFilePath: "../generated-resources/html/" // realtive to deployments.sourcePath
+                sourceFilePath : "../index.html",
                 stage: ["staging"]
             ]
         ]
@@ -68,10 +66,10 @@ class HelmTest {
         helmGit.preValidation('staging')
 
         assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values ./chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm staging/testapp/mergedValues.yaml')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf workspace/chart || true')
-        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf ./chart || true')
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[[returnStdout:true, script:helm values ./chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
         assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
@@ -84,7 +82,7 @@ spec:
   chart:
     git: repoUrl
     ref: null
-    path: .
+    path: chartPath
   values:
     ---
     #this part is only for PlainTest regarding updating the image name

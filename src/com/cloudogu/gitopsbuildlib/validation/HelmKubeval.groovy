@@ -29,8 +29,7 @@ class HelmKubeval extends Validator {
                 }
 
                 withDockerImage(config.image) {
-                    script.sh "helm dep update ./chart/${chartPath}"
-                    script.sh "helm kubeval ./chart/${chartPath} -v ${config.k8sSchemaVersion}"
+                    script.sh "helm kubeval chart/${chartPath} -v ${config.k8sSchemaVersion}"
                 }
 
             } else if (deployments.helm.repoType == 'HELM') {

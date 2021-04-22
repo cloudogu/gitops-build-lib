@@ -23,9 +23,8 @@ class ArgoCDReleaseTest {
             'namespace',
             'this/is/a/valusfile')
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update .')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valusfile]')
-        assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/path')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update ./chart/path')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app ./chart/path -f this/is/a/valusfile]')
     }
 
     @Test
@@ -40,8 +39,7 @@ class ArgoCDReleaseTest {
             'namespace',
             'this/is/a/valusfile')
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update .')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app . -f workspace/.configRepoTempDir/this/is/a/valusfile]')
-        assertThat(scriptMock.actualDir[0]).isEqualTo('workspace/chart/')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update ./chart/')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm template app ./chart/ -f this/is/a/valusfile]')
     }
 }
