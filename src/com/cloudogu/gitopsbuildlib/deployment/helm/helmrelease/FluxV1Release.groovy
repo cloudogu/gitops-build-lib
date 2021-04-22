@@ -26,10 +26,16 @@ ${values}
     }
 
     private String gitRepoChart(Map helmConfig) {
+
+        def chartPath = "."
+        if (helmConfig.containsKey('chartPath') && helmConfig.chartPath) {
+            chartPath = helmConfig.chartPath
+        }
+
         return """
     git: ${helmConfig.repoUrl}
     ref: ${helmConfig.version}
-    path: ."""
+    path: ${chartPath}"""
     }
 
     private String helmRepoChart(Map helmConfig) {

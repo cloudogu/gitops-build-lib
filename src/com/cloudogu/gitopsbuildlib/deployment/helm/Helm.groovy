@@ -45,7 +45,7 @@ class Helm extends Deployment {
         script.sh "rm ${stage}/${application}/mergedValues.yaml"
         // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
         if (helmConfig.repoType == 'GIT') {
-            script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
+            script.sh "rm -rf ./chart || true"
         }
     }
 

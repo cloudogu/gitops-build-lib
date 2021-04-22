@@ -14,17 +14,17 @@ class ArgoCDRelease extends HelmRelease{
     @Override
     String create(Map helmConfig, String application, String namespace, String mergedValuesFile) {
 
-        String mergedValuesFileLocation = "${script.env.WORKSPACE}/.configRepoTempDir/${mergedValuesFile}"
+//        String mergedValuesFileLocation = "${script.env.WORKSPACE}/.configRepoTempDir/${mergedValuesFile}"
         String helmRelease = ""
         if (helmConfig.repoType == 'GIT') {
-            helmRelease = createResourcesFromGitRepo(helmConfig, application, mergedValuesFileLocation)
+            helmRelease = createResourcesFromGitRepo(helmConfig, application, mergedValuesFile)
         } else if (helmConfig.repoType == 'HELM') {
             // TODO not yet implemented
         }
         return helmRelease
     }
 
-    private String createResourcesFromGitRepo(Map helmConfig, String application, String mergedValuesFileLocation) {
+    private String createResourcesFromGitRepo(Map helmConfig, String application, String mergedValuesFile) {
         String helmRelease = ""
 
         def chartPath = ''
@@ -33,11 +33,9 @@ class ArgoCDRelease extends HelmRelease{
         }
 
         dockerWrapper.withHelm {
-            script.dir("${script.env.WORKSPACE}/chart/${chartPath}") {
-                script.sh "helm dep update ."
-                String templateScript = "helm template ${application} . -f ${mergedValuesFileLocation}"
-                helmRelease = script.sh returnStdout: true, script: templateScript
-            }
+            script.sh "helm dep update ./chart/${chartPath}"
+            String templateScript = "helm template ${application} ./chart/${chartPath} -f ${mergedValuesFile}"
+            helmRelease = script.sh returnStdout: true, script: templateScript
         }
         // this line removes all empty lines since helm template creates some and the helm validator will throw an error if there are emtpy lines present
         helmRelease = helmRelease.replaceAll("(?m)^[ \t]*\r?\n", "")
