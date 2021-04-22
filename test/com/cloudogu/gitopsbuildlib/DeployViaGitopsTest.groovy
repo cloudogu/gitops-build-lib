@@ -1,6 +1,6 @@
 package com.cloudogu.gitopsbuildlib
 
-import com.cloudogu.ces.cesbuildlib.DockerMock
+
 import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint

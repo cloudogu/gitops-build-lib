@@ -7,8 +7,8 @@ class FluxV1Release extends HelmRelease{
     }
 
     @Override
-    String create(Map helmConfig, String application, String namespace, String valuesFile) {
-        def values = fileToInlineYaml(valuesFile)
+    String create(Map helmConfig, String application, String namespace, String mergedValuesFile) {
+        def values = fileToInlineYaml(mergedValuesFile)
         def chart = getChart(helmConfig)
         return """apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
@@ -26,10 +26,16 @@ ${values}
     }
 
     private String gitRepoChart(Map helmConfig) {
+
+        def chartPath = "."
+        if (helmConfig.containsKey('chartPath') && helmConfig.chartPath) {
+            chartPath = helmConfig.chartPath
+        }
+
         return """
     git: ${helmConfig.repoUrl}
     ref: ${helmConfig.version}
-    path: ."""
+    path: ${chartPath}"""
     }
 
     private String helmRepoChart(Map helmConfig) {

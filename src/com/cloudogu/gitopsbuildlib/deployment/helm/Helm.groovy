@@ -39,16 +39,18 @@ class Helm extends Deployment {
         script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: chartRepo.mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
-        script.writeFile file: "${stage}/${application}/helmRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${stage}/${application}/mergedValues.yaml")
+
+        script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${stage}/${application}/mergedValues.yaml")
 
         // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
         script.sh "rm ${stage}/${application}/mergedValues.yaml"
-        // clean the helm chart folder since the helmRelease.yaml ist now created
-        script.sh "rm -rf ${script.env.WORKSPACE}/chart || true"
     }
 
     @Override
     def postValidation(String stage) {
+        def helmConfig = gitopsConfig.deployments.helm
+        // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
+        script.sh "rm -rf chart || true"
     }
 
     private void updateYamlValue(String yamlFilePath, Map helmConfig) {
@@ -66,28 +68,4 @@ class Helm extends Deployment {
         }
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
     }
-
-
-    //TODO helmValuesFromFile not yet implemented
-//    private String createFromFileValues(String stage, Map gitopsConfig) {
-//        String values = ""
-//
-//        gitopsConfig.helmValuesFromFile.each {
-//            if (stage in it['stage']) {
-//                values = fileToInlineYaml(it['key'], "${script.env.WORKSPACE}/k8s/${it['file']}")
-//            }
-//        }
-//        return values
-//    }
-//
-//    private String fileToInlineYaml(String key, String filePath) {
-//        String values = ""
-//        String indent = "        "
-//
-//        def fileContent = readFile filePath
-//        values += "\n    ${key}: |\n${indent}"
-//        values += fileContent.split("\\n").join("\n" + indent)
-//
-//        return values
-//    }
 }

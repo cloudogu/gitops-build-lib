@@ -10,7 +10,7 @@ class GitRepo extends RepoType {
     String mergeValues(Map helmConfig, String[] valuesFiles) {
         String merge = ""
 
-        prepareGitRepo(helmConfig)
+        getHelmChartFromGitRepo(helmConfig)
 
         def chartPath = ''
         if (helmConfig.containsKey('chartPath')) {
@@ -18,28 +18,30 @@ class GitRepo extends RepoType {
         }
 
         withHelm {
-            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${chartPath} ${valuesFilesWithParameter(valuesFiles)}"
+            script.sh "helm dep update chart/${chartPath}"
+            String helmScript = "helm values chart/${chartPath} ${valuesFilesWithParameter(valuesFiles)}"
             merge = script.sh returnStdout: true, script: helmScript
         }
 
         return merge
     }
 
-    private prepareGitRepo(Map helmConfig) {
-        def myGit
+    private getHelmChartFromGitRepo(Map helmConfig) {
+        def git
 
-        script.dir("${script.env.WORKSPACE}/chart") {
+        script.dir("chart") {
 
             if (helmConfig.containsKey('credentialsId')) {
-                script.git credentialsId: helmConfig.credentialsId, url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
-                myGit = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)
+                git = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)
             } else {
-                script.git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
-                myGit = script.cesBuildLib.Git.new(script)
+                git = script.cesBuildLib.Git.new(script)
             }
+
+            git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+
             if(helmConfig.containsKey('version') && helmConfig.version) {
-                myGit.fetch()
-                myGit.checkout(helmConfig.version)
+                git.fetch()
+                git.checkout(helmConfig.version)
             }
         }
     }

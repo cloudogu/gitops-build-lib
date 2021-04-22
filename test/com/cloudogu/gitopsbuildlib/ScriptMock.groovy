@@ -1,7 +1,5 @@
 package com.cloudogu.gitopsbuildlib
 
-import com.cloudogu.ces.cesbuildlib.DockerMock
-import com.cloudogu.ces.cesbuildlib.GitMock
 import groovy.yaml.YamlSlurper
 
 class ScriptMock {

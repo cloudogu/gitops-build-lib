@@ -29,9 +29,7 @@ class HelmTest {
         fileConfigmaps: [
             [
                 name : "index",
-                sourceFilePath : "../index.html", // relative to deployments.sourcePath
-                // additional feature in the future. current default folder is '../generated-resources'
-                // destinationFilePath: "../generated-resources/html/" // realtive to deployments.sourcePath
+                sourceFilePath : "../index.html",
                 stage: ["staging"]
             ]
         ]
@@ -56,9 +54,7 @@ class HelmTest {
         fileConfigmaps: [
             [
                 name : "index",
-                sourceFilePath : "../index.html", // relative to deployments.sourcePath
-                // additional feature in the future. current default folder is '../generated-resources'
-                // destinationFilePath: "../generated-resources/html/" // realtive to deployments.sourcePath
+                sourceFilePath : "../index.html",
                 stage: ["staging"]
             ]
         ]
@@ -69,38 +65,37 @@ class HelmTest {
         helmGit.preValidation('staging')
 
         assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm staging/testapp/mergedValues.yaml')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf workspace/chart || true')
-        assertThat(scriptMock.actualGitArgs[0]).isEqualTo('[url:repoUrl, branch:main, changelog:false, poll:false]')
-        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
-        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('[file:staging/testapp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1\n' +
-            'kind: HelmRelease\n' +
-            'metadata:\n' +
-            '  name: testapp\n' +
-            '  namespace: fluxv1-staging\n' +
-            '  annotations:\n' +
-            '    fluxcd.io/automated: "false"\n' +
-            'spec:\n' +
-            '  releaseName: testapp\n' +
-            '  chart:\n' +
-            '    git: repoUrl\n' +
-            '    ref: null\n' +
-            '    path: .\n' +
-            '  values:\n' +
-            '    ---\n' +
-            '    #this part is only for PlainTest regarding updating the image name\n' +
-            '    spec:\n' +
-            '      template:\n' +
-            '        spec:\n' +
-            '          containers:\n' +
-            '            - name: \'application\'\n' +
-            '              image: \'oldImageName\'\n' +
-            '    #this part is only for HelmTest regarding changing the yaml values\n' +
-            '    to:\n' +
-            '      be:\n' +
-            '        changed: \'oldValue\'\n' +
-            ']')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update chart/chartPath')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm staging/testapp/mergedValues.yaml')
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[helm dep update chart/chartPath, [returnStdout:true, script:helm values chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
+        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: testapp
+  namespace: fluxv1-staging
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  releaseName: testapp
+  chart:
+    git: repoUrl
+    ref: null
+    path: chartPath
+  values:
+    ---
+    #this part is only for PlainTest regarding updating the image name
+    spec:
+      template:
+        spec:
+          containers:
+            - name: \'application\'
+              image: \'oldImageName\'
+    #this part is only for HelmTest regarding changing the yaml values
+    to:
+      be:
+        changed: \'oldValue\'
+]''')
     }
 
     @Test
@@ -118,32 +113,32 @@ class HelmTest {
             'text:[helm repo add chartRepo repoUrl, helm repo update, ' +
             'helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/chart, ' +
             '[returnStdout:true, script:helm values workspace/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
-        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('[file:staging/testapp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1\n' +
-            'kind: HelmRelease\n' +
-            'metadata:\n' +
-            '  name: testapp\n' +
-            '  namespace: fluxv1-staging\n' +
-            '  annotations:\n' +
-            '    fluxcd.io/automated: "false"\n' +
-            'spec:\n' +
-            '  releaseName: testapp\n' +
-            '  chart:\n' +
-            '    repository: repoUrl\n' +
-            '    name: chartName\n' +
-            '    version: 1.0\n' +
-            '  values:\n' +
-            '    ---\n' +
-            '    #this part is only for PlainTest regarding updating the image name\n' +
-            '    spec:\n' +
-            '      template:\n' +
-            '        spec:\n' +
-            '          containers:\n' +
-            '            - name: \'application\'\n' +
-            '              image: \'oldImageName\'\n' +
-            '    #this part is only for HelmTest regarding changing the yaml values\n' +
-            '    to:\n' +
-            '      be:\n' +
-            '        changed: \'oldValue\'\n' +
-            ']')
+        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: testapp
+  namespace: fluxv1-staging
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  releaseName: testapp
+  chart:
+    repository: repoUrl
+    name: chartName
+    version: 1.0
+  values:
+    ---
+    #this part is only for PlainTest regarding updating the image name
+    spec:
+      template:
+        spec:
+          containers:
+            - name: \'application\'
+              image: \'oldImageName\'
+    #this part is only for HelmTest regarding changing the yaml values
+    to:
+      be:
+        changed: \'oldValue\'
+]''')
     }
 }
