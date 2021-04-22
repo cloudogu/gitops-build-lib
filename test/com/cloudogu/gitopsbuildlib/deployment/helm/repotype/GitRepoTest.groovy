@@ -22,6 +22,5 @@ class GitRepoTest {
         ] as String[])
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f file1 -f file2 ]')
-        assertThat(scriptMock.actualGitArgs[0]).isEqualTo('[url:url, branch:main, changelog:false, poll:false]')
     }
 }

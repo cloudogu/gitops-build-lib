@@ -1,11 +1,14 @@
 package com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease
 
+import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+
 class ArgoCDRelease extends HelmRelease{
 
-    protected static String getHelmImage() { 'ghcr.io/cloudogu/helm:3.5.4-1' }
+    protected DockerWrapper dockerWrapper
 
     ArgoCDRelease(def script) {
         super(script)
+        dockerWrapper = new DockerWrapper(script)
     }
 
     @Override
@@ -29,7 +32,7 @@ class ArgoCDRelease extends HelmRelease{
             chartPath = helmConfig.chartPath
         }
 
-        withHelm {
+        dockerWrapper.withHelm {
             script.dir("${script.env.WORKSPACE}/chart/${chartPath}") {
                 script.sh "helm dep update ."
                 String templateScript = "helm template ${application} . -f ${mergedValuesFileLocation}"
@@ -39,13 +42,5 @@ class ArgoCDRelease extends HelmRelease{
         // this line removes all empty lines since helm template creates some and the helm validator will throw an error if there are emtpy lines present
         helmRelease = helmRelease.replaceAll("(?m)^[ \t]*\r?\n", "")
         return helmRelease
-    }
-
-    void withHelm(Closure body) {
-        script.cesBuildLib.Docker.new(script).image(helmImage).inside(
-            "${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}"
-        ) {
-            body()
-        }
     }
 }

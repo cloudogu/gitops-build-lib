@@ -1,21 +1,21 @@
 package com.cloudogu.gitopsbuildlib.deployment.helm.repotype
 
+import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+
 abstract class RepoType {
 
-    protected static String getHelmImage() { 'ghcr.io/cloudogu/helm:3.5.4-1' }
-
     protected script
+    protected DockerWrapper dockerWrapper
 
     RepoType(def script) {
         this.script = script
+        dockerWrapper = new DockerWrapper(script)
     }
 
     abstract mergeValues(Map helmConfig, String[] files)
 
     void withHelm(Closure body) {
-        script.cesBuildLib.Docker.new(script).image(helmImage).inside(
-            "${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}"
-        ) {
+        dockerWrapper.withHelm {
             body()
         }
     }

@@ -71,7 +71,6 @@ class HelmTest {
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm staging/testapp/mergedValues.yaml')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf workspace/chart || true')
-        assertThat(scriptMock.actualGitArgs[0]).isEqualTo('[url:repoUrl, branch:main, changelog:false, poll:false]')
         assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[[returnStdout:true, script:helm values workspace/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
         assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease

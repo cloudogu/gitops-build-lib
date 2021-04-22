@@ -1,5 +1,7 @@
 package com.cloudogu.gitopsbuildlib.validation
 
+import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+
 class HelmKubeval extends Validator {
 
     HelmKubeval(def script) {
