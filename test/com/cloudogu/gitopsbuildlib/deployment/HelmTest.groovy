@@ -105,14 +105,13 @@ spec:
         assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo repoUrl')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/chart')
-        assertThat(scriptMock.actualShArgs[3]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=chart')
+        assertThat(scriptMock.actualShArgs[3]).isEqualTo('[returnStdout:true, script:helm values chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualShArgs[4]).isEqualTo('rm staging/testapp/mergedValues.yaml')
-        assertThat(scriptMock.actualShArgs[5]).isEqualTo('rm -rf workspace/chart || true')
         assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, ' +
             'text:[helm repo add chartRepo repoUrl, helm repo update, ' +
-            'helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/chart, ' +
-            '[returnStdout:true, script:helm values workspace/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
+            'helm pull chartRepo/chartName --version=1.0 --untar --untardir=chart, ' +
+            '[returnStdout:true, script:helm values chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
         assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:

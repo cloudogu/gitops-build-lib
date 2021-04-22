@@ -19,7 +19,7 @@ class Plain extends Deployment{
 
     private updateImage(String stage) {
         gitopsConfig.deployments.plain.updateImages.each {
-            def deploymentFilePath = "${stage}/${gitopsConfig.application}/${gitopsConfig.deployments.sourcePath}/${it['filename']}"
+            def deploymentFilePath = "${stage}/${gitopsConfig.application}/${it['filename']}"
             def data = script.readYaml file: deploymentFilePath
             def containers = data.spec.template.spec.containers
             def containerName = it['containerName']
