@@ -30,8 +30,8 @@ class HelmRepo extends RepoType{
         withHelm {
             script.sh "helm repo add chartRepo ${helmConfig.repoUrl}${credentialArgs}"
             script.sh "helm repo update"
-            script.sh "helm pull chartRepo/${helmConfig.chartName} --version=${helmConfig.version} --untar --untardir=${script.env.WORKSPACE}/chart"
-            String helmScript = "helm values ${script.env.WORKSPACE}/chart/${helmConfig.chartName} ${valuesFilesWithParameter(valuesFiles)}"
+            script.sh "helm pull chartRepo/${helmConfig.chartName} --version=${helmConfig.version} --untar --untardir=chart"
+            String helmScript = "helm values chart/${helmConfig.chartName} ${valuesFilesWithParameter(valuesFiles)}"
             merge = script.sh returnStdout: true, script: helmScript
         }
 
