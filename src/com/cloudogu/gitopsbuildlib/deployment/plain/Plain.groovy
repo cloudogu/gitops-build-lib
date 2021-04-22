@@ -1,4 +1,6 @@
-package com.cloudogu.gitopsbuildlib.deployment
+package com.cloudogu.gitopsbuildlib.deployment.plain
+
+import com.cloudogu.gitopsbuildlib.deployment.Deployment
 
 class Plain extends Deployment{
 
@@ -7,11 +9,11 @@ class Plain extends Deployment{
     }
 
     @Override
-    def createPreValidation(String stage) {
+    def preValidation(String stage) {
     }
 
     @Override
-    def createPostValidation(String stage) {
+    def postValidation(String stage) {
         updateImage(stage)
     }
 

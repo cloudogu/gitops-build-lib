@@ -56,10 +56,10 @@ class DeploymentTest {
     @Test
     void 'creating folders for plain deployment'() {
         deploymentUnderTest.createFoldersAndCopyK8sResources('staging',)
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Copying k8s payload from application repo to gitOps Repo: \'k8s/staging/*\' to \'staging/app/k8s\'')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('mkdir -p staging/app/k8s/')
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Copying k8s payload from application repo to gitOps Repo: \'k8s/staging/*\' to \'staging/app/extraResources/\'')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('mkdir -p staging/app/extraResources/')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('mkdir -p .config/')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* staging/app/k8s/ || true')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* staging/app/extraResources/ || true')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('cp workspace/*.yamllint.yaml .config/ || true')
     }
 
@@ -78,24 +78,24 @@ class DeploymentTest {
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:KUBECONFIG=pwd/.kube/config kubectl create configmap index --from-file=index.html=workspace/k8s/../index.html --dry-run=client -o yaml -n fluxv1-staging]')
 
-        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:pwd/.kube/config, text:apiVersion: v1\n' +
-            'clusters:\n' +
-            '- cluster:\n' +
-            '    certificate-authority-data: DATA+OMITTED\n' +
-            '    server: https://localhost\n' +
-            '  name: self-hosted-cluster\n' +
-            'contexts:\n' +
-            '- context:\n' +
-            '    cluster: self-hosted-cluster\n' +
-            '    user: svcs-acct-dply\n' +
-            '  name: svcs-acct-context\n' +
-            'current-context: svcs-acct-context\n' +
-            'kind: Config\n' +
-            'preferences: {}\n' +
-            'users:\n' +
-            '- name: svcs-acct-dply\n' +
-            '  user:\n' +
-            '    token: DATA+OMITTED]')
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('''[file:pwd/.kube/config, text:apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: DATA+OMITTED
+    server: https://localhost
+  name: self-hosted-cluster
+contexts:
+- context:
+    cluster: self-hosted-cluster
+    user: svcs-acct-dply
+  name: svcs-acct-context
+current-context: svcs-acct-context
+kind: Config
+preferences: {}
+users:
+- name: svcs-acct-dply
+  user:
+    token: DATA+OMITTED]''')
         assertThat(scriptMock.actualWriteFileArgs[1]).contains('[file:staging/app/generatedResources/index.yaml')
     }
 
@@ -106,12 +106,12 @@ class DeploymentTest {
         }
 
         @Override
-        def createPreValidation(String stage) {
+        def preValidation(String stage) {
             return null
         }
 
         @Override
-        def createPostValidation(String stage) {
+        def postValidation(String stage) {
             return null
         }
     }

@@ -1,13 +1,14 @@
-package com.cloudogu.gitopsbuildlib.deployment.repotype
+package com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Test
+
 import static org.assertj.core.api.Assertions.assertThat
 
-class RepoTypeTest {
+class HelmReleaseTest {
 
     def scriptMock = new ScriptMock()
-    def repoType = new RepoTypeUnderTest(scriptMock.mock)
+    def repoType = new HelmReleaseUnderTest(scriptMock.mock)
 
     @Test
     void 'inline yaml test'() {
@@ -28,19 +29,14 @@ class RepoTypeTest {
         changed: 'oldValue\'''')
     }
 
-    class RepoTypeUnderTest extends RepoType {
+    class HelmReleaseUnderTest extends HelmRelease {
 
-        RepoTypeUnderTest(Object script) {
+        HelmReleaseUnderTest(Object script) {
             super(script)
         }
 
         @Override
-        def createHelmRelease(Map helmConfig, String application, String namespace, String valuesFile) {
-            return null
-        }
-
-        @Override
-        def mergeValues(Map helmConfig, String[] files) {
+        String create(Map helmConfig, String application, String namespace, String valuesFile) {
             return null
         }
     }

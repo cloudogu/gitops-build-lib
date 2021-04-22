@@ -1,9 +1,10 @@
-package com.cloudogu.ces.cesbuildlib
+package com.cloudogu.gitopsbuildlib
+
+import com.cloudogu.ces.cesbuildlib.Git
 
 import static org.mockito.Mockito.mock
 
 class GitMock {
-    List<String> actualArgs = new LinkedList<>()
 
     Git createMock() {
         Git gitMock = mock(Git.class)

@@ -1,15 +1,15 @@
 #!groovy
 import com.cloudogu.gitopsbuildlib.*
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
-import com.cloudogu.gitopsbuildlib.deployment.Helm
-import com.cloudogu.gitopsbuildlib.deployment.Plain
+import com.cloudogu.gitopsbuildlib.deployment.helm.Helm
+import com.cloudogu.gitopsbuildlib.deployment.plain.Plain
 import com.cloudogu.gitopsbuildlib.scm.SCMManager
 import com.cloudogu.gitopsbuildlib.scm.SCMProvider
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 
-String getHelmImage() { 'ghcr.io/cloudogu/helm:3.4.1-1' }
+String getHelmImage() { 'ghcr.io/cloudogu/helm:3.5.4-1' }
 
 List getMandatoryFields() {
     return [
@@ -21,7 +21,7 @@ Map getDefaultConfig() {
 
     return [
         cesBuildLibRepo         : 'https://github.com/cloudogu/ces-build-lib',
-        cesBuildLibVersion      : '1.45.0',
+        cesBuildLibVersion      : '1.46.1',
         cesBuildLibCredentialsId: '',
         mainBranch              : 'main',
         deployments             : [

@@ -24,7 +24,7 @@ class KubevalTest {
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(
-            'kubeval -d target/k8s -v 1.5 --strict'
+            'kubeval -d target -v 1.5 --strict'
         )
     }
 }

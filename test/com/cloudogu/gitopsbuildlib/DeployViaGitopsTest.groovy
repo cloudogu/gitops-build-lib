@@ -1,6 +1,6 @@
 package com.cloudogu.gitopsbuildlib
 
-import com.cloudogu.ces.cesbuildlib.DockerMock
+
 import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
@@ -16,7 +16,8 @@ import static org.mockito.ArgumentMatchers.anyString
 import static org.mockito.ArgumentMatchers.eq
 import static org.mockito.Mockito.*
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// Lifecycle.PER_METHOD is slower than PER_CLASS but we had issues regarding shared state (by executing all tests there was different behaviour than executing single tests in isolation).
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class DeployViaGitopsTest extends BasePipelineTest {
 
     class CesBuildLibMock {
@@ -99,14 +100,12 @@ class DeployViaGitopsTest extends BasePipelineTest {
         qa        : [deployDirectly: false]
     ]
 
-    @BeforeAll
-    void setUp() throws Exception {
-        scriptRoots += 'vars'
-        super.setUp()
-    }
-
     @BeforeEach
     void init() {
+        super.setUp()
+
+        scriptRoots += 'vars'
+
         deployViaGitops = loadScript('vars/deployViaGitops.groovy')
         binding.getVariable('currentBuild').result = 'SUCCESS'
         setupGlobals(deployViaGitops)

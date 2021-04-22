@@ -17,13 +17,13 @@ abstract class Deployment {
     def create(String stage) {
         createFoldersAndCopyK8sResources(stage)
         createFileConfigmaps(stage)
-        createPreValidation(stage)
+        preValidation(stage)
         validate(stage)
-        createPostValidation(stage)
+        postValidation(stage)
     }
 
-    abstract createPreValidation(String stage)
-    abstract createPostValidation(String stage)
+    abstract preValidation(String stage)
+    abstract postValidation(String stage)
 
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
@@ -36,11 +36,11 @@ abstract class Deployment {
         def sourcePath = gitopsConfig.deployments.sourcePath
         def application = gitopsConfig.application
 
-        script.sh "mkdir -p ${stage}/${application}/${sourcePath}/"
+        script.sh "mkdir -p ${stage}/${application}/extraResources/"
         script.sh "mkdir -p ${configDir}/"
         // copy extra resources like sealed secrets
-        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/${sourcePath}'"
-        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/${sourcePath}/ || true"
+        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/extraResources/'"
+        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/extraResources/ || true"
         script.sh "cp ${script.env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
     }
 
