@@ -48,6 +48,8 @@ class Helm extends Deployment {
 
     @Override
     def postValidation(String stage) {
+        def helmConfig = gitopsConfig.deployments.helm
+
         // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
         if (helmConfig.repoType == 'GIT') {
             script.sh "rm -rf chart || true"

@@ -66,11 +66,11 @@ class HelmTest {
         helmGit.preValidation('staging')
 
         assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values ./chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('rm staging/testapp/mergedValues.yaml')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm -rf ./chart || true')
-        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[[returnStdout:true, script:helm values ./chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
-        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update chart/chartPath')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('rm staging/testapp/mergedValues.yaml')
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:staging/testapp/mergedValues.yaml, text:[helm dep update chart/chartPath, [returnStdout:true, script:helm values chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
+        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
   name: testapp
@@ -114,7 +114,7 @@ spec:
             'text:[helm repo add chartRepo repoUrl, helm repo update, ' +
             'helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/chart, ' +
             '[returnStdout:true, script:helm values workspace/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
-        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/helmRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
+        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/testapp/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
   name: testapp
