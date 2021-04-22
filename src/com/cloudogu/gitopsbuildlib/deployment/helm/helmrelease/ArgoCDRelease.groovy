@@ -40,11 +40,10 @@ class ArgoCDRelease extends HelmRelease{
     private String createHelmRelease(String chartPath, String application, String mergedValuesFile) {
         String helmRelease = ""
         dockerWrapper.withHelm {
-            script.dir("chart/${chartPath}") {
-                String templateScript = "helm template ${application} . -f ${mergedValuesFile}"
-                helmRelease = script.sh returnStdout: true, script: templateScript
-            }
+            String templateScript = "helm template ${application} chart/${chartPath} -f ${mergedValuesFile}"
+            helmRelease = script.sh returnStdout: true, script: templateScript
         }
+
         // this line removes all empty lines since helm template creates some and the helm validator will throw an error if there are emtpy lines present
         helmRelease = helmRelease.replaceAll("(?m)^[ \t]*\r?\n", "")
         return helmRelease

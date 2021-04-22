@@ -3,6 +3,7 @@ package com.cloudogu.gitopsbuildlib.deployment
 abstract class Deployment {
 
     protected static String getKubectlImage() { 'lachlanevenson/k8s-kubectl:v1.19.3' }
+    protected String extraResourcesFolder = ""
 
     static String getConfigDir() { '.config' }
 
@@ -36,11 +37,11 @@ abstract class Deployment {
         def sourcePath = gitopsConfig.deployments.sourcePath
         def application = gitopsConfig.application
 
-        script.sh "mkdir -p ${stage}/${application}/extraResources/"
+        script.sh "mkdir -p ${stage}/${application}/${extraResourcesFolder}"
         script.sh "mkdir -p ${configDir}/"
         // copy extra resources like sealed secrets
-        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/extraResources/'"
-        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/extraResources/ || true"
+        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/${extraResourcesFolder}'"
+        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/${extraResourcesFolder} || true"
         script.sh "cp ${script.env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
     }
 
