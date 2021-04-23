@@ -26,10 +26,11 @@ abstract class Deployment {
     abstract preValidation(String stage)
     abstract postValidation(String stage)
 
+
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
             script.echo "Executing validator ${validatorConfig.key}"
-            validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}", validatorConfig.value.config, gitopsConfig.deployments)
+            validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}", validatorConfig.value.config, gitopsConfig)
         }
     }
 

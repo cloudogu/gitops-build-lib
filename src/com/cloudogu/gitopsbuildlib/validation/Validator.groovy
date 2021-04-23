@@ -12,9 +12,9 @@ abstract class Validator {
         dockerWrapper = new DockerWrapper(script)
     }
 
-    void validate(boolean enabled, String targetDirectory, Map config, Map deployments) {
+    void validate(boolean enabled, String targetDirectory, Map config, Map gitopsConfig) {
         if (enabled) {
-            validate(targetDirectory, config, deployments)
+            validate(targetDirectory, config, gitopsConfig)
         } else {
             script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false"
         }
