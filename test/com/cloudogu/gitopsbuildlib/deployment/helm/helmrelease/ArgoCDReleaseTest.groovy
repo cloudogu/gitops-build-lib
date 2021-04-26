@@ -21,9 +21,9 @@ class ArgoCDReleaseTest {
         ],
             'app',
             'namespace',
-            'this/is/a/valusfile')
+            'this/is/a/valuesfile')
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app chart/path -f this/is/a/valusfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app chart/path -f this/is/a/valuesfile]')
     }
 
     @Test
@@ -36,8 +36,23 @@ class ArgoCDReleaseTest {
         ],
             'app',
             'namespace',
-            'this/is/a/valusfile')
+            'this/is/a/valuesfile')
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app chart/ -f this/is/a/valusfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app chart/ -f this/is/a/valuesfile]')
+    }
+
+    @Test
+    void 'correct helm release with helm repo'() {
+        argoCdReleaseTest.create([
+            repoType: 'HELM',
+            repoUrl: 'url',
+            chartName: 'chartName',
+            version: '1.0'
+        ],
+            'app',
+            'namespace',
+            'this/is/a/valuesfile')
+
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app chart/chartName -f this/is/a/valuesfile]')
     }
 }

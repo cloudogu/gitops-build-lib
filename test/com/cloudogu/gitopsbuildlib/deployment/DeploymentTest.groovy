@@ -56,10 +56,10 @@ class DeploymentTest {
     @Test
     void 'creating folders for plain deployment'() {
         deploymentUnderTest.createFoldersAndCopyK8sResources('staging',)
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Copying k8s payload from application repo to gitOps Repo: \'k8s/staging/*\' to \'staging/app/extraResources/\'')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('mkdir -p staging/app/extraResources/')
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Copying k8s payload from application repo to gitOps Repo: \'k8s/staging/*\' to \'staging/app/\'')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('mkdir -p staging/app/')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('mkdir -p .config/')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* staging/app/extraResources/ || true')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* staging/app/ || true')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('cp workspace/*.yamllint.yaml .config/ || true')
     }
 

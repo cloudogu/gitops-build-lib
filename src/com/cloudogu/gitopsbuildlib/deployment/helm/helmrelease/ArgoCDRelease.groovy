@@ -18,24 +18,33 @@ class ArgoCDRelease extends HelmRelease{
         if (helmConfig.repoType == 'GIT') {
             helmRelease = createResourcesFromGitRepo(helmConfig, application, mergedValuesFile)
         } else if (helmConfig.repoType == 'HELM') {
-            // TODO not yet implemented
+            helmRelease = createResourcesFromHelmRepo(helmConfig, application, mergedValuesFile)
         }
         return helmRelease
     }
 
     private String createResourcesFromGitRepo(Map helmConfig, String application, String mergedValuesFile) {
-        String helmRelease = ""
 
         def chartPath = ''
         if (helmConfig.containsKey('chartPath')) {
             chartPath = helmConfig.chartPath
         }
 
+        return createHelmRelease(chartPath as String, application, mergedValuesFile)
+    }
+
+    private String createResourcesFromHelmRepo(Map helmConfig, String application, String mergedValuesFile) {
+        return createHelmRelease(helmConfig.chartName as String, application, mergedValuesFile)
+    }
+
+    private String createHelmRelease(String chartPath, String application, String mergedValuesFile) {
+        String helmRelease = ""
         dockerWrapper.withHelm {
             String templateScript = "helm template ${application} chart/${chartPath} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }
-        // this line removes all empty lines since helm template creates some and the helm kubeval validator will throw an error if there are emtpy lines present
+
+        // this line removes all empty lines since helm template creates some and the helm validator will throw an error if there are emtpy lines present
         helmRelease = helmRelease.replaceAll("(?m)^[ \t]*\r?\n", "")
         return helmRelease
     }

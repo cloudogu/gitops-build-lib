@@ -15,6 +15,7 @@ class Helm extends Deployment {
 
     Helm(def script, def gitopsConfig) {
         super(script, gitopsConfig)
+        this.extraResourcesFolder = "extraResources"
         if (gitopsConfig.deployments.helm.repoType == 'GIT') {
             chartRepo = new GitRepo(script)
         } else if (gitopsConfig.deployments.helm.repoType == 'HELM') {
@@ -49,11 +50,8 @@ class Helm extends Deployment {
     @Override
     def postValidation(String stage) {
         def helmConfig = gitopsConfig.deployments.helm
-
         // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
-        if (helmConfig.repoType == 'GIT') {
-            script.sh "rm -rf chart || true"
-        }
+        script.sh "rm -rf chart || true"
     }
 
     private void updateYamlValue(String yamlFilePath, Map helmConfig) {
