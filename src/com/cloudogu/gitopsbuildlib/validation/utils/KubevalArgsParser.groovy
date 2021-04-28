@@ -4,7 +4,7 @@ class KubevalArgsParser implements ArgsParser{
 
     private boolean strict = true
     private boolean ignoreMissingSchemas = true
-    private List<String> skipKinds = new ArrayList<>()
+    private List<String> skipKinds = []
 
     @Override
     String parse(Map validatorConfig) {
@@ -43,7 +43,7 @@ class KubevalArgsParser implements ArgsParser{
     private String parseSkipKinds(Map validatorConfig) {
         String skipKindsArgs = ''
         if(validatorConfig.containsKey('skipKinds') && validatorConfig.skipKinds) {
-            skipKinds = validatorConfig.skipKinds as List<String>
+            skipKinds = validatorConfig.skipKinds
         }
         if(!skipKinds.isEmpty()) {
             skipKindsArgs += " --skip-kinds ".concat(skipKinds.join(","))

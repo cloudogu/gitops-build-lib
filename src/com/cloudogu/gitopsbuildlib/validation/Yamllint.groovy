@@ -16,12 +16,22 @@ class Yamllint extends Validator {
     }
 
     @Override
-    void validate(String targetDirectory, Map config, Map gitopsConfig) {
-        withDockerImage(config.image) {
+    void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
+        withDockerImage(validatorConfig.image) {
             script.sh "yamllint " +
-                "${config.profile ? "-d ${config.profile} " : ''}" +
+                "${validatorConfig.profile ? "-d ${validatorConfig.profile} " : ''}" +
                 '-f standard ' + // non-colored for CI-server  
                 "${targetDirectory}"
         }
+    }
+
+    @Override
+    SourceType[] getSupportedSourceTypes() {
+        return [SourceType.HELM, SourceType.PLAIN]
+    }
+
+    @Override
+    GitopsTool[] getSupportedGitopsTools() {
+        return [GitopsTool.FLUX, GitopsTool.ARGO]
     }
 }

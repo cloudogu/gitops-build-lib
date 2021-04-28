@@ -12,15 +12,17 @@ abstract class Validator {
         dockerWrapper = new DockerWrapper(script)
     }
 
-    void validate(boolean enabled, String targetDirectory, Map config, Map gitopsConfig) {
+    void validate(boolean enabled, String targetDirectory, Map validatorConfig, Map gitopsConfig) {
         if (enabled) {
-            validate(targetDirectory, config, gitopsConfig)
+            validate(targetDirectory, validatorConfig, gitopsConfig)
         } else {
             script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false"
         }
     }
 
-    abstract protected void validate(String targetDirectory, Map config, Map deployments)
+    abstract protected void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig)
+    abstract SourceType[] getSupportedSourceTypes()
+    abstract GitopsTool[] getSupportedGitopsTools()
 
     protected void withDockerImage(String image, Closure body) {
         dockerWrapper.withDockerImage(image, body)

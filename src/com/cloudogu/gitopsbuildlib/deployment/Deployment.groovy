@@ -1,6 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+import com.cloudogu.gitopsbuildlib.validation.SourceType
 
 abstract class Deployment {
 
@@ -35,7 +36,15 @@ abstract class Deployment {
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
             script.echo "Executing validator ${validatorConfig.key}"
-            validatorConfig.value.validator.validate(validatorConfig.value.enabled, "${stage}/${gitopsConfig.application}", validatorConfig.value.config, gitopsConfig)
+            validatorConfig.value.validator.getSupportedSourceTypes().each { sourceType ->
+                String targetDirectory = ''
+                if (sourceType.equals(SourceType.HELM)) {
+                    targetDirectory = "${script.env.WORKSPACE}/.helmChartTempDir"
+                } else if(sourceType.equals(SourceType.PLAIN)) {
+                    targetDirectory = "${stage}/${gitopsConfig.application}"
+                }
+                validatorConfig.value.validator.validate(validatorConfig.value.enabled, targetDirectory, validatorConfig.value.config, gitopsConfig)
+            }
         }
     }
 
@@ -71,14 +80,6 @@ abstract class Deployment {
         }
         return configMap
     }
-
-//    void withKubectl(Closure body) {
-//        script.cesBuildLib.Docker.new(script).image(kubectlImage)
-//        // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
-//            .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
-//                body()
-//            }
-//    }
 
     void withDockerImage(String image, Closure body) {
         dockerWrapper.withDockerImage(image, body)

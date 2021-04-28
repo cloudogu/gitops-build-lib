@@ -51,5 +51,15 @@ class ValidatorTest {
                 closureCalled = true
             }
         }
+
+        @Override
+        SourceType[] getSupportedSourceTypes() {
+            return new SourceType[0]
+        }
+
+        @Override
+        GitopsTool[] getSupportedGitopsTools() {
+            return new GitopsTool[0]
+        }
     }
 }

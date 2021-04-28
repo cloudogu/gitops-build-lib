@@ -16,12 +16,22 @@ class Kubeval extends Validator {
     }
 
     @Override
-    void validate(String targetDirectory, Map config, Map deployments) {
+    void validate(String targetDirectory, Map config, Map gitopsConfig) {
 
         String args = argsParser.parse(config)
 
         withDockerImage(config.image) {
             script.sh "kubeval -d ${targetDirectory} -v ${config.k8sSchemaVersion}${args}"
         }
+    }
+
+    @Override
+    SourceType[] getSupportedSourceTypes() {
+        return [SourceType.PLAIN]
+    }
+
+    @Override
+    GitopsTool[] getSupportedGitopsTools() {
+        return [GitopsTool.ARGO, GitopsTool.FLUX]
     }
 }

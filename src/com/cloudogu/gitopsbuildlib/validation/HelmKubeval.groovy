@@ -14,21 +14,32 @@ class HelmKubeval extends Validator {
     }
 
     @Override
-    void validate(String targetDirectory, Map config, Map deployments) {
+    void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
+        Map deployments = gitopsConfig.deployments as Map
         if (deployments.containsKey('helm')) {
 
-            String args = argsParser.parse(config)
+            String args = argsParser.parse(validatorConfig)
 
             def chartDir = ''
-            if (deployments.helm.containsKey('chartPath')) {
-                chartDir = deployments.helm.chartPath
-            } else if ( deployments.helm.containsKey('chartName')) {
-                chartDir = deployments.helm.chartName
+            if (gitopsConfig.helm.containsKey('chartPath')) {
+                chartDir = gitopsConfig.helm.chartPath
+            } else if ( gitopsConfig.helm.containsKey('chartName')) {
+                chartDir = gitopsConfig.helm.chartName
             }
 
-            withDockerImage(config.image) {
-                script.sh "helm kubeval chart/${chartDir} -v ${config.k8sSchemaVersion}${args}"
+            withDockerImage(validatorConfig.image) {
+                script.sh "helm kubeval chart/${chartDir} -v ${validatorConfig.k8sSchemaVersion}${args}"
             }
         }
+    }
+
+    @Override
+    SourceType[] getSupportedSourceTypes() {
+        return [SourceType.HELM]
+    }
+
+    @Override
+    GitopsTool[] getSupportedGitopsTools() {
+        return [GitopsTool.FLUX]
     }
 }
