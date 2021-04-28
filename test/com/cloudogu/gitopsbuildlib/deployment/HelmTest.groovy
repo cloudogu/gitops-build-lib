@@ -140,4 +140,16 @@ spec:
         changed: \'oldValue\'
 ]''')
     }
+
+    @Test
+    void 'values files getting parameters attached with gitRepo'() {
+        def output = helmGit.valuesFilesWithParameter(['file1.yaml', 'file2.yaml'] as String[])
+        assertThat(output).isEqualTo('-f file1.yaml -f file2.yaml ')
+    }
+
+    @Test
+    void 'values files getting parameters attached with helmRepo'() {
+        def output = helmHelm.valuesFilesWithParameter(['file1.yaml', 'file2.yaml'] as String[])
+        assertThat(output).isEqualTo('-f file1.yaml -f file2.yaml ')
+    }
 }

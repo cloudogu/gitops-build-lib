@@ -14,12 +14,6 @@ abstract class RepoType {
 
     abstract void prepareRepo(Map helmConfig)
 
-//    void withHelm(Closure body) {
-//        dockerWrapper.withHelm {
-//            body()
-//        }
-//    }
-
     void withHelm(Closure body) {
         dockerWrapper.withHelm(body)
     }
