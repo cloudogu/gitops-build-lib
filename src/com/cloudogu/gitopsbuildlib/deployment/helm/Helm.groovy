@@ -34,10 +34,12 @@ class Helm extends Deployment {
         def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath
 
+        chartRepo.prepareRepo(helmConfig)
+
         // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
         // This makes it easier to read in and indent for the inline use in the helmRelease.
         // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: chartRepo.mergeValues(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
+        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValuesFiles(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
 
@@ -68,5 +70,30 @@ class Helm extends Deployment {
             }
         }
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
+    }
+
+    private String mergeValuesFiles(Map helmConfig, String[] valuesFiles) {
+        String mergedValuesFile = ""
+
+        def chartDir = ''
+        if (helmConfig.containsKey('chartPath') && helmConfig.chartPath) {
+            chartDir = helmConfig.chartPath
+        } else if ( helmConfig.containsKey('chartName')) {
+            chartDir = helmConfig.chartName
+        }
+
+        withHelm {
+            String helmScript = "helm values chart/${chartDir} ${valuesFilesWithParameter(valuesFiles)}"
+            mergedValuesFile = script.sh returnStdout: true, script: helmScript
+        }
+        return mergedValuesFile
+    }
+
+    private String valuesFilesWithParameter(String[] valuesFiles) {
+        String valuesFilesWithParameter = ""
+        valuesFiles.each {
+            valuesFilesWithParameter += "-f $it "
+        }
+        return valuesFilesWithParameter
     }
 }

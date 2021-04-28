@@ -1,5 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
+import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+
 abstract class Deployment {
 
     protected static String getKubectlImage() { 'lachlanevenson/k8s-kubectl:v1.19.3' }
@@ -10,9 +12,12 @@ abstract class Deployment {
     protected script
     protected Map gitopsConfig
 
+    protected DockerWrapper dockerWrapper
+
     Deployment(def script, def gitopsConfig) {
         this.script = script
         this.gitopsConfig = gitopsConfig
+        dockerWrapper = new DockerWrapper(this.script)
     }
 
     def create(String stage) {
@@ -57,7 +62,7 @@ abstract class Deployment {
 
     String createConfigMap(String key, String filePath, String name, String namespace) {
         String configMap = ""
-        withKubectl {
+        withDockerImage(kubectlImage) {
             String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"
@@ -67,12 +72,20 @@ abstract class Deployment {
         return configMap
     }
 
-    void withKubectl(Closure body) {
-        script.cesBuildLib.Docker.new(script).image(kubectlImage)
-        // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
-            .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
-                body()
-            }
+//    void withKubectl(Closure body) {
+//        script.cesBuildLib.Docker.new(script).image(kubectlImage)
+//        // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
+//            .inside("${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE}"}") {
+//                body()
+//            }
+//    }
+
+    void withDockerImage(String image, Closure body) {
+        dockerWrapper.withDockerImage(image, body)
+    }
+
+    void withHelm(Closure body) {
+        dockerWrapper.withHelm(body)
     }
 
     // Dummy kubeConfig, so we can use `kubectl --dry-run=client`

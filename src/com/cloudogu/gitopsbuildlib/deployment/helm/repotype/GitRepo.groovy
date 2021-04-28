@@ -7,8 +7,7 @@ class GitRepo extends RepoType {
     }
 
     @Override
-    String mergeValues(Map helmConfig, String[] valuesFiles) {
-        String merge = ""
+    void prepareRepo(Map helmConfig) {
 
         getHelmChartFromGitRepo(helmConfig)
 
@@ -19,11 +18,7 @@ class GitRepo extends RepoType {
 
         withHelm {
             script.sh "helm dep update chart/${chartPath}"
-            String helmScript = "helm values chart/${chartPath} ${valuesFilesWithParameter(valuesFiles)}"
-            merge = script.sh returnStdout: true, script: helmScript
         }
-
-        return merge
     }
 
     private getHelmChartFromGitRepo(Map helmConfig) {
