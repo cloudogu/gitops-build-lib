@@ -26,6 +26,7 @@ working example bundled with the complete infrastructure for a gitops deep dive.
   - [Plain k8s deployment](#plain-k8s-deployment)
   - [Helm deployment](#helm-deployment)
     - [Conventions for helm deployment](#conventions-for-helm-deployment)
+    - [helm template with ArgoCD application](#helm-template-with-argocd-application)
 - [Validators](#validators)
   - [Custom validators](#custom-validators)
 - [Extra Files](#extra-files)
@@ -50,6 +51,9 @@ Use Case realised by this library:
 * Support for multiple stages within the same gitOps Repo
     * Push to application branch and create PR (production) or
     * Push to main branch (e.g. "main") directly for staging deployment
+* Support for different GitOps Vendors
+    * ArgoCD
+    * Flux v1
 * Deployment methods
     * Plain Kubernetes resources - write image tag into kubernetes deployments dynamically
         * add files to deployment which will be generated to a configmap
@@ -75,7 +79,7 @@ Detailed instructions about the attributes can be found [here](#gitops-config).
 ### Minimal
 
 This will simply [validate](#validators) and deploy the resources from the source repo's `k8s` folder into the
-`fluxv1/gitops` repo.
+`gitops` repo.
 
 ```groovy
 def gitopsConfig = [
@@ -83,10 +87,10 @@ def gitopsConfig = [
         provider:       'SCMManager',
         credentialsId:  'scmm-user',
         baseUrl:        'http://scmm-scm-manager/scm',
-        repositoryUrl:  'fluxv1/gitops'
+        repositoryUrl:  'gitops'
     ],
     application: 'spring-petclinic',
-    gitopsTool: 'FLUX',
+    gitopsTool: 'FLUX', /* or 'ARGO' */
     stages: [
         staging: [ 
             deployDirectly: true
@@ -112,13 +116,13 @@ def gitopsConfig = [
         provider:       'SCMManager',
         credentialsId:  'scmm-user',
         baseUrl:        'http://scmm-scm-manager/scm',
-        repositoryUrl:  'fluxv1/gitops'
+        repositoryUrl:  'gitops'
     ],
     cesBuildLibRepo: <cesBuildLibRepo> /* Default: 'https://github.com/cloudogu/ces-build-lib' */ ,
     cesBuildLibVersion: <cesBuildLibVersion> /* Default: a recent cesBuildLibVersion see deployViaGitops.groovy */ ,
     cesBuildLibCredentialsId: <cesBuildLibCredentialsId> /* Default: '', empty due to default public github repo */,
     application: 'spring-petclinic',
-    gitopsTool: 'FLUX'
+    gitopsTool: 'FLUX' /* or 'ARGO' */
     mainBranch: 'master' /* Default: 'main' */, 
     deployments: [
         sourcePath: 'k8s' /* Default: 'k8s' */,
@@ -163,7 +167,7 @@ deployViaGitops(gitopsConfig)
 **ArgoCD:**
 * [using petclinic with helm and extra k8s-resources and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/argocd/helm/Jenkinsfile)
 * [using petclinic with plain-k8s](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/argocd/plain-k8s/Jenkinsfile)
-
+* [using nginx with helm and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/nginx/argocd/Jenkinsfile)
 
 ---
 
@@ -548,6 +552,13 @@ def gitopsConfig = [
   e.g. in stage production =>
 
   > copies '/k8s/production/configMap.yaml' and '/k8s/production/secrets' to the gitops folder where every k8s resource in ./secrets will be copied to the gitops folder
+
+#### `helm template` with ArgoCD application
+
+We decided to generate plain k8s Resources from Helm applications before we push it to the gitops Repository for the following reasons:
+
+- With ArgoCD you can only set one source for your application. In case of helm it is common to have a source Repository for your chart and a scource Repository for your configuration files (values.yaml). In order to use two different sources for your helm application you will need some sort of workaround (e.g. Helm dependencies in `Chart.yaml`).  
+- ArgoCD itself uses `helm template` to apply plain k8s Resources to the cluster. By templating the helm application before pushing to the gitops repository, we have the same resources in our repository as in our cluster. Which leads to increased transparency.
 ---
 
 ## Validators
@@ -628,7 +639,7 @@ This will generate a k8s ConfigMap with the content of this file as data:
 
 ```bash
 Name:         index
-Namespace:    fluxv1-staging                                                                                                                                                                                                                │
+Namespace:    staging                                                                                                                                                                                                                │
 Data
 ====
 index.html:
