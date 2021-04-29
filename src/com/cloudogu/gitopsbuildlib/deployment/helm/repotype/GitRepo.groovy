@@ -24,7 +24,7 @@ class GitRepo extends RepoType {
     private getHelmChartFromGitRepo(Map helmConfig) {
         def git
 
-        script.dir("chart") {
+        script.dir("${script.env.WORKSPACE}/.helmChartTempDir/chart/") {
 
             if (helmConfig.containsKey('credentialsId')) {
                 git = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)

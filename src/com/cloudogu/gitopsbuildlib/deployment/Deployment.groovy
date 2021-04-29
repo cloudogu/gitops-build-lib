@@ -1,6 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+import com.cloudogu.gitopsbuildlib.validation.GitopsTool
 import com.cloudogu.gitopsbuildlib.validation.SourceType
 
 abstract class Deployment {
@@ -35,15 +36,18 @@ abstract class Deployment {
 
     def validate(String stage) {
         gitopsConfig.validators.each { validatorConfig ->
-            script.echo "Executing validator ${validatorConfig.key}"
-            validatorConfig.value.validator.getSupportedSourceTypes().each { sourceType ->
-                String targetDirectory = ''
-                if (sourceType.equals(SourceType.HELM)) {
-                    targetDirectory = "${script.env.WORKSPACE}/.helmChartTempDir"
-                } else if(sourceType.equals(SourceType.PLAIN)) {
-                    targetDirectory = "${stage}/${gitopsConfig.application}"
+            GitopsTool gitopsTool = gitopsConfig.gitopsTool.toUpperCase()
+            if (validatorConfig.value.validator.getSupportedGitopsTools().contains(gitopsTool)) {
+                script.echo "Executing validator ${validatorConfig.key} for ${gitopsTool.name()}"
+                validatorConfig.value.validator.getSupportedSourceTypes().each { sourceType ->
+                    String targetDirectory = ''
+                    if (sourceType.equals(SourceType.HELM)) {
+                        targetDirectory = "${script.env.WORKSPACE}/.helmChartTempDir"
+                    } else if (sourceType.equals(SourceType.PLAIN)) {
+                        targetDirectory = "${stage}/${gitopsConfig.application}"
+                    }
+                    validatorConfig.value.validator.validate(validatorConfig.value.enabled, targetDirectory, validatorConfig.value.config, gitopsConfig)
                 }
-                validatorConfig.value.validator.validate(validatorConfig.value.enabled, targetDirectory, validatorConfig.value.config, gitopsConfig)
             }
         }
     }
