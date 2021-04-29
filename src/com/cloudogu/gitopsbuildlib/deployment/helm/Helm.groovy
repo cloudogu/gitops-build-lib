@@ -39,21 +39,17 @@ class Helm extends Deployment {
         // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
         // This makes it easier to read in and indent for the inline use in the helmRelease.
         // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${stage}/${application}/mergedValues.yaml", text: mergeValuesFiles(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
+        script.writeFile file: "${script.env.WORKSPACE}/.helmChartTempDir/mergedValues.yaml", text: mergeValuesFiles(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
         updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
 
-        script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${stage}/${application}/mergedValues.yaml")
-
-        // since the values are already inline (helmRelease.yaml) we do not need to commit them into the gitops repo
-        script.sh "rm ${stage}/${application}/mergedValues.yaml"
+        script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${script.env.WORKSPACE}/.helmChartTempDir/mergedValues.yaml")
     }
 
     @Override
     def postValidation(String stage) {
-        def helmConfig = gitopsConfig.deployments.helm
-        // clean the gitrepo helm chart folder since the helmRelease.yaml ist now created
-        script.sh "rm -rf chart || true"
+        // clean the helm chart folder since the validation on this helm chart is done
+        script.sh "rm -rf ${script.env.WORKSPACE}/.helmChartTempDir || true"
     }
 
     private void updateYamlValue(String yamlFilePath, Map helmConfig) {
@@ -83,7 +79,7 @@ class Helm extends Deployment {
         }
 
         withHelm {
-            String helmScript = "helm values chart/${chartDir} ${valuesFilesWithParameter(valuesFiles)}"
+            String helmScript = "helm values ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartDir} ${valuesFilesWithParameter(valuesFiles)}"
             mergedValuesFile = script.sh returnStdout: true, script: helmScript
         }
         return mergedValuesFile

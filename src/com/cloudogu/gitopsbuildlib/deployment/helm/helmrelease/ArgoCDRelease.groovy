@@ -40,7 +40,7 @@ class ArgoCDRelease extends HelmRelease{
     private String createHelmRelease(String chartPath, String application, String mergedValuesFile) {
         String helmRelease = ""
         dockerWrapper.withHelm {
-            String templateScript = "helm template ${application} chart/${chartPath} -f ${mergedValuesFile}"
+            String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }
 

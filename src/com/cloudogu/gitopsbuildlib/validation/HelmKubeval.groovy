@@ -21,14 +21,14 @@ class HelmKubeval extends Validator {
             String args = argsParser.parse(validatorConfig)
 
             def chartDir = ''
-            if (gitopsConfig.helm.containsKey('chartPath')) {
-                chartDir = gitopsConfig.helm.chartPath
-            } else if ( gitopsConfig.helm.containsKey('chartName')) {
-                chartDir = gitopsConfig.helm.chartName
+            if (deployments.helm.containsKey('chartPath')) {
+                chartDir = deployments.helm.chartPath
+            } else if ( deployments.helm.containsKey('chartName')) {
+                chartDir = deployments.helm.chartName
             }
 
             withDockerImage(validatorConfig.image) {
-                script.sh "helm kubeval chart/${chartDir} -v ${validatorConfig.k8sSchemaVersion}${args}"
+                script.sh "helm kubeval ${targetDirectory}/chart/${chartDir} -f ${targetDirectory}/mergedValues.yaml -v ${validatorConfig.k8sSchemaVersion}${args}"
             }
         }
     }
