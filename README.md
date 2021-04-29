@@ -584,23 +584,77 @@ node {
         deployViaGitops(gitopsConfig)
     }
 }
-
-// Simple example that works with dynamic library loading, i.e. the library() step
-class MyValidator {
-    def script
-    MyValidator(def script) {
-        this.script = script
-    }
-
-    void validate(boolean enabled, String targetDirectory, Map config) {
-        script.echo "Enabled: $enabled; targetDirectory: $targetDirectory; config: $config"
-    }
-}
 ```
 
 ### Custom validators
 
-In general a custom validator must provide this method: `validate(boolean enabled, String targetDirectory, Map config)`
+```groovy
+
+class MyValidator extends Validator {
+
+    MyValidator(def script) {
+        super(script)
+    }
+
+    @Override
+    void validate(boolean enabled, String targetDirectory, Map validatorConfig, Map gitopsConfig) {
+        script.echo "Enabled: $enabled; targetDirectory: $targetDirectory; validatorConfig: $validatorConfig; gitopsConfig: $gitopsConfig"
+    }
+
+    @Override
+    SourceType[] getSupportedSourceTypes() {
+        return [SourceType.***]
+    }
+
+    @Override
+    GitopsTool[] getSupportedGitopsTools() {
+        return [GitopsTool.***]
+    }
+}
+```
+
+In general a custom validator must implement the Validator class. You therefore have to implement the following methods:
+
+`void validate(boolean enabled, String targetDirectory, Map config)`
+- Here lies your validation code or the entrypoint for more complex validation processes
+
+`SourceType[] getSupportedSourceTypes()`  
+- This method returns a collection of supported Source Types.  
+The SourceType determines which resources are going to be validated
+There are two locations where resources can be validated.   
+They are differentiated by the resource-type of which there are two right now.
+    - Helm resources
+    - Plain k8s resources
+    
+
+**Visual representation of the folder structure on the Jenkins agent**
+```
+├── jenkinsworkdir
+   └── .configRepoTempDir
+      └── ${stage}
+         └── ${application}
+            ├── extraResources
+            ├── generatedResources
+            └── "your plain k8s resources"
+   └── .helmChartTempDir
+      └── chart
+         └── chartPath (for git repo) or chartName (for helm repo)
+      └── mergedValues.yaml
+```
+
+Helm:
+This location is only temporary and is being used for the helm chart to be downloaded and the mergedValues.file (values-shared.yaml + values-${stage}.yaml)
+Only Validators which support Helm schemas should operate on this folder
+
+Plain:
+This location is for your plain k8s resources. This folder is also the gitops folder which will be pushed to the scm.
+It contains your k8s resources in the root and two extra folders for additional k8s resources:
+extraResources: Only needed for a Helm deployment if you whish to deploy plain k8s resources in addition to the helm deployment. See: [Important note in Namespaces](#namespaces)
+generatedResources: If you have files which need to be deployed as a configMap. See: [Extra Files](#extra-files)
+
+`GitopsTool[] getSupportedGitopsTools()`
+This determins on which GitopsTool the validator will run. We implemented this feature since Argo already uses `helm template` and `kubeval` internally so we don't need `helm kubeval` since it does exactly the same.
+So we defined `HelmKubeval` as only needed to be executed on a `FLUX` operator.
 
 The library also offers a convenient base class [`com.cloudogu.gitops.gitopsbuildlib.Validator`](src/com/cloudogu/gitopsbuildlib/Validator.groovy).
 However, this seems impossible to use with neither dynamic library loading via the `library()` nor with `@Library`,

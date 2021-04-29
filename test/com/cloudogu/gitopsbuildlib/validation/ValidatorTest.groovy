@@ -54,12 +54,12 @@ class ValidatorTest {
 
         @Override
         SourceType[] getSupportedSourceTypes() {
-            return new SourceType[0]
+            return [SourceType.PLAIN]
         }
 
         @Override
         GitopsTool[] getSupportedGitopsTools() {
-            return new GitopsTool[0]
+            return [GitopsTool.FLUX]
         }
     }
 }

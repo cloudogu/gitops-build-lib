@@ -21,16 +21,18 @@ class HelmKubevalTest {
                 k8sSchemaVersion: '1.5'
             ],
             [
-                helm: [
-                    repoType: 'GIT',
-                    repoUrl: 'chartRepo/namespace/repoPath',
-                    chartPath: 'chartPath',
-                    version: 'version'
+                deployments:[
+                    helm: [
+                        repoType: 'GIT',
+                        repoUrl: 'chartRepo/namespace/repoPath',
+                        chartPath: 'chartPath',
+                        version: 'version'
+                    ]
                 ]
             ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval chart/chartPath -v 1.5 --strict --ignore-missing-schemas')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chartPath -f target/mergedValues.yaml -v 1.5 --strict --ignore-missing-schemas')
     }
 
     @Test
@@ -42,16 +44,18 @@ class HelmKubevalTest {
                 k8sSchemaVersion: '1.5'
             ],
             [
-                helm: [
-                    repoType: 'HELM',
-                    chartName: 'chart',
-                    repoUrl: 'chartRepo',
-                    version: 'version'
+                deployments:[
+                    helm: [
+                        repoType: 'HELM',
+                        chartName: 'chart',
+                        repoUrl: 'chartRepo',
+                        version: 'version'
+                    ]
                 ]
             ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval chart/chart -v 1.5 --strict --ignore-missing-schemas')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chart -f target/mergedValues.yaml -v 1.5 --strict --ignore-missing-schemas')
     }
 
     @Test
@@ -60,7 +64,11 @@ class HelmKubevalTest {
             'target',
             [image           : 'img',
              k8sSchemaVersion: '1.5'],
-            [plain: []]
+            [
+                deployments:[
+                    plain: []
+                ]
+            ]
         )
         assertThat(dockerMock.actualImages[0]).isEqualTo(null)
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(null)

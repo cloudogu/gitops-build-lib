@@ -19,6 +19,6 @@ class HelmRepoTest {
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo url')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=chart')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/.helmChartTempDir/chart')
     }
 }

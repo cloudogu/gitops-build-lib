@@ -30,6 +30,8 @@ class HelmKubeval extends Validator {
             withDockerImage(validatorConfig.image) {
                 script.sh "helm kubeval ${targetDirectory}/chart/${chartDir} -f ${targetDirectory}/mergedValues.yaml -v ${validatorConfig.k8sSchemaVersion}${args}"
             }
+        } else {
+            script.echo "Not executing HelmKubeval because this is not a helm deployment"
         }
     }
 
