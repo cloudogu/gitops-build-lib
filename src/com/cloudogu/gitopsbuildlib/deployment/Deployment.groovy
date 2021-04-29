@@ -38,8 +38,8 @@ abstract class Deployment {
         gitopsConfig.validators.each { validator ->
             GitopsTool gitopsTool = gitopsConfig.gitopsTool.toUpperCase()
             if (validator.value.validator.getSupportedGitopsTools().contains(gitopsTool)) {
-                script.echo "Executing validator ${validator.key} for ${gitopsTool.name()}"
                 validator.value.validator.getSupportedSourceTypes().each { sourceType ->
+                    script.echo "Executing validator ${validator.key} for ${gitopsTool.name()} in ${sourceType.name()} resources"
                     String targetDirectory = ''
                     if (gitopsConfig.deployments.containsKey('helm') && sourceType.equals(SourceType.HELM) ) {
                         targetDirectory = "${script.env.WORKSPACE}/.helmChartTempDir"
