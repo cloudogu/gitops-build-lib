@@ -41,7 +41,7 @@ class Helm extends Deployment {
         // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
         script.writeFile file: "${script.env.WORKSPACE}/.helmChartTempDir/mergedValues.yaml", text: mergeValuesFiles(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
-        updateYamlValue("${stage}/${application}/mergedValues.yaml", helmConfig)
+        updateYamlValue("${script.env.WORKSPACE}/.helmChartTempDir/mergedValues.yaml", helmConfig)
 
         script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${script.env.WORKSPACE}/.helmChartTempDir/mergedValues.yaml")
     }
