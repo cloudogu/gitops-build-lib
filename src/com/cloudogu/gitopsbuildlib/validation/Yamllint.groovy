@@ -27,7 +27,7 @@ class Yamllint extends Validator {
 
     @Override
     SourceType[] getSupportedSourceTypes() {
-        return [SourceType.HELM, SourceType.PLAIN]
+        return [SourceType.PLAIN]
     }
 
     @Override
