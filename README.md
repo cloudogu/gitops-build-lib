@@ -2,7 +2,9 @@
 
 Jenkins pipeline shared library for automating deployments via GitOps.   
 Take a look at [cloudogu/k8s-gitops-playground](https://github.com/cloudogu/k8s-gitops-playground) to see a fully 
-working example bundled with the complete infrastructure for a gitops deep dive.
+working example bundled with the complete infrastructure for a gitops deep dive.  
+See also our [blog post](https://cloudogu.com/en/blog/ciops-vs-gitops_en) that describes the challenges leading to this
+library and some of the features it offers. 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
