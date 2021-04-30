@@ -38,6 +38,20 @@ class ValidatorTest {
             .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false")
     }
 
+    @Test
+    void 'correct target directory for helm sourceType'() {
+        def output = validator.getTargetDirectory("staging", "app", SourceType.HELM)
+
+        assertThat(output).isEqualTo("workspace/.helmChartTempDir")
+    }
+
+    @Test
+    void 'correct target directory for plain sourceType'() {
+        def output = validator.getTargetDirectory("staging", "app", SourceType.PLAIN)
+
+        assertThat(output).isEqualTo("staging/app")
+    }
+
     class ValidatorUnderTest extends Validator {
 
         ValidatorUnderTest(Object script) {

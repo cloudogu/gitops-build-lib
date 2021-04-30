@@ -36,19 +36,7 @@ abstract class Deployment {
 
     def validate(String stage) {
         gitopsConfig.validators.each { validator ->
-            GitopsTool gitopsTool = gitopsConfig.gitopsTool.toUpperCase()
-            if (validator.value.validator.getSupportedGitopsTools().contains(gitopsTool)) {
-                validator.value.validator.getSupportedSourceTypes().each { sourceType ->
-                    script.echo "Starting validator ${validator.key} for ${gitopsTool.name()} in ${sourceType.name()} resources"
-                    String targetDirectory = ''
-                    if (gitopsConfig.deployments.containsKey('helm') && sourceType.equals(SourceType.HELM) ) {
-                        targetDirectory = "${script.env.WORKSPACE}/.helmChartTempDir"
-                    } else if (sourceType.equals(SourceType.PLAIN)) {
-                        targetDirectory = "${stage}/${gitopsConfig.application}"
-                    }
-                    validator.value.validator.validate(validator.value.enabled, targetDirectory, validator.value.config, gitopsConfig)
-                }
-            }
+            validator.value.validator.validate(validator.value.enabled, stage, validator.value.config, gitopsConfig)
         }
     }
 

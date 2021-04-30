@@ -100,9 +100,9 @@ users:
     void 'flux plain validates with yamllint and kubeval'() {
         deploymentUnderTest.validate('staging')
 
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator yamllint for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator kubeval for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Starting validator helmKubeval for FLUX in HELM resources')
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for FLUX in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for FLUX in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Starting validator HelmKubeval for FLUX in HELM resources')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
@@ -117,9 +117,9 @@ users:
         ]
         deploymentUnderTest.validate('staging')
 
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator yamllint for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator kubeval for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Starting validator helmKubeval for FLUX in HELM resources')
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for FLUX in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for FLUX in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Starting validator HelmKubeval for FLUX in HELM resources')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
@@ -131,8 +131,8 @@ users:
         deploymentUnderTest.gitopsConfig['gitopsTool'] = 'ARGO'
         deploymentUnderTest.validate('staging')
 
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator yamllint for ARGO in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator kubeval for ARGO in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for ARGO in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for ARGO in PLAIN resources')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
@@ -147,8 +147,8 @@ users:
         deploymentUnderTest.gitopsConfig['gitopsTool'] = 'ARGO'
         deploymentUnderTest.validate('staging')
 
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator yamllint for ARGO in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator kubeval for ARGO in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for ARGO in PLAIN resources')
+        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for ARGO in PLAIN resources')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
@@ -169,72 +169,6 @@ users:
         @Override
         def postValidation(String stage) {
             return null
-        }
-    }
-
-    class HelmKubevalUnderTest extends Validator {
-
-        HelmKubevalUnderTest(Object script) {
-            super(script)
-        }
-
-        @Override
-        protected void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
-            script.echo "i've been run"
-        }
-
-        @Override
-        SourceType[] getSupportedSourceTypes() {
-            return [SourceType.HELM]
-        }
-
-        @Override
-        GitopsTool[] getSupportedGitopsTools() {
-            return [GitopsTool.FLUX]
-        }
-    }
-
-    class KubevalUnderTest extends Validator {
-
-        KubevalUnderTest(Object script) {
-            super(script)
-        }
-
-        @Override
-        protected void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
-            script.echo "i've been run"
-        }
-
-        @Override
-        SourceType[] getSupportedSourceTypes() {
-            return [SourceType.PLAIN]
-        }
-
-        @Override
-        GitopsTool[] getSupportedGitopsTools() {
-            return [GitopsTool.FLUX, GitopsTool.ARGO]
-        }
-    }
-
-    class YamllintUnderTest extends Validator {
-
-        YamllintUnderTest(Object script) {
-            super(script)
-        }
-
-        @Override
-        protected void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
-            script.echo "i've been run"
-        }
-
-        @Override
-        SourceType[] getSupportedSourceTypes() {
-            return [SourceType.PLAIN]
-        }
-
-        @Override
-        GitopsTool[] getSupportedGitopsTools() {
-            return [GitopsTool.FLUX, GitopsTool.ARGO]
         }
     }
 }
