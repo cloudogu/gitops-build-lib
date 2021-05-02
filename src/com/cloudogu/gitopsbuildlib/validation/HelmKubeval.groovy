@@ -16,23 +16,21 @@ class HelmKubeval extends Validator {
     @Override
     void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
         Map deployments = gitopsConfig.deployments as Map
-        if (deployments.containsKey('helm')) {
+        String args = argsParser.parse(validatorConfig)
 
-            String args = argsParser.parse(validatorConfig)
-
-            def chartDir = ''
-            if (deployments.helm.containsKey('chartPath')) {
-                chartDir = deployments.helm.chartPath
-            } else if ( deployments.helm.containsKey('chartName')) {
-                chartDir = deployments.helm.chartName
-            }
-
-            withDockerImage(validatorConfig.image) {
-                script.sh "helm kubeval ${targetDirectory}/chart/${chartDir} -f ${targetDirectory}/mergedValues.yaml -v ${validatorConfig.k8sSchemaVersion}${args}"
-            }
-        } else {
-            script.echo "Not executing HelmKubeval because this is not a helm deployment"
+        withDockerImage(validatorConfig.image) {
+            script.sh "helm kubeval ${targetDirectory}/chart/${getChartDir(deployments)} -f ${targetDirectory}/mergedValues.yaml -v ${validatorConfig.k8sSchemaVersion}${args}"
         }
+    }
+
+    private String getChartDir(Map deployments) {
+        def chartDir = ''
+        if (deployments.helm.containsKey('chartPath')) {
+            chartDir = deployments.helm.chartPath
+        } else if ( deployments.helm.containsKey('chartName')) {
+            chartDir = deployments.helm.chartName
+        }
+        return chartDir
     }
 
     @Override
@@ -43,5 +41,10 @@ class HelmKubeval extends Validator {
     @Override
     GitopsTool[] getSupportedGitopsTools() {
         return [GitopsTool.FLUX]
+    }
+
+    @Override
+    Deployment[] getSupportedDeployments() {
+        return [Deployment.HELM]
     }
 }

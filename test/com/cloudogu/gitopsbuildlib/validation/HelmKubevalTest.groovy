@@ -57,20 +57,4 @@ class HelmKubevalTest {
         assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chart -f target/mergedValues.yaml -v 1.5 --strict --ignore-missing-schemas')
     }
-
-    @Test
-    void 'is not executed on plain deployment'() {
-        helmKubeval.validate(
-            'target',
-            [image           : 'img',
-             k8sSchemaVersion: '1.5'],
-            [
-                deployments:[
-                    plain: []
-                ]
-            ]
-        )
-        assertThat(dockerMock.actualImages[0]).isEqualTo(null)
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo(null)
-    }
 }

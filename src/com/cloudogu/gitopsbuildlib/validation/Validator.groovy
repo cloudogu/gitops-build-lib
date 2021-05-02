@@ -14,27 +14,28 @@ abstract class Validator {
 
     void validate(boolean enabled, String stage, Map validatorConfig, Map gitopsConfig) {
         GitopsTool gitopsTool = gitopsConfig.gitopsTool.toUpperCase()
-        SourceType deployment = getDeploymentType(gitopsConfig)
-        if (enabled && getSupportedGitopsTools().contains(gitopsTool) && getSupportedSourceTypes().contains(deployment)) {
+        Deployment deployment = getDeploymentType(gitopsConfig)
+        if (enabled && getSupportedGitopsTools().contains(gitopsTool) && getSupportedDeployments().contains(deployment)) {
             getSupportedSourceTypes().each { sourceType ->
                 script.echo "Starting validator ${this.getClass().getSimpleName()} for ${gitopsTool.name()} in ${sourceType.name()} resources"
                 validate(getTargetDirectory(stage, gitopsConfig.application, sourceType), validatorConfig, gitopsConfig)
             }
         } else {
-            script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false or doesn't match the given gitopsTool"
+            script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false or doesn't support the given gitopsTool or deployment"
         }
     }
 
     abstract protected void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig)
     abstract SourceType[] getSupportedSourceTypes()
     abstract GitopsTool[] getSupportedGitopsTools()
+    abstract Deployment[] getSupportedDeployments()
 
-    protected SourceType getDeploymentType(Map gitopsConfig) {
-        SourceType deploymentType = null
-        if (gitopsConfig.deployments.contains('helm')) {
-            deploymentType = SourceType.HELM
-        } else if (gitopsConfig.deployments.contains('plain')) {
-            deploymentType = SourceType.PLAIN
+    protected Deployment getDeploymentType(Map gitopsConfig) {
+        Deployment deploymentType = null
+        if (gitopsConfig.deployments.containsKey('helm')) {
+            deploymentType = Deployment.HELM
+        } else if (gitopsConfig.deployments.containsKey('plain')) {
+            deploymentType = Deployment.PLAIN
         }
         return deploymentType
     }

@@ -102,11 +102,10 @@ users:
 
         assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for FLUX in PLAIN resources')
         assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Starting validator HelmKubeval for FLUX in HELM resources')
+        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Skipping validator HelmKubeval because it is configured as enabled=false or doesn\'t support the given gitopsTool or deployment')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
-        assertThat(scriptMock.actualEchoArgs[3]).isEqualTo('Not executing HelmKubeval because this is not a helm deployment')
     }
 
     @Test

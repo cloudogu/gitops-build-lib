@@ -34,4 +34,9 @@ class Kubeval extends Validator {
     GitopsTool[] getSupportedGitopsTools() {
         return [GitopsTool.ARGO, GitopsTool.FLUX]
     }
+
+    @Override
+    Deployment[] getSupportedDeployments() {
+        return [Deployment.HELM, Deployment.PLAIN]
+    }
 }

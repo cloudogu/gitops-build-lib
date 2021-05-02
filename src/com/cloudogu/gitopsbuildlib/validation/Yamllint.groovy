@@ -25,6 +25,8 @@ class Yamllint extends Validator {
         }
     }
 
+
+
     @Override
     SourceType[] getSupportedSourceTypes() {
         return [SourceType.PLAIN]
@@ -33,5 +35,10 @@ class Yamllint extends Validator {
     @Override
     GitopsTool[] getSupportedGitopsTools() {
         return [GitopsTool.FLUX, GitopsTool.ARGO]
+    }
+
+    @Override
+    Deployment[] getSupportedDeployments() {
+        return [Deployment.HELM, Deployment.PLAIN]
     }
 }

@@ -15,7 +15,14 @@ class ValidatorTest {
 
     @Test
     void 'withDockerImage mounts workspace'() {
-        validator.validate(true, 'target', [:], [:])
+        validator.validate(true, 'target', [:],
+            [
+                gitopsTool: 'ARGO',
+                deployments: [
+                    helm: [:]
+                ]
+            ]
+        )
         assertThat(dockerMock.actualInsideArgs[0]).isEqualTo('-v workspace:workspace --entrypoint=""')
         assertThat(closureCalled).as("Closure was not called").isTrue()
         assertThat(validateCalled).as("Validate was not called").isTrue()
@@ -24,7 +31,12 @@ class ValidatorTest {
     @Test
     void 'withDockerImage doesnt mount workspace if already in workspace'() {
         scriptMock.mock.pwd = { scriptMock.mock.env.WORKSPACE }
-        validator.validate(true, 'target', [:], [:])
+        validator.validate(true, 'target', [:], [
+            gitopsTool: 'ARGO',
+            deployments: [
+                helm: [:]
+            ]
+        ])
         assertThat(dockerMock.actualInsideArgs[0]).isEqualTo('--entrypoint=""')
         assertThat(closureCalled).as("Closure was not called").isTrue()
         assertThat(validateCalled).as("Validate was not called").isTrue()
@@ -32,10 +44,15 @@ class ValidatorTest {
 
     @Test
     void 'skip validator if disabled'() {
-        validator.validate(false, 'target', [:], [:])
+        validator.validate(false, 'target', [:], [
+            gitopsTool: 'ARGO',
+            deployments: [
+                helm: [:]
+            ]
+        ])
         assertThat(validateCalled).as("Validate was called").isFalse()
         assertThat(scriptMock.actualEchoArgs[0])
-            .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false")
+            .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false or doesn't support the given gitopsTool or deployment")
     }
 
     @Test
@@ -68,12 +85,17 @@ class ValidatorTest {
 
         @Override
         SourceType[] getSupportedSourceTypes() {
-            return [SourceType.PLAIN]
+            return [SourceType.PLAIN, SourceType.HELM]
         }
 
         @Override
         GitopsTool[] getSupportedGitopsTools() {
-            return [GitopsTool.FLUX]
+            return [GitopsTool.FLUX, GitopsTool.ARGO]
+        }
+
+        @Override
+        Deployment[] getSupportedDeployments() {
+            return [Deployment.HELM, Deployment.PLAIN]
         }
     }
 }
