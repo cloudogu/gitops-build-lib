@@ -14,8 +14,7 @@ abstract class Validator {
 
     void validate(boolean enabled, String stage, Map validatorConfig, Map gitopsConfig) {
         GitopsTool gitopsTool = gitopsConfig.gitopsTool.toUpperCase()
-        Deployment deployment = getDeploymentType(gitopsConfig)
-        if (enabled && getSupportedGitopsTools().contains(gitopsTool) && getSupportedDeployments().contains(deployment)) {
+        if (enabled && getSupportedGitopsTools().contains(gitopsTool)) {
             getSupportedSourceTypes().each { sourceType ->
                 script.echo "Starting validator ${this.getClass().getSimpleName()} for ${gitopsTool.name()} in ${sourceType.name()} resources"
                 validate(getTargetDirectory(stage, gitopsConfig.application, sourceType), validatorConfig, gitopsConfig)
