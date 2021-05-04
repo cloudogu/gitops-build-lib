@@ -7,7 +7,7 @@ class KubevalArgsParserTest {
 
     @Test
     void 'no config yields correct defaults'() {
-        ArgsParser argsParser = new KubevalArgsParser()
+        KubevalArgsParser argsParser = new KubevalArgsParser()
         String output = argsParser.parse([:])
 
         assertThat(output).isEqualTo(' --strict --ignore-missing-schemas')
@@ -15,7 +15,7 @@ class KubevalArgsParserTest {
 
     @Test
     void 'setting all args yields correct output'() {
-        ArgsParser argsParser = new KubevalArgsParser()
+        KubevalArgsParser argsParser = new KubevalArgsParser()
         String output = argsParser.parse([
             strict: true,
             ignoreMissingSchemas: true,
@@ -27,7 +27,7 @@ class KubevalArgsParserTest {
 
     @Test
     void 'disabling args yields correct output'() {
-        ArgsParser argsParser = new KubevalArgsParser()
+        KubevalArgsParser argsParser = new KubevalArgsParser()
         String output = argsParser.parse([
             strict: false,
             ignoreMissingSchemas: false,
@@ -39,7 +39,7 @@ class KubevalArgsParserTest {
 
     @Test
     void 'mixing config yields correct output'() {
-        ArgsParser argsParser = new KubevalArgsParser()
+        KubevalArgsParser argsParser = new KubevalArgsParser()
         String output = argsParser.parse([
             strict: false,
             skipKinds: ['kind1']

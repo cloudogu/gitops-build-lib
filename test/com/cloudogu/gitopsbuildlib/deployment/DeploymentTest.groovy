@@ -93,64 +93,6 @@ users:
         assertThat(scriptMock.actualWriteFileArgs[1]).contains('[file:staging/app/generatedResources/index.yaml')
     }
 
-    @Test
-    void 'flux plain validates with yamllint and kubeval'() {
-        deploymentUnderTest.validate('staging')
-
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Skipping validator HelmKubeval because it is configured as enabled=false or doesn\'t support the given gitopsTool or deployment')
-
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
-    }
-
-    @Test
-    void 'flux helm validates with yamllint and kubeval and helmKubeval'() {
-        deploymentUnderTest.gitopsConfig['deployments'] = [
-            sourcePath: 'k8s',
-            helm: [:]
-        ]
-        deploymentUnderTest.validate('staging')
-
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Starting validator HelmKubeval for FLUX in HELM resources')
-
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm kubeval workspace/.helmChartTempDir/chart/ -f workspace/.helmChartTempDir/mergedValues.yaml -v null --strict --ignore-missing-schemas')
-    }
-
-    @Test
-    void 'argo plain validates with yamllint and kubeval'() {
-        deploymentUnderTest.gitopsConfig['gitopsTool'] = 'ARGO'
-        deploymentUnderTest.validate('staging')
-
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for ARGO in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for ARGO in PLAIN resources')
-
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
-    }
-
-    @Test
-    void 'argo helm validates with yamllint and kubeval'() {
-        deploymentUnderTest.gitopsConfig['deployments'] = [
-            sourcePath: 'k8s',
-            helm: [:]
-        ]
-        deploymentUnderTest.gitopsConfig['gitopsTool'] = 'ARGO'
-        deploymentUnderTest.validate('staging')
-
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for ARGO in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for ARGO in PLAIN resources')
-
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
-
-    }
-
     class DeploymentUnderTest extends Deployment {
 
         DeploymentUnderTest(Object script, Object gitopsConfig) {
@@ -164,6 +106,11 @@ users:
 
         @Override
         def postValidation(String stage) {
+            return null
+        }
+
+        @Override
+        def validate(String stage) {
             return null
         }
     }

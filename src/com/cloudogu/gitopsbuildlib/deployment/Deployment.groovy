@@ -110,12 +110,13 @@ users:
     }
 
     protected GitopsTool getGitopsTool() {
-        GitopsTool gitopsTool = null
-        if(gitopsConfig.gitopsTool == 'FLUX') {
-            gitopsTool = GitopsTool.FLUX
-        } else if(gitopsConfig.gitopsTool == 'ARGO') {
-            gitopsTool = GitopsTool.ARGO
+        switch (gitopsConfig.gitopsTool) {
+            case 'FLUX':
+                return GitopsTool.FLUX
+            case 'ARGO':
+                return GitopsTool.ARGO
+            default:
+                return null
         }
-        return gitopsTool
     }
 }

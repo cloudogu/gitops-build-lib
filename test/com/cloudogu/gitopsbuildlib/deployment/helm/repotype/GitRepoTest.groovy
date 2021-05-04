@@ -16,8 +16,8 @@ class GitRepoTest {
             repoUrl: 'url',
             chartPath: 'chartPath',
             version: '1.0'
-        ])
+        ], ".helmChartTempDir", "chartRootDir")
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update workspace/.helmChartTempDir/chart/chartPath')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update workspace/.helmChartTempDir/chartRootDir/chartPath')
     }
 }

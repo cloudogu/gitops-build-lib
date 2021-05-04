@@ -15,14 +15,7 @@ class ValidatorTest {
 
     @Test
     void 'withDockerImage mounts workspace'() {
-        validator.validate(true, 'target', [:],
-            [
-                gitopsTool: 'ARGO',
-                deployments: [
-                    helm: [:]
-                ]
-            ]
-        )
+        validator.validate(true, GitopsTool.ARGO, SourceType.HELM, "helmDir", [:], [:])
         assertThat(dockerMock.actualInsideArgs[0]).isEqualTo('-v workspace:workspace --entrypoint=""')
         assertThat(closureCalled).as("Closure was not called").isTrue()
         assertThat(validateCalled).as("Validate was not called").isTrue()
@@ -31,12 +24,7 @@ class ValidatorTest {
     @Test
     void 'withDockerImage doesnt mount workspace if already in workspace'() {
         scriptMock.mock.pwd = { scriptMock.mock.env.WORKSPACE }
-        validator.validate(true, 'target', [:], [
-            gitopsTool: 'ARGO',
-            deployments: [
-                helm: [:]
-            ]
-        ])
+        validator.validate(true, GitopsTool.ARGO, SourceType.HELM, "helmDir", [:], [:])
         assertThat(dockerMock.actualInsideArgs[0]).isEqualTo('--entrypoint=""')
         assertThat(closureCalled).as("Closure was not called").isTrue()
         assertThat(validateCalled).as("Validate was not called").isTrue()
@@ -44,29 +32,10 @@ class ValidatorTest {
 
     @Test
     void 'skip validator if disabled'() {
-        validator.validate(false, 'target', [:], [
-            gitopsTool: 'ARGO',
-            deployments: [
-                helm: [:]
-            ]
-        ])
+        validator.validate(false, GitopsTool.ARGO, SourceType.HELM, "helmDir", [:], [:])
         assertThat(validateCalled).as("Validate was called").isFalse()
         assertThat(scriptMock.actualEchoArgs[0])
-            .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false or doesn't support the given gitopsTool or deployment")
-    }
-
-    @Test
-    void 'correct target directory for helm sourceType'() {
-        def output = validator.getTargetDirectory("staging", "app", SourceType.HELM)
-
-        assertThat(output).isEqualTo("workspace/.helmChartTempDir")
-    }
-
-    @Test
-    void 'correct target directory for plain sourceType'() {
-        def output = validator.getTargetDirectory("staging", "app", SourceType.PLAIN)
-
-        assertThat(output).isEqualTo("staging/app")
+            .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false or doesn't support the given gitopsTool=argo or sourceType=helm")
     }
 
     class ValidatorUnderTest extends Validator {
@@ -91,11 +60,6 @@ class ValidatorTest {
         @Override
         GitopsTool[] getSupportedGitopsTools() {
             return [GitopsTool.FLUX, GitopsTool.ARGO]
-        }
-
-        @Override
-        Deployment[] getSupportedDeployments() {
-            return [Deployment.HELM, Deployment.PLAIN]
         }
     }
 }

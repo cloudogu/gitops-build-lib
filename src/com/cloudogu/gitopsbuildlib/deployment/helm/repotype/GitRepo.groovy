@@ -17,7 +17,7 @@ class GitRepo extends RepoType {
         }
 
         withHelm {
-            script.sh "helm dep update ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath}"
+            script.sh "helm dep update ${script.env.WORKSPACE}/.helmChartTempDir/${chartRootDir}/${chartPath}"
         }
     }
 
