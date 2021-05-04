@@ -19,7 +19,7 @@ abstract class Validator {
             script.echo "Starting validator ${this.getClass().getSimpleName()} for ${gitopsTool.name()} in ${sourceType.name()} resources"
             validate(targetDirectory, validatorConfig, gitopsConfig)
         } else {
-            script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false or doesn't support the given gitopsTool=${gitopsTool.nameValue} or sourceType=${sourceType.nameValue}"
+            script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false or doesn't support the given gitopsTool=${gitopsTool.name()} or sourceType=${sourceType.name()}"
         }
     }
 
