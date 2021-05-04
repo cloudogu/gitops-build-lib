@@ -35,9 +35,4 @@ class Yamllint extends Validator {
     GitopsTool[] getSupportedGitopsTools() {
         return [GitopsTool.FLUX, GitopsTool.ARGO]
     }
-
-    @Override
-    Deployment[] getSupportedDeployments() {
-        return [Deployment.HELM, Deployment.PLAIN]
-    }
 }

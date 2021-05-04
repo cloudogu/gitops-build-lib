@@ -21,7 +21,7 @@ class Plain extends Deployment{
     @Override
     def validate(String stage) {
         gitopsConfig.validators.each { validator ->
-            validator.value.validator.validate(validator.value.enabled, SourceType.PLAIN, "${stage}/${gitopsConfig.application}", validator.value.config, gitopsConfig)
+            validator.value.validator.validate(validator.value.enabled, getGitopsTool(), SourceType.PLAIN, "${stage}/${gitopsConfig.application}", validator.value.config, gitopsConfig)
         }
     }
 

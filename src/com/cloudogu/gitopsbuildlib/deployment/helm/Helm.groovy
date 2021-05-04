@@ -26,9 +26,9 @@ class Helm extends Deployment {
         } else if (gitopsConfig.deployments.helm.repoType == 'HELM') {
             chartRepo = new HelmRepo(script)
         }
-        if(getGitopsTool() == GitopsTool.FLUX) {
+        if(gitopsConfig.gitopsTool == 'FLUX') {
             helmRelease = new FluxV1Release(script)
-        } else if(getGitopsTool() == GitopsTool.ARGO) {
+        } else if(gitopsConfig.gitopsTool == 'ARGO') {
             helmRelease = new ArgoCDRelease(script)
         }
     }
