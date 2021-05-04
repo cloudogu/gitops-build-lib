@@ -1,11 +1,8 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
-import com.cloudogu.gitopsbuildlib.validation.GitopsTool
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
-import com.cloudogu.gitopsbuildlib.validation.SourceType
-import com.cloudogu.gitopsbuildlib.validation.Validator
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import org.junit.jupiter.api.*
 import static org.assertj.core.api.Assertions.assertThat

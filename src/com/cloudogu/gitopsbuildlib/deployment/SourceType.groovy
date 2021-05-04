@@ -1,4 +1,4 @@
-package com.cloudogu.gitopsbuildlib.validation
+package com.cloudogu.gitopsbuildlib.deployment
 
 enum SourceType {
     HELM('helm'), PLAIN('plain')

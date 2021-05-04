@@ -1,5 +1,7 @@
 package com.cloudogu.gitopsbuildlib.validation
 
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
 
 abstract class Validator {
@@ -12,41 +14,18 @@ abstract class Validator {
         dockerWrapper = new DockerWrapper(script)
     }
 
-    void validate(boolean enabled, String stage, Map validatorConfig, Map gitopsConfig) {
-        GitopsTool gitopsTool = gitopsConfig.gitopsTool.toUpperCase()
-        if (enabled && getSupportedGitopsTools().contains(gitopsTool)) {
-            getSupportedSourceTypes().each { sourceType ->
-                script.echo "Starting validator ${this.getClass().getSimpleName()} for ${gitopsTool.name()} in ${sourceType.name()} resources"
-                validate(getTargetDirectory(stage, gitopsConfig.application, sourceType), validatorConfig, gitopsConfig)
-            }
+    void validate(boolean enabled, GitopsTool gitopsTool, SourceType sourceType, String targetDirectory, Map validatorConfig, Map gitopsConfig) {
+        if (enabled && getSupportedGitopsTools().contains(gitopsTool) && getSupportedSourceTypes().contains(sourceType)) {
+            script.echo "Starting validator ${this.getClass().getSimpleName()} for ${gitopsTool.name()} in ${sourceType.name()} resources"
+            validate(targetDirectory, validatorConfig, gitopsConfig)
         } else {
-            script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false or doesn't support the given gitopsTool or deployment"
+            script.echo "Skipping validator ${this.getClass().getSimpleName()} because it is configured as enabled=false or doesn't support the given gitopsTool or sourceType"
         }
     }
 
     abstract protected void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig)
     abstract SourceType[] getSupportedSourceTypes()
     abstract GitopsTool[] getSupportedGitopsTools()
-    abstract Deployment[] getSupportedDeployments()
-
-    protected Deployment getDeploymentType(Map gitopsConfig) {
-        Deployment deploymentType = null
-        if (gitopsConfig.deployments.containsKey('helm')) {
-            deploymentType = Deployment.HELM
-        } else if (gitopsConfig.deployments.containsKey('plain')) {
-            deploymentType = Deployment.PLAIN
-        }
-        return deploymentType
-    }
-
-    protected String getTargetDirectory(String stage, String application, SourceType sourceType) {
-        switch (sourceType) {
-            case SourceType.HELM:
-                return "${script.env.WORKSPACE}/.helmChartTempDir"
-            case SourceType.PLAIN:
-                return  "${stage}/${application}"
-        }
-    }
 
     protected void withDockerImage(String image, Closure body) {
         dockerWrapper.withDockerImage(image, body)

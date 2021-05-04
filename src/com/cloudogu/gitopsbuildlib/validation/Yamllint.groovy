@@ -1,6 +1,7 @@
 package com.cloudogu.gitopsbuildlib.validation
 
-import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 
 /**
  * Checks for correct YAML syntax using yamllint

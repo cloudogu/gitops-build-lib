@@ -1,12 +1,13 @@
 package com.cloudogu.gitopsbuildlib.validation
 
-import com.cloudogu.gitopsbuildlib.validation.utils.ArgsParser
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 import com.cloudogu.gitopsbuildlib.validation.utils.KubevalArgsParser
 
 
 class HelmKubeval extends Validator {
 
-    ArgsParser argsParser
+    KubevalArgsParser argsParser
 
     HelmKubeval(def script) {
         super(script)
@@ -41,10 +42,5 @@ class HelmKubeval extends Validator {
     @Override
     GitopsTool[] getSupportedGitopsTools() {
         return [GitopsTool.FLUX]
-    }
-
-    @Override
-    Deployment[] getSupportedDeployments() {
-        return [Deployment.HELM]
     }
 }

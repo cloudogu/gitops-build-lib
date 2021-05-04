@@ -1,8 +1,8 @@
 package com.cloudogu.gitopsbuildlib.validation
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
-import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
-import com.cloudogu.gitopsbuildlib.validation.Validator
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 import org.junit.jupiter.api.Test
 import static org.assertj.core.api.Assertions.assertThat
 

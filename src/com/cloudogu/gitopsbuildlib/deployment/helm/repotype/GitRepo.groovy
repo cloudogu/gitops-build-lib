@@ -7,9 +7,9 @@ class GitRepo extends RepoType {
     }
 
     @Override
-    void prepareRepo(Map helmConfig) {
+    void prepareRepo(Map helmConfig, String helmChartTempDir, String chartRootDir) {
 
-        getHelmChartFromGitRepo(helmConfig)
+        getHelmChartFromGitRepo(helmConfig, helmChartTempDir, chartRootDir)
 
         def chartPath = ''
         if (helmConfig.containsKey('chartPath')) {
@@ -21,10 +21,10 @@ class GitRepo extends RepoType {
         }
     }
 
-    private getHelmChartFromGitRepo(Map helmConfig) {
+    private getHelmChartFromGitRepo(Map helmConfig, String helmChartTempDir, String chartRootDir) {
         def git
 
-        script.dir("${script.env.WORKSPACE}/.helmChartTempDir/chart/") {
+        script.dir("${script.env.WORKSPACE}/${helmChartTempDir}/${chartRootDir}/") {
 
             if (helmConfig.containsKey('credentialsId')) {
                 git = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)

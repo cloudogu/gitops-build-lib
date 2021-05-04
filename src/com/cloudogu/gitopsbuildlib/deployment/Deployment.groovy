@@ -1,8 +1,6 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
-import com.cloudogu.gitopsbuildlib.validation.GitopsTool
-import com.cloudogu.gitopsbuildlib.validation.SourceType
 
 abstract class Deployment {
 
@@ -32,13 +30,7 @@ abstract class Deployment {
 
     abstract preValidation(String stage)
     abstract postValidation(String stage)
-
-
-    def validate(String stage) {
-        gitopsConfig.validators.each { validator ->
-            validator.value.validator.validate(validator.value.enabled, stage, validator.value.config, gitopsConfig)
-        }
-    }
+    abstract validate(String stage)
 
     def createFoldersAndCopyK8sResources(String stage) {
         def sourcePath = gitopsConfig.deployments.sourcePath
@@ -115,5 +107,15 @@ users:
             namespace = stage
         }
         return namespace
+    }
+
+    protected GitopsTool getGitopsTool() {
+        GitopsTool gitopsTool = null
+        if(gitopsConfig.gitopsTool == 'FLUX') {
+            gitopsTool = GitopsTool.FLUX
+        } else if(gitopsConfig.gitopsTool == 'ARGO') {
+            gitopsTool = GitopsTool.ARGO
+        }
+        return gitopsTool
     }
 }

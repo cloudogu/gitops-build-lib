@@ -598,8 +598,8 @@ If you need to use `library()` or `@Library` then your validator needs to implem
 - `GitopsTool[] getSupportedGitopsTools()`
 
 ```groovy
-import com.cloudogu.gitopsbuildlib.validation.GitopsTool
-import com.cloudogu.gitopsbuildlib.validation.SourceType
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 
 class MyValidator extends Validator {
 

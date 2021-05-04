@@ -1,12 +1,11 @@
 package com.cloudogu.gitopsbuildlib.validation.utils
 
-class KubevalArgsParser implements ArgsParser{
+class KubevalArgsParser {
 
     private boolean strict = true
     private boolean ignoreMissingSchemas = true
     private List<String> skipKinds = []
 
-    @Override
     String parse(Map validatorConfig) {
 
         String args = ''

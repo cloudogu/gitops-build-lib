@@ -1,6 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment.plain
 
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 
 class Plain extends Deployment{
 
@@ -10,11 +11,18 @@ class Plain extends Deployment{
 
     @Override
     def preValidation(String stage) {
+        updateImage(stage)
     }
 
     @Override
     def postValidation(String stage) {
-        updateImage(stage)
+    }
+
+    @Override
+    def validate(String stage) {
+        gitopsConfig.validators.each { validator ->
+            validator.value.validator.validate(validator.value.enabled, SourceType.PLAIN, "${stage}/${gitopsConfig.application}", validator.value.config, gitopsConfig)
+        }
     }
 
     private updateImage(String stage) {
