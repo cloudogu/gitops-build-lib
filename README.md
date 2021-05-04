@@ -214,11 +214,46 @@ The library hides some implementation specifics of the individual tools. For exa
 
 #### Flux v1
 
-See [Example in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/fluxv1)
+You can make this library work with Flux v1 with the following steps:
+
+- Create a repository in your SCM for the payload of your applications
+- Configure the Flux operator to use this repository
+- If you want to use Helm applications you will need a Helm operator because this library is creating `HelmRelease` CRs
+
+See [Example for operator configurations in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/fluxv1)  
+See [Example application with Flux v1](https://github.com/cloudogu/k8s-gitops-playground/tree/main/applications/petclinic/fluxv1/helm)
 
 #### ArgoCD
 
-See [Example in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/argocd)
+You can make this library work with your ArgoCD with the following steps:
+
+- Create a repository in your SCM for the payload of your applications
+- Add this repository to your ArgoCD configuration
+- Add application definitions for the different stages of your application e.g. (your staging application):
+    ```yaml
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: petclinic-staging
+      namespace: argocd
+    spec:
+      destination:
+        namespace: argocd-staging
+        server: https://kubernetes.default.svc
+      project: petclinic
+      source:
+        path: staging/spring-petclinic
+        repoURL: http://scm/repo/gitops
+        targetRevision: main
+        directory:
+          recurse: true
+      syncPolicy:
+        automated: {}
+    ```
+- Configure the payload repository through the `scm` key in your [gitopsconfig](#gitops-config)
+
+See [Example of ArgoCD configuration in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/argocd)  
+See [Example of ArgoCD application in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/applications/petclinic/argocd/helm)
 
 ---
 
