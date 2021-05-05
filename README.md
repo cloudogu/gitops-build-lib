@@ -748,7 +748,7 @@ They are differentiated by the resource-type of which there are two right now.
             └── ...
    └── .helmChartTempDir/
       └── chart/
-         └── chartPath/ (for git repo) or chartName (for helm repo)
+         └── ${chartPath}/ (for git repo) or ${chartName}/ (for helm repo)
       └── mergedValues.yaml
 ```
 
