@@ -16,11 +16,14 @@ library and some of the features it offers.
   - [More options](#more-options)
   - [Real life examples](#real-life-examples)
 - [Usage](#usage)
+  - [Jenkins](#jenkins)
+  - [GitOps tool](#gitops-tool)
+    - [Flux v1](#flux-v1)
+    - [ArgoCD](#argocd)
 - [Default Folder Structure](#default-folder-structure)
   - [Plain-k8s](#plain-k8s)
   - [Helm](#helm)
 - [GitOps-Config](#gitops-config)
-- [SCM-Provider](#scm-provider)
 - [Stages](#stages)
   - [Namespaces](#namespaces)
   - [Conventions for stages](#conventions-for-stages)
@@ -28,9 +31,11 @@ library and some of the features it offers.
   - [Plain k8s deployment](#plain-k8s-deployment)
   - [Helm deployment](#helm-deployment)
     - [Conventions for helm deployment](#conventions-for-helm-deployment)
+    - [`helm template` with ArgoCD application](#helm-template-with-argocd-application)
+- [Extra Files](#extra-files)
+- [SCM-Provider](#scm-provider)
 - [Validators](#validators)
   - [Custom validators](#custom-validators)
-- [Extra Files](#extra-files)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -44,27 +49,31 @@ Use Case realised by this library:
 * Infrastructure as Code is maintained  in app repo,
 * CI Server writes to GitOps repo and creates PullRequests.
 * Lots of convenience features
+* Same Pipeline API for different GitOps tools
 
 ## Features
 
 * Write Kubernetes resources to a git repo (for a GitOps operator to pick them up) and creates PRs.
-* Opinionated conventions for folder structures and workflows.
-* Support for multiple stages within the same gitOps Repo
+* Opinionated conventions for [folder structures](#default-folder-structure) and workflows.
+* Support for [multiple stages](#stages) within the same gitOps Repo
     * Push to application branch and create PR (production) or
     * Push to main branch (e.g. "main") directly for staging deployment
+* Support for different [GitOps tools/operators/vendors](#gitops-tool)
+    * ArgoCD
+    * Flux v1
 * Deployment methods
-    * Plain Kubernetes resources - write image tag into kubernetes deployments dynamically
+    * [Plain Kubernetes resources](#plain-k8s-deployment) - write image tag into kubernetes deployments dynamically
         * add files to deployment which will be generated to a configmap
-    * Helm deployments - set values (e.g. image tag) dynamically
+    * [Helm deployments](#helm-deployment) - set values (e.g. image tag) dynamically
         * add custom k8s resources
-* Support for different Helm-Repository types
-    * Helm
-    * Git
-* Fail early: Validate YAML syntax (yamllint) and against Kubernetes schema (kubeval) as well as Helm charts (helmKubeval)
-* Pluggable validators: Simply add your own validators
-* SCM Systems Supported
+        * Support for different Helm-Repository types:  Helm, Git
+* [Convert files into Kubernetes config maps](#extra-files). 
+  This way you can edit them using full highlighting and linting support of your IDE.
+* Fail early: [Validate](#validators) YAML syntax (yamllint) and against Kubernetes schema (kubeval) as well as Helm charts (helmKubeval)
+* [Pluggable validators](#custom-validators): Simply add your own validators
+* Extensible SCM providers
     * SCM-Manager
-    * Abstraction for others is WIP
+    * Other can easily be added due to an abstraction layer 
 
 ---
 
@@ -76,8 +85,9 @@ Detailed instructions about the attributes can be found [here](#gitops-config).
 
 ### Minimal
 
-This will simply [validate](#validators) and deploy the resources from the source repo's `k8s` folder into the
-`fluxv1/gitops` repo.
+This will simply [validate](#validators) and deploy the resources from the source repo's `k8s` folder (see 
+[folder structure](#default-folder-structure) into the `gitops` repo, implementing two stages (see [stages](#stages)) 
+using SCM-Manager (see [SCM provider](#scm-provider)).
 
 ```groovy
 def gitopsConfig = [
@@ -85,18 +95,10 @@ def gitopsConfig = [
         provider:       'SCMManager',
         credentialsId:  'scmm-user',
         baseUrl:        'http://scmm-scm-manager/scm',
-        repositoryUrl:  'fluxv1/gitops'
+        repositoryUrl:  'gitops'
     ],
     application: 'spring-petclinic',
-    gitopsTool: 'FLUX',
-    stages: [
-        staging: [ 
-            deployDirectly: true
-        ],
-        production: [
-            deployDirectly: false 
-        ],
-    ]
+    gitopsTool: 'FLUX' /* or 'ARGO' */
 ]
 
 deployViaGitops(gitopsConfig)
@@ -104,9 +106,9 @@ deployViaGitops(gitopsConfig)
 
 ### More options
 
-Example of a small and yet complete **gitops-config** for a helm-deployment of an application. This would lead to a 
-deployment of your staging environment by updating the resources of "staging" folder within your gitops-folder in git.
-For production it will open a PR with the changes.
+The following is an example of a small and yet complete **gitops-config** for a helm-deployment of an application. 
+This would lead to a deployment of your staging environment by updating the resources of "staging" folder within your 
+gitops-folder in git. For production it will open a PR with the changes.
 
 ```groovy
 def gitopsConfig = [
@@ -114,13 +116,13 @@ def gitopsConfig = [
         provider:       'SCMManager',
         credentialsId:  'scmm-user',
         baseUrl:        'http://scmm-scm-manager/scm',
-        repositoryUrl:  'fluxv1/gitops'
+        repositoryUrl:  'gitops'
     ],
     cesBuildLibRepo: <cesBuildLibRepo> /* Default: 'https://github.com/cloudogu/ces-build-lib' */ ,
     cesBuildLibVersion: <cesBuildLibVersion> /* Default: a recent cesBuildLibVersion see deployViaGitops.groovy */ ,
     cesBuildLibCredentialsId: <cesBuildLibCredentialsId> /* Default: '', empty due to default public github repo */,
     application: 'spring-petclinic',
-    gitopsTool: 'FLUX'
+    gitopsTool: 'FLUX' /* or 'ARGO' */
     mainBranch: 'master' /* Default: 'main' */, 
     deployments: [
         sourcePath: 'k8s' /* Default: 'k8s' */,
@@ -165,11 +167,17 @@ deployViaGitops(gitopsConfig)
 **ArgoCD:**
 * [using petclinic with helm and extra k8s-resources and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/argocd/helm/Jenkinsfile)
 * [using petclinic with plain-k8s](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/petclinic/argocd/plain-k8s/Jenkinsfile)
-
+* [using nginx with helm and extra files](https://github.com/cloudogu/k8s-gitops-playground/blob/main/applications/nginx/argocd/Jenkinsfile)
 
 ---
 
 ## Usage
+
+Two parts need completion in order to get up and running with the library:
+* Trigger the library in your build, which writes infrastructure code into your GitOps repo.
+* Set up the GitOps tool, so it deploys the infrastructure code from your GitOps repo.
+
+### Jenkins
 
 At first you have to import the library. You can either use one of the following options:
 * `library()` when the library is being loaded from a private git
@@ -192,12 +200,62 @@ import com.cloudogu.gitops.gitopsbuildlib.*
 
 To utilize the library itself, there is little to do:
 - Setup a [`gitopsConfig`](#examples) containing the following sections
-    - properties (e.g. remote urls to scm, application etc.)
+    - properties (e.g. remote urls to scm, application, GitOps tool, etc.)
     - stages
     - deployments
     - validators
     - fileConfigMaps
 - Call `deployViaGitops(gitopsConfig)`
+
+### GitOps tool
+
+Having the library write the configuration into your GitOps repository is the first part.
+Next, make your GitOps tool deploy it. Obviously this setup depends on the GitOps tool used.
+
+The library hides some implementation specifics of the individual tools. For example, for Flux, it creates `HelmRelease` CRs, for argo it calls `helm template`, see [Helm](#helm-deployment).
+
+#### Flux v1
+
+You can make this library work with Flux v1 with the following steps:
+
+- Create a repository in your SCM for the payload of your applications
+- Configure the Flux operator to use this repository
+- If you want to use Helm applications you will need a Helm operator because this library is creating `HelmRelease` CRs
+
+See [Example for operator configurations in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/fluxv1)  
+See [Example application with Flux v1](https://github.com/cloudogu/k8s-gitops-playground/tree/main/applications/petclinic/fluxv1/helm)
+
+#### ArgoCD
+
+You can make this library work with your ArgoCD with the following steps:
+
+- Create a repository in your SCM for the payload of your applications
+- Add this repository to your ArgoCD configuration
+- Add application definitions for the different stages of your application e.g. (your staging application):
+    ```yaml
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: petclinic-staging
+      namespace: argocd
+    spec:
+      destination:
+        namespace: argocd-staging
+        server: https://kubernetes.default.svc
+      project: petclinic
+      source:
+        path: staging/spring-petclinic
+        repoURL: http://scm/repo/gitops
+        targetRevision: main
+        directory:
+          recurse: true
+      syncPolicy:
+        automated: {}
+    ```
+- Configure the payload repository through the `scm` key in your [gitopsconfig](#gitops-config)
+
+See [Example of ArgoCD configuration in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/argocd)  
+See [Example of ArgoCD application in GitOps Playground](https://github.com/cloudogu/k8s-gitops-playground/tree/main/applications/petclinic/argocd/helm)
 
 ---
 
@@ -252,74 +310,12 @@ You can find a complete yet simple example [here](#examples).
 
 First of all there are some mandatory properties e.g. the information about your gitops repository, the application repository and the gitops tool to be used.
 
-```
-application:            'spring-petclinic' // Name of the application. Used as a folder in GitOps repo
-```
-
-```
-gitopsTool:            'ARGO' // Name of the gitops tool. Currently supporting 'FLUX' (for now only fluxV1) and 'ARGO'
-```
-
-and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:
-```
-cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib',
-cesBuildLibVersion: '1.45.0',
-mainBranch:         'main'
-```
----
-
-## SCM-Provider
-
-The scm-section defines where your 'gitops-repository' resides (url, provider) and how to access it (credentials):
-
-```groovy
-def gitopsConfig = [
-    ...
-    scm: [
-        provider:       'SCMManager',   // This is the name of the scm-provider in use, for a list of supported providers watch below!
-        credentialsId:  'scmm-user',    // ID of credentials defined in Jenkins used to authenticated with SCMM
-        baseUrl:        'http://scmm-scm-manager/scm',  // this is your gitops base url 
-        repositoryUrl:  'fluxv1/gitops' // this is the gitops repo
-    ],
-    ...
-]
-```
-It currently supports the following scm-provider:
-
-- [SCMManager](https://www.scm-manager.org/)
-
-To empower people to participate and encourage the integration of other scm-software (e.g. github), we decided to implement an abstraction for the
-scm-provider. By extending the SCM-Provider class you can integrate your own provider! Please feel free to contribute!
-
-Example:
-
-```groovy
-import com.cloudogu.gitopsbuildlib.scm.SCMProvider
-
-class GitHub extends SCMProvider {
-    @Override
-    void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl }
-
-    @Override
-    void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl }
-
-    @Override
-    void setCredentials(String credentialsId) { this.credentials = credentialsId }
-
-    @Override
-    String getRepositoryUrl() { return "${this.baseUrl}/${repositoryUrl}"}
-
-    @Override
-    void createOrUpdatePullRequest(String stageBranch, String mainBranch, String title, String description) {
-        // TODO: this is a specific implementation for github
-        // 1. creating a pr on the given repo with the given details
-        // 2. update a pr on the given repo if it already exists
-        //
-        // Note: Credentials given are credentialsId from Jenkins!
-    }
-}
-
-```
+* `application: 'spring-petclinic'` - Name of the application. Used as a folder in GitOps repo
+* `gitopsTool: 'ARGO'` - Name of the gitops tool. Currently supporting `'FLUX'` (for now only fluxV1) and `'ARGO'`.  
+* and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:
+   * `cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib'`
+   * `cesBuildLibVersion: '1.45.0'`
+   * `mainBranch:         'main'`
 
 ---
 
@@ -345,7 +341,7 @@ def gitopsConfig = [
 
 The defaults above can be overwritten by providing an entry for 'stages' within your config.
 If it is set to deploy directly it will commit and push to your desired `gitops-folder` and therefore triggers a deployment. If it is set to false
-it will create a PR on your `gitops-folder`. **Remember** there are [important](#important-note) conventions regarding namespaces and the folder structure.
+it will create a PR on your `gitops-folder`. **Remember** there are important conventions regarding namespaces and the folder structure (see [namespaces](#namespaces)).
 
 ### Namespaces
 
@@ -466,6 +462,7 @@ For Helm:
 - Stage name is used to identify the yamls to be used:
   > `${deployments.sourcePath}/values-<stage>.yaml` + `${deployments.sourcePath}/values-shared.yaml`
   For now we only support one `values-shared.yaml` which will be used for all namespaces and one additional values file for each namespace `values-${stage}.yaml`
+
 ---
 
 ## Deployment
@@ -550,7 +547,106 @@ def gitopsConfig = [
   e.g. in stage production =>
 
   > copies '/k8s/production/configMap.yaml' and '/k8s/production/secrets' to the gitops folder where every k8s resource in ./secrets will be copied to the gitops folder
+
+#### `helm template` with ArgoCD application
+
+We decided to generate plain k8s Resources from Helm applications before we push it to the gitops Repository for the following reasons:
+
+- With ArgoCD you can only set one source for your application. In case of helm it is common to have a source Repository for your chart and a scource Repository for your configuration files (values.yaml). In order to use two different sources for your helm application you will need some sort of workaround (e.g. Helm dependencies in `Chart.yaml`).  
+- ArgoCD itself uses `helm template` to apply plain k8s Resources to the cluster. By templating the helm application before pushing to the gitops repository, we have the same resources in our repository as in our cluster. Which leads to increased transparency.
+
 ---
+
+
+## Extra Files
+
+If extra files are needed and are not k8s resources there is the `fileConfigMaps` property.
+
+```groovy
+def gitopsConfig = [
+        fileConfigmaps: [ 
+                [
+                    name : "index",
+                    sourceFilePath : "../index.html", // relative to deployments.sourcePath
+                    stage: ["staging", "production"] // these have to match the `gitopsConfig.stages` 
+                ]
+        ]
+]
+```
+
+This will generate a k8s ConfigMap with the content of this file as data:
+
+```bash
+Name:         index
+Namespace:    staging                                                                                                                                                                                                                │
+Data
+====
+index.html:
+----
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>k8s-gitops-playground</title>
+</head>
+<body>
+<h2>Hello cloudogu gitops playground!</h2>
+</body>
+</html>
+```
+
+## SCM-Provider
+
+The scm-section defines where your 'gitops-repository' resides (url, provider) and how to access it (credentials):
+
+```groovy
+def gitopsConfig = [
+    ...
+    scm: [
+        provider:       'SCMManager',   // This is the name of the scm-provider in use, for a list of supported providers watch below!
+        credentialsId:  'scmm-user',    // ID of credentials defined in Jenkins used to authenticated with SCMM
+        baseUrl:        'http://scmm-scm-manager/scm',  // this is your gitops base url 
+        repositoryUrl:  'fluxv1/gitops' // this is the gitops repo
+    ],
+    ...
+]
+```
+It currently supports the following scm-provider:
+
+- [SCMManager](https://www.scm-manager.org/)
+
+To empower people to participate and encourage the integration of other scm-software (e.g. github), we decided to implement an abstraction for the
+scm-provider. By extending the SCM-Provider class you can integrate your own provider! Please feel free to contribute!
+
+Example:
+
+```groovy
+import com.cloudogu.gitopsbuildlib.scm.SCMProvider
+
+class GitHub extends SCMProvider {
+    @Override
+    void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl }
+
+    @Override
+    void setRepositoryUrl(String repositoryUrl) { this.repositoryUrl = repositoryUrl }
+
+    @Override
+    void setCredentials(String credentialsId) { this.credentials = credentialsId }
+
+    @Override
+    String getRepositoryUrl() { return "${this.baseUrl}/${repositoryUrl}"}
+
+    @Override
+    void createOrUpdatePullRequest(String stageBranch, String mainBranch, String title, String description) {
+        // TODO: this is a specific implementation for github
+        // 1. creating a pr on the given repo with the given details
+        // 2. update a pr on the given repo if it already exists
+        //
+        // Note: Credentials given are credentialsId from Jenkins!
+    }
+}
+```
 
 ## Validators
 
@@ -607,43 +703,3 @@ In general a custom validator must provide this method: `validate(boolean enable
 The library also offers a convenient base class [`com.cloudogu.gitops.gitopsbuildlib.Validator`](src/com/cloudogu/gitopsbuildlib/Validator.groovy).
 However, this seems impossible to use with neither dynamic library loading via the `library()` nor with `@Library`,
 because the library is loaded after the class is evaluated.
-
----
-
-## Extra Files
-
-If extra files are needed and are not k8s resources there is the `fileConfigMaps` property.
-
-```groovy
-def gitopsConfig = [
-        fileConfigmaps: [ 
-                [
-                    name : "index",
-                    sourceFilePath : "../index.html", // relative to deployments.sourcePath
-                    stage: ["staging", "production"] // these have to match the `gitopsConfig.stages` 
-                ]
-        ]
-]
-```
-
-This will generate a k8s ConfigMap with the content of this file as data:
-
-```bash
-Name:         index
-Namespace:    fluxv1-staging                                                                                                                                                                                                                │
-Data
-====
-index.html:
-----
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>k8s-gitops-playground</title>
-</head>
-<body>
-<h2>Hello cloudogu gitops playground!</h2>
-</body>
-</html>
-```
