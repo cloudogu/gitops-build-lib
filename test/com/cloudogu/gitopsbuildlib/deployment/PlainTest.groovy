@@ -64,7 +64,7 @@ class PlainTest {
 
         assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for FLUX in PLAIN resources')
         assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for FLUX in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Skipping validator HelmKubeval because it is configured as enabled=false or doesn\'t support the given gitopsTool=flux or sourceType=plain')
+        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Skipping validator HelmKubeval because it is configured as enabled=false or doesn\'t support the given gitopsTool=FLUX or sourceType=PLAIN')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
@@ -77,7 +77,7 @@ class PlainTest {
 
         assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Starting validator Yamllint for ARGO in PLAIN resources')
         assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Starting validator Kubeval for ARGO in PLAIN resources')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Skipping validator HelmKubeval because it is configured as enabled=false or doesn\'t support the given gitopsTool=argo or sourceType=plain')
+        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Skipping validator HelmKubeval because it is configured as enabled=false or doesn\'t support the given gitopsTool=ARGO or sourceType=PLAIN')
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')

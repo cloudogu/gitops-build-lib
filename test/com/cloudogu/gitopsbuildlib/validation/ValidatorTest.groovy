@@ -35,7 +35,7 @@ class ValidatorTest {
         validator.validate(false, GitopsTool.ARGO, SourceType.HELM, "helmDir", [:], [:])
         assertThat(validateCalled).as("Validate was called").isFalse()
         assertThat(scriptMock.actualEchoArgs[0])
-            .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false or doesn't support the given gitopsTool=argo or sourceType=helm")
+            .isEqualTo("Skipping validator ValidatorUnderTest because it is configured as enabled=false or doesn't support the given gitopsTool=ARGO or sourceType=HELM")
     }
 
     class ValidatorUnderTest extends Validator {
