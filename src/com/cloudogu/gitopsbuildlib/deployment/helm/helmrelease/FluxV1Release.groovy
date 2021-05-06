@@ -1,6 +1,6 @@
 package com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease
 
-class FluxV1Release extends HelmRelease{
+class FluxV1Release extends HelmRelease {
 
     FluxV1Release(def script) {
         super(script)
@@ -26,7 +26,6 @@ ${values}
     }
 
     private String gitRepoChart(Map helmConfig) {
-
         def chartPath = "."
         if (helmConfig.containsKey('chartPath') && helmConfig.chartPath) {
             chartPath = helmConfig.chartPath
