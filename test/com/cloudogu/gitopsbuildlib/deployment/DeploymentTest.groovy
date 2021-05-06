@@ -13,13 +13,15 @@ class DeploymentTest {
 
     Deployment deploymentUnderTest = new DeploymentUnderTest(scriptMock.mock, [
         application: 'app',
+        gitopsTool: 'FLUX',
         stages: [
             staging: [
                 namespace: 'fluxv1-staging'
             ]
         ],
         deployments: [
-            sourcePath: 'k8s'
+            sourcePath: 'k8s',
+            plain: [:]
         ],
         validators: [
             yamllint: [
@@ -62,15 +64,7 @@ class DeploymentTest {
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* staging/app/ || true')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('cp workspace/*.yamllint.yaml .config/ || true')
     }
-
-    @Test
-    void 'validate three times for every validator'() {
-        deploymentUnderTest.validate('staging')
-        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Executing validator yamllint')
-        assertThat(scriptMock.actualEchoArgs[1]).isEqualTo('Executing validator kubeval')
-        assertThat(scriptMock.actualEchoArgs[2]).isEqualTo('Executing validator helmKubeval')
-    }
-
+    
     @Test
     void 'create configmaps from files'() {
 
@@ -112,6 +106,11 @@ users:
 
         @Override
         def postValidation(String stage) {
+            return null
+        }
+
+        @Override
+        def validate(String stage) {
             return null
         }
     }

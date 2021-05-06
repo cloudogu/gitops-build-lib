@@ -12,19 +12,9 @@ abstract class RepoType {
         dockerWrapper = new DockerWrapper(script)
     }
 
-    abstract mergeValues(Map helmConfig, String[] files)
+    abstract void prepareRepo(Map helmConfig, String helmChartTempDir, String chartRootDir)
 
     void withHelm(Closure body) {
-        dockerWrapper.withHelm {
-            body()
-        }
-    }
-
-    protected String valuesFilesWithParameter(String[] valuesFiles) {
-        String valuesFilesWithParameter = ""
-        valuesFiles.each {
-            valuesFilesWithParameter += "-f $it "
-        }
-        return valuesFilesWithParameter
+        dockerWrapper.withHelm(body)
     }
 }

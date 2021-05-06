@@ -12,16 +12,12 @@ class GitRepoTest {
 
     @Test
     void 'merges values successfully'() {
-        gitRepo.mergeValues([
+        gitRepo.prepareRepo([
             repoUrl: 'url',
             chartPath: 'chartPath',
             version: '1.0'
-        ], [
-            'file1',
-            'file2'
-        ] as String[])
+        ], ".helmChartTempDir", "chartRootDir")
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update chart/chartPath')
-        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values chart/chartPath -f file1 -f file2 ]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update workspace/.helmChartTempDir/chartRootDir/chartPath')
     }
 }

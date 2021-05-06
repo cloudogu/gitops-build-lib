@@ -89,7 +89,8 @@ def mergeMaps(Map a, Map b) {
     }
 }
 
-// Note: had to do this little hack because groovy tests do not care about 'error' class
+// Note: had to do this little hack because groovy tests should fail on invalid configurations
+//       but the error class is jenkins specific so a basic boolean return value was needed.
 def validateConfig(Map gitopsConfig) {
     return validateMandatoryFields(gitopsConfig) && validateDeploymentConfig(gitopsConfig)
 }
@@ -145,7 +146,6 @@ def validateDeploymentConfig(Map gitopsConfig) {
         return false
     }
 
-    // TODO: implement distinction between tools @ helm feature for argo
     if (gitopsConfig.deployments.containsKey('plain')) {
         deployment = new Plain(this, gitopsConfig)
     } else if (gitopsConfig.deployments.containsKey('helm')) {

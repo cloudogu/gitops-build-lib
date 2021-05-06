@@ -52,7 +52,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
             cesBuildLibCredentialsId: 'cesBuildLibCredentialsId',
             application             : 'application',
             mainBranch              : 'main',
-            gitopsTool              : 'FLUX_V1',
+            gitopsTool              : 'FLUX',
             deployments             : deployments,
             validators              : [
                 kubeval : [

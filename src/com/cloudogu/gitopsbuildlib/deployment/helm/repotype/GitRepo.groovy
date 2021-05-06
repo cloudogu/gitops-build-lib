@@ -7,10 +7,9 @@ class GitRepo extends RepoType {
     }
 
     @Override
-    String mergeValues(Map helmConfig, String[] valuesFiles) {
-        String merge = ""
+    void prepareRepo(Map helmConfig, String helmChartTempDir, String chartRootDir) {
 
-        getHelmChartFromGitRepo(helmConfig)
+        getHelmChartFromGitRepo(helmConfig, helmChartTempDir, chartRootDir)
 
         def chartPath = ''
         if (helmConfig.containsKey('chartPath')) {
@@ -18,18 +17,14 @@ class GitRepo extends RepoType {
         }
 
         withHelm {
-            script.sh "helm dep update chart/${chartPath}"
-            String helmScript = "helm values chart/${chartPath} ${valuesFilesWithParameter(valuesFiles)}"
-            merge = script.sh returnStdout: true, script: helmScript
+            script.sh "helm dep update ${script.env.WORKSPACE}/.helmChartTempDir/${chartRootDir}/${chartPath}"
         }
-
-        return merge
     }
 
-    private getHelmChartFromGitRepo(Map helmConfig) {
+    private getHelmChartFromGitRepo(Map helmConfig, String helmChartTempDir, String chartRootDir) {
         def git
 
-        script.dir("chart") {
+        script.dir("${script.env.WORKSPACE}/${helmChartTempDir}/${chartRootDir}/") {
 
             if (helmConfig.containsKey('credentialsId')) {
                 git = script.cesBuildLib.Git.new(script, helmConfig.credentialsId)

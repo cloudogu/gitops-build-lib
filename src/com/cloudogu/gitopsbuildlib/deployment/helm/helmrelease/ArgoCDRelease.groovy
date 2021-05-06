@@ -2,7 +2,7 @@ package com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease
 
 import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
 
-class ArgoCDRelease extends HelmRelease{
+class ArgoCDRelease extends HelmRelease {
 
     protected DockerWrapper dockerWrapper
 
@@ -13,7 +13,6 @@ class ArgoCDRelease extends HelmRelease{
 
     @Override
     String create(Map helmConfig, String application, String namespace, String mergedValuesFile) {
-
         String helmRelease = ""
         if (helmConfig.repoType == 'GIT') {
             helmRelease = createResourcesFromGitRepo(helmConfig, application, mergedValuesFile)
@@ -24,7 +23,6 @@ class ArgoCDRelease extends HelmRelease{
     }
 
     private String createResourcesFromGitRepo(Map helmConfig, String application, String mergedValuesFile) {
-
         def chartPath = ''
         if (helmConfig.containsKey('chartPath')) {
             chartPath = helmConfig.chartPath
@@ -40,7 +38,7 @@ class ArgoCDRelease extends HelmRelease{
     private String createHelmRelease(String chartPath, String application, String mergedValuesFile) {
         String helmRelease = ""
         dockerWrapper.withHelm {
-            String templateScript = "helm template ${application} chart/${chartPath} -f ${mergedValuesFile}"
+            String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }
 

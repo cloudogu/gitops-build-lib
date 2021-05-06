@@ -11,18 +11,14 @@ class HelmRepoTest {
 
     @Test
     void 'merges values successfully'() {
-        helmRepo.mergeValues([
+        helmRepo.prepareRepo([
             repoUrl: 'url',
             chartName: 'chartName',
             version: '1.0'
-        ], [
-            'file1',
-            'file2'
-        ] as String[])
+        ], ".helmChartTempDir", "chartRoot")
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo url')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
-        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=chart')
-        assertThat(scriptMock.actualShArgs[3]).isEqualTo('[returnStdout:true, script:helm values chart/chartName -f file1 -f file2 ]')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/.helmChartTempDir/chartRoot')
     }
 }

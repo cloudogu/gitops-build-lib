@@ -1,6 +1,7 @@
 package com.cloudogu.gitopsbuildlib.validation
 
-import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 
 /**
  * Checks for correct YAML syntax using yamllint
@@ -16,12 +17,22 @@ class Yamllint extends Validator {
     }
 
     @Override
-    void validate(String targetDirectory, Map config, Map gitopsConfig) {
-        withDockerImage(config.image) {
+    void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
+        withDockerImage(validatorConfig.image) {
             script.sh "yamllint " +
-                "${config.profile ? "-d ${config.profile} " : ''}" +
+                "${validatorConfig.profile ? "-d ${validatorConfig.profile} " : ''}" +
                 '-f standard ' + // non-colored for CI-server  
                 "${targetDirectory}"
         }
+    }
+
+    @Override
+    SourceType[] getSupportedSourceTypes() {
+        return [SourceType.PLAIN]
+    }
+
+    @Override
+    GitopsTool[] getSupportedGitopsTools() {
+        return [GitopsTool.FLUX, GitopsTool.ARGO]
     }
 }
