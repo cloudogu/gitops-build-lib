@@ -12,7 +12,7 @@ abstract class RepoType {
         dockerWrapper = new DockerWrapper(script)
     }
 
-    abstract void prepareRepo(Map helmConfig, String helmChartTempDir, String chartRootDir)
+    abstract void prepareRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir)
 
     void withHelm(Closure body) {
         dockerWrapper.withHelm(body)

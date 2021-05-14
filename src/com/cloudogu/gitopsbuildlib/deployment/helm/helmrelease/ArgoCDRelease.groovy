@@ -12,7 +12,10 @@ class ArgoCDRelease extends HelmRelease {
     }
 
     @Override
-    String create(Map helmConfig, String application, String namespace, String mergedValuesFile) {
+    String create(Map gitopsConfig, String namespace, String mergedValuesFile) {
+        Map helmConfig = gitopsConfig.deployments.helm
+        String application = gitopsConfig.application
+
         String helmRelease = ""
         if (helmConfig.repoType == 'GIT') {
             helmRelease = createResourcesFromGitRepo(helmConfig, application, mergedValuesFile)
@@ -37,7 +40,7 @@ class ArgoCDRelease extends HelmRelease {
 
     private String createHelmRelease(String chartPath, String application, String mergedValuesFile) {
         String helmRelease = ""
-        dockerWrapper.withHelm {
+        dockerWrapper.withDockerImage() {
             String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }

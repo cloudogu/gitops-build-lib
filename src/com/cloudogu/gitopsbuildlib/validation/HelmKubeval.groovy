@@ -18,10 +18,7 @@ class HelmKubeval extends Validator {
     void validate(String targetDirectory, Map validatorConfig, Map gitopsConfig) {
         Map deployments = gitopsConfig.deployments as Map
         String args = argsParser.parse(validatorConfig)
-
-        withDockerImage(validatorConfig.image) {
-            script.sh "helm kubeval ${targetDirectory}/chart/${getChartDir(deployments)} -f ${targetDirectory}/mergedValues.yaml -v ${validatorConfig.k8sSchemaVersion}${args}"
-        }
+        script.sh "helm kubeval ${targetDirectory}/chart/${getChartDir(deployments)} -f ${targetDirectory}/mergedValues.yaml -v ${validatorConfig.k8sSchemaVersion}${args}"
     }
 
     private String getChartDir(Map deployments) {

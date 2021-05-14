@@ -9,8 +9,6 @@ import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 
-String getHelmImage() { 'ghcr.io/cloudogu/helm:3.5.4-1' }
-
 List getMandatoryFields() {
     return [
         'scm.provider', 'scm.baseUrl', 'scm.repositoryUrl', 'application', 'stages', 'gitopsTool'
@@ -24,6 +22,14 @@ Map getDefaultConfig() {
         cesBuildLibVersion      : '1.46.1',
         cesBuildLibCredentialsId: '',
         mainBranch              : 'main',
+        buildImages          : [
+            helm: 'ghcr.io/cloudogu/helm:3.5.4-1',
+            kubectl: 'lachlanevenson/k8s-kubectl:v1.19.3',
+            // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
+            kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
+            helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
+            yamllint: 'cytopia/yamllint:1.25-0.7'
+        ],
         deployments             : [
             sourcePath: 'k8s',
         ],
@@ -32,8 +38,8 @@ Map getDefaultConfig() {
                 validator: new Kubeval(this),
                 enabled  : true,
                 config   : [
-                    // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
-                    image           : helmImage,
+                    // imageRef's are referencing the key in gitopsConfig.buildImages
+                    imageRef        : 'kubeval',
                     k8sSchemaVersion: '1.18.1'
                 ]
             ],
@@ -41,8 +47,7 @@ Map getDefaultConfig() {
                 validator: new HelmKubeval(this),
                 enabled  : true,
                 config   : [
-                    // We use the helm image (that also contains helm kubeval plugin) to speed up builds by allowing to reuse image
-                    image           : helmImage,
+                    imageRef        : 'helmKubeval',
                     k8sSchemaVersion: '1.18.1'
                 ]
             ],
@@ -50,7 +55,7 @@ Map getDefaultConfig() {
                 validator: new Yamllint(this),
                 enabled  : true,
                 config   : [
-                    image  : 'cytopia/yamllint:1.25-0.7',
+                    imageRef  : 'yamllint',
                     // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
                     // It still fails on syntax errors.
                     profile: 'relaxed'

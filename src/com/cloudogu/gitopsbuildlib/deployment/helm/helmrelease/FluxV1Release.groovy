@@ -7,7 +7,10 @@ class FluxV1Release extends HelmRelease {
     }
 
     @Override
-    String create(Map helmConfig, String application, String namespace, String mergedValuesFile) {
+    String create(Map gitopsConfig, String namespace, String mergedValuesFile) {
+        Map helmConfig = gitopsConfig.deployments.helm
+        String application = gitopsConfig.application
+
         def values = fileToInlineYaml(mergedValuesFile)
         def chart = getChart(helmConfig)
         return """apiVersion: helm.fluxcd.io/v1

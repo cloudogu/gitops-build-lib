@@ -7,7 +7,8 @@ class HelmRepo extends RepoType {
     }
 
     @Override
-    void prepareRepo(Map helmConfig, String helmChartTempDir, String chartRootDir) {
+    void prepareRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir) {
+        def helmConfig = gitopsConfig.deployments.helm
 
         if (helmConfig.containsKey('credentialsId') && helmConfig.credentialsId) {
             script.withCredentials([

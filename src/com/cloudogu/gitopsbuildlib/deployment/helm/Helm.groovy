@@ -1,14 +1,13 @@
 package com.cloudogu.gitopsbuildlib.deployment.helm
 
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
-import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
+import com.cloudogu.gitopsbuildlib.deployment.SourceType
 import com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease.ArgoCDRelease
 import com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease.FluxV1Release
 import com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease.HelmRelease
 import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.GitRepo
 import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.HelmRepo
 import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.RepoType
-import com.cloudogu.gitopsbuildlib.deployment.SourceType
 
 class Helm extends Deployment {
 
@@ -35,20 +34,18 @@ class Helm extends Deployment {
 
     @Override
     def preValidation(String stage) {
-        def helmConfig = gitopsConfig.deployments.helm
-        def application = gitopsConfig.application
         def sourcePath = gitopsConfig.deployments.sourcePath
 
-        chartRepo.prepareRepo(helmConfig, helmChartTempDir, chartRootDir)
+        chartRepo.prepareRepo(gitopsConfig, helmChartTempDir, chartRootDir)
 
         // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
         // This makes it easier to read in and indent for the inline use in the helmRelease.
         // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", text: mergeValuesFiles(helmConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
+        script.writeFile file: "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", text: mergeValuesFiles(gitopsConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
 
-        updateYamlValue("${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", helmConfig)
+        updateYamlValue("${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", gitopsConfig)
 
-        script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(helmConfig, application, getNamespace(stage), "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml")
+        script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(gitopsConfig, getNamespace(stage), "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml")
     }
 
     @Override
@@ -65,7 +62,9 @@ class Helm extends Deployment {
         }
     }
 
-    private void updateYamlValue(String yamlFilePath, Map helmConfig) {
+    private void updateYamlValue(String yamlFilePath, Map gitopsConfig) {
+        def helmConfig = gitopsConfig.deployments.helm
+
         def data = script.readYaml file: yamlFilePath
         helmConfig.updateValues.each {
             String[] paths = it["fieldPath"].split("\\.")
@@ -81,7 +80,9 @@ class Helm extends Deployment {
         script.writeYaml file: yamlFilePath, data: data, overwrite: true
     }
 
-    private String mergeValuesFiles(Map helmConfig, String[] valuesFiles) {
+    private String mergeValuesFiles(Map gitopsConfig, String[] valuesFiles) {
+        def helmConfig = gitopsConfig.deployments.helm
+
         String mergedValuesFile = ""
 
         def chartDir = ''
