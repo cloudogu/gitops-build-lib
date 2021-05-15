@@ -13,14 +13,17 @@ class FluxV1ReleaseTest {
     @Test
     void 'correct helm release with git repo'() {
         def output = fluxV1Release.create([
-            repoType: 'GIT',
-            repoUrl: 'url',
-            chartName: 'chartName',
-            version: '1.0'
-        ],
-        'app',
-        'namespace',
-        'this/is/a/valuesfile')
+            application: 'app',
+            deployments: [
+                helm: [
+                    repoType: 'GIT',
+                    repoUrl: 'url',
+                    chartName: 'chartName',
+                    version: '1.0'
+                    ]
+                ]
+            ],
+            'namespace', 'this/is/a/valuesfile')
 
         assertThat(output).isEqualTo("""apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
@@ -54,12 +57,16 @@ spec:
     @Test
     void 'correct helm release with helm repo'() {
         def output = fluxV1Release.create([
-            repoType: 'HELM',
-            repoUrl: 'url',
-            chartName: 'chartName',
-            version: '1.0'
-        ],
-            'app',
+            application: 'app',
+            deployments: [
+                helm: [
+                    repoType: 'HELM',
+                    repoUrl: 'url',
+                    chartName: 'chartName',
+                    version: '1.0'
+                    ]
+                ]
+            ],
             'namespace',
             'this/is/a/valuesfile')
 

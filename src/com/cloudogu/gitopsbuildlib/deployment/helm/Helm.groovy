@@ -45,7 +45,7 @@ class Helm extends Deployment {
 
         updateYamlValue("${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", gitopsConfig)
 
-        script.writeFile file: "${stage}/${application}/applicationRelease.yaml", text: helmRelease.create(gitopsConfig, getNamespace(stage), "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml")
+        script.writeFile file: "${stage}/${gitopsConfig.application}/applicationRelease.yaml", text: helmRelease.create(gitopsConfig, getNamespace(stage), "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml")
     }
 
     @Override

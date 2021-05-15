@@ -12,10 +12,17 @@ class HelmRepoTest {
     @Test
     void 'merges values successfully'() {
         helmRepo.prepareRepo([
-            repoUrl: 'url',
-            chartName: 'chartName',
-            version: '1.0'
-        ], ".helmChartTempDir", "chartRoot")
+            buildImages: [
+                helm: 'helmImage'
+            ],
+            deployments: [
+                helm: [
+                    repoUrl: 'url',
+                    chartName: 'chartName',
+                    version: '1.0'
+                    ]
+                ]
+            ], ".helmChartTempDir", "chartRoot")
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo url')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')

@@ -13,10 +13,17 @@ class GitRepoTest {
     @Test
     void 'merges values successfully'() {
         gitRepo.prepareRepo([
-            repoUrl: 'url',
-            chartPath: 'chartPath',
-            version: '1.0'
-        ], ".helmChartTempDir", "chartRootDir")
+            buildImages: [
+                helm: 'helmImage'
+            ],
+            deployments: [
+                helm: [
+                    repoUrl: 'url',
+                    chartPath: 'chartPath',
+                    version: '1.0'
+                    ]
+                ]
+            ], ".helmChartTempDir", "chartRootDir")
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update workspace/.helmChartTempDir/chartRootDir/chartPath')
     }

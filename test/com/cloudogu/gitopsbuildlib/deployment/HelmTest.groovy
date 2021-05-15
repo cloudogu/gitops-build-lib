@@ -39,6 +39,10 @@ class HelmTest {
                     namespace: 'fluxv1-staging'
                 ]
             ],
+            buildImages: [
+                helm: 'helmImage',
+                kubectl: 'kubectlImage'
+            ],
             deployments: deployment,
             validators: [
                 yamllint: [
@@ -82,7 +86,7 @@ class HelmTest {
     void 'creating helm release with git repo'() {
         helmGit.preValidation('staging')
 
-        assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
+        assertThat(dockerMock.actualImages[0]).contains('helmImage')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update workspace/.helmChartTempDir/chart/chartPath')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:workspace/.helmChartTempDir/mergedValues.yaml, text:[helm dep update workspace/.helmChartTempDir/chart/chartPath, [returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
@@ -119,7 +123,7 @@ spec:
     void 'creating helm release with helm repo'() {
         helmHelm.preValidation('staging')
 
-        assertThat(dockerMock.actualImages[0]).contains('ghcr.io/cloudogu/helm:')
+        assertThat(dockerMock.actualImages[0]).contains('helmImage')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo repoUrl')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/.helmChartTempDir/chart')

@@ -8,15 +8,15 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class HelmKubevalTest {
     def scriptMock = new ScriptMock()
-    def dockerMock = scriptMock.dockerMock
-    def gitMock = scriptMock.gitMock
     def helmKubeval = new HelmKubeval(scriptMock.mock)
 
     @Test
     void 'is executed with repoType GIT'() {
         helmKubeval.validate(
             'target',
-            [:],
+            [
+                k8sSchemaVersion: '1.5'
+            ],
             [
                 deployments:[
                     helm: [
@@ -35,7 +35,9 @@ class HelmKubevalTest {
     void 'is executed with repoType HELM'() {
         helmKubeval.validate(
             'target',
-            [:],
+            [
+                k8sSchemaVersion: '1.5'
+            ],
             [
                 deployments:[
                     helm: [
