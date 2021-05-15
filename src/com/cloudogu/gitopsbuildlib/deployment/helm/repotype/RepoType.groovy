@@ -14,7 +14,7 @@ abstract class RepoType {
 
     abstract void prepareRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir)
 
-    void withHelm(Closure body) {
-        dockerWrapper.withHelm(body)
+    void withDockerImage(String image, Closure body) {
+        dockerWrapper.withDockerImage(image, body)
     }
 }

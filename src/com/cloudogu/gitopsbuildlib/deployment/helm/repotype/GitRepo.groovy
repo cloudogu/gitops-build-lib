@@ -17,7 +17,7 @@ class GitRepo extends RepoType {
             chartPath = helmConfig.chartPath
         }
 
-        withHelm {
+        withDockerImage(gitopsConfig.buildImages.helm) {
             script.sh "helm dep update ${script.env.WORKSPACE}/.helmChartTempDir/${chartRootDir}/${chartPath}"
         }
     }

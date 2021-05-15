@@ -92,7 +92,7 @@ class Helm extends Deployment {
             chartDir = helmConfig.chartName
         }
 
-        withHelm {
+        withDockerImage(gitopsConfig.buildImages.helm) {
             String helmScript = "helm values ${script.env.WORKSPACE}/${helmChartTempDir}/${chartRootDir}/${chartDir} ${valuesFilesWithParameter(valuesFiles)}"
             mergedValuesFile = script.sh returnStdout: true, script: helmScript
         }

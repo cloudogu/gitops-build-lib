@@ -36,11 +36,12 @@ abstract class Validator {
     private String getImage(Map gitopsConfig, Map validatorConfig) {
 
         // TODO zunächst imageref existence -> imageref contains -> image existence -> FAIL
-
-        if (gitopsConfig.buildImages.containsKey(validatorConfig.image)) {
+        if (validatorConfig.containsKey('imageRef') && gitopsConfig.buildImages.containsKey(validatorConfig.imageRef)) {
             return gitopsConfig.buildImages[validatorConfig.image]
-        } else {
+        } else if (validatorConfig.containsKey('image')) {
             return validatorConfig.image
+        } else {
+            return ""
         }
     }
 }

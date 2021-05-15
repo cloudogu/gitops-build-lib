@@ -13,46 +13,70 @@ class ArgoCDReleaseTest {
     @Test
     void 'correct helm release with git repo and chartPath'() {
         argoCdReleaseTest.create([
-            repoType: 'GIT',
-            repoUrl: 'url',
-            chartName: 'chartName',
-            chartPath: 'path',
-            version: '1.0'
-        ],
-            'app',
+            application: 'app',
+            deployments: [
+                helm: [
+                    repoType : 'GIT',
+                    repoUrl  : 'url',
+                    chartName: 'chartName',
+                    chartPath: 'path',
+                    version  : '1.0'
+                    ]
+                ],
+                buildImages: [
+                    helm: 'helmImg'
+                ]
+            ],
             'namespace',
             'this/is/a/valuesfile')
 
+        assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/path -f this/is/a/valuesfile]')
     }
 
     @Test
     void 'correct helm release with git repo without chartPath'() {
         argoCdReleaseTest.create([
-            repoType: 'GIT',
-            repoUrl: 'url',
-            chartName: 'chartName',
-            version: '1.0'
-        ],
-            'app',
+            application: 'app',
+            deployments: [
+                helm: [
+                    repoType : 'GIT',
+                    repoUrl  : 'url',
+                    chartName: 'chartName',
+                    version  : '1.0'
+                    ]
+                ],
+                buildImages: [
+                    helm: 'helmImg'
+                ]
+            ],
             'namespace',
             'this/is/a/valuesfile')
 
+        assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/ -f this/is/a/valuesfile]')
     }
 
     @Test
     void 'correct helm release with helm repo'() {
         argoCdReleaseTest.create([
-            repoType: 'HELM',
-            repoUrl: 'url',
-            chartName: 'chartName',
-            version: '1.0'
-        ],
-            'app',
+            application: 'app',
+            deployments: [
+                helm: [
+                    repoType : 'HELM',
+                    repoUrl  : 'url',
+                    chartName: 'chartName',
+                    version  : '1.0'
+                    ]
+                ],
+                buildImages: [
+                    helm: 'helmImg'
+                ]
+            ],
             'namespace',
             'this/is/a/valuesfile')
 
+        assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/chartName -f this/is/a/valuesfile]')
     }
 }

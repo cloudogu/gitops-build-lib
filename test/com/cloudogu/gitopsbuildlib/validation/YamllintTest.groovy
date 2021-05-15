@@ -19,7 +19,6 @@ class YamllintTest {
             profile: 'pro'],
             [plain: []]
         )
-        assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(
             'yamllint -d pro -f standard target'
         )

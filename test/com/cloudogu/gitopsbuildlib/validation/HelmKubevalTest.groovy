@@ -16,10 +16,7 @@ class HelmKubevalTest {
     void 'is executed with repoType GIT'() {
         helmKubeval.validate(
             'target',
-            [
-                image           : 'img',
-                k8sSchemaVersion: '1.5'
-            ],
+            [:],
             [
                 deployments:[
                     helm: [
@@ -31,7 +28,6 @@ class HelmKubevalTest {
                 ]
             ]
         )
-        assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chartPath -f target/mergedValues.yaml -v 1.5 --strict --ignore-missing-schemas')
     }
 
@@ -39,10 +35,7 @@ class HelmKubevalTest {
     void 'is executed with repoType HELM'() {
         helmKubeval.validate(
             'target',
-            [
-                image           : 'img',
-                k8sSchemaVersion: '1.5'
-            ],
+            [:],
             [
                 deployments:[
                     helm: [
@@ -54,7 +47,6 @@ class HelmKubevalTest {
                 ]
             ]
         )
-        assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chart -f target/mergedValues.yaml -v 1.5 --strict --ignore-missing-schemas')
     }
 }
