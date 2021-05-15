@@ -3,6 +3,7 @@ package com.cloudogu.gitopsbuildlib.validation
 import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
 import com.cloudogu.gitopsbuildlib.deployment.SourceType
 import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
+import org.codehaus.groovy.runtime.NullObject
 
 abstract class Validator {
 
@@ -33,15 +34,13 @@ abstract class Validator {
         dockerWrapper.withDockerImage(image, body)
     }
 
-    private String getImage(Map gitopsConfig, Map validatorConfig) {
-
-        // TODO zunächst imageref existence -> imageref contains -> image existence -> FAIL
-        if (validatorConfig.containsKey('imageRef') && gitopsConfig.buildImages.containsKey(validatorConfig.imageRef)) {
-            return gitopsConfig.buildImages[validatorConfig.image]
-        } else if (validatorConfig.containsKey('image')) {
+    protected String getImage(Map gitopsConfig, Map validatorConfig) {
+        if (validatorConfig.containsKey('image')) {
             return validatorConfig.image
+        } else if (validatorConfig.containsKey('imageRef') && gitopsConfig.buildImages.containsKey(validatorConfig.imageRef)) {
+            return gitopsConfig.buildImages[validatorConfig.imageRef]
         } else {
-            return ""
+            return null
         }
     }
 }
