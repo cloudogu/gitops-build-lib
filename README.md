@@ -319,6 +319,24 @@ First of all there are some mandatory properties e.g. the information about your
 
 ---
 
+## Build Images
+The GitOps-build-lib uses some docker images internally (To run Helm or Kubectl commands and specific Validators inside a docker container).  
+All of these have set default images, but you can change them if you wish to.
+
+```groovy
+def gitopsConfig = [
+        buildImages: [
+            // These are used to run helm and kubectl commands in the core logic
+            helm: 'ghcr.io/cloudogu/helm:3.5.4-1',
+            kubectl: 'lachlanevenson/k8s-kubectl:v1.19.3',
+            // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
+            kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
+            helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
+            yamllint: 'cytopia/yamllint:1.25-0.7'
+        ]
+]
+```
+
 ## Stages
 The GitOps-build-lib supports builds on multiple stages. A stage is defined by a name and contains a namespace (used to
 generate the resources) and a deployment-flag. If no stages is passed into the gitops-config by the user, the default
@@ -683,6 +701,40 @@ node {
     }
 }
 ```
+
+Each Validator has a property called `imageRef` and `image` inside the `config` property.  
+`imageRef`'s value defaults to the key in the `buildImages` property and will replace the key-name with the actual image corresponding to the value.
+
+```groovy
+def gitopsConfig = [
+        validators: [
+            kubeval: [
+                enabled: true,
+                config: [
+                    imageRef: 'kubeval' // this corresponds to the key/value pair in buildImages which internally will become imageRef: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                ]
+            ]
+        ]
+    ]
+```
+
+If you wish to change the image, you can do so by changing the image in the corresponding key/value pair in `buildImages` or by setting the image directly via the `image` property.
+First, the library will check if the `image` property is set and if so, will use its value as the image.
+
+```groovy
+def gitopsConfig = [
+        validators: [
+            kubeval: [
+                enabled: true,
+                config: [
+                    image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                ]
+            ]
+        ]
+    ]
+```
+
+If the `image` value is not set, it resorts to the `imageRef` property.
 
 ### Custom validators
 
