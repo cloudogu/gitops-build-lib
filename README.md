@@ -527,7 +527,7 @@ def gitopsConfig = [
         deployments: [
                 helm: [
                     repoType: 'GIT',
-                    repoUrl: "https://git-repo/namespace/name",
+                    repoUrl: "https://git-repo/namespace/name",  // git-repo must have a 'main' branch due to limitations of the git-step within jenkins
                     credentialsId: 'creds',
                     version: '1.2.3', // tag, commit or branch
                     chartPath: 'chart', // the path relative to root in the git repo. If the chart is at root level you can ommit this property
@@ -536,6 +536,13 @@ def gitopsConfig = [
         ]
 ]
 ```
+
+**Note:**
+
+Due to limitations in the git-step of Jenkins, we have to clone from a specific branch rather then having the 
+git client checkout the default branch given within the HEADs meta information. This specific branch is the
+`main` branch. Make sure the git-repository has a main-branch, else the deployment step will fail. After a successful clone 
+it checks out the given version as expected. 
 
 #### Conventions for helm deployment
 - Application name is used as the release-name in Flux (not for argo, argo creates plain resources using `helm template`)
