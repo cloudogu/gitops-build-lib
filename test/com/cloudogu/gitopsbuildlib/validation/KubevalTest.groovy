@@ -15,14 +15,14 @@ class KubevalTest {
     void 'is executed with defaults'() {
         kubeval.validate(
             'target',
-            [image           : 'img',
-            k8sSchemaVersion: '1.5'],
+            [
+                k8sSchemaVersion: '1.5'
+            ],
             [
                 sourcePath: 'k8s',
                 plain: []
             ]
         )
-        assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo(
             'kubeval -d target -v 1.5 --strict --ignore-missing-schemas'
         )

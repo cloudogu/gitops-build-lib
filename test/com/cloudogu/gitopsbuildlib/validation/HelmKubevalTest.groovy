@@ -8,8 +8,6 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class HelmKubevalTest {
     def scriptMock = new ScriptMock()
-    def dockerMock = scriptMock.dockerMock
-    def gitMock = scriptMock.gitMock
     def helmKubeval = new HelmKubeval(scriptMock.mock)
 
     @Test
@@ -17,7 +15,6 @@ class HelmKubevalTest {
         helmKubeval.validate(
             'target',
             [
-                image           : 'img',
                 k8sSchemaVersion: '1.5'
             ],
             [
@@ -31,7 +28,6 @@ class HelmKubevalTest {
                 ]
             ]
         )
-        assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chartPath -f target/mergedValues.yaml -v 1.5 --strict --ignore-missing-schemas')
     }
 
@@ -40,7 +36,6 @@ class HelmKubevalTest {
         helmKubeval.validate(
             'target',
             [
-                image           : 'img',
                 k8sSchemaVersion: '1.5'
             ],
             [
@@ -54,7 +49,6 @@ class HelmKubevalTest {
                 ]
             ]
         )
-        assertThat(dockerMock.actualImages[0]).isEqualTo('img')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm kubeval target/chart/chart -f target/mergedValues.yaml -v 1.5 --strict --ignore-missing-schemas')
     }
 }

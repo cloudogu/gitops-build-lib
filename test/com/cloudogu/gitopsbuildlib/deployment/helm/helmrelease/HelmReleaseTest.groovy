@@ -36,7 +36,7 @@ class HelmReleaseTest {
         }
 
         @Override
-        String create(Map helmConfig, String application, String namespace, String valuesFile) {
+        String create(Map gitopsConfig, String namespace, String valuesFile) {
             return null
         }
     }

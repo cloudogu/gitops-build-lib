@@ -69,10 +69,6 @@ abstract class Deployment {
         dockerWrapper.withDockerImage(image, body)
     }
 
-    void withHelm(Closure body) {
-        dockerWrapper.withHelm(body)
-    }
-
     // Dummy kubeConfig, so we can use `kubectl --dry-run=client`
     String writeKubeConfig() {
         String kubeConfigPath = "${script.pwd()}/.kube/config"

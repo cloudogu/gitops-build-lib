@@ -7,7 +7,8 @@ class HelmRepo extends RepoType {
     }
 
     @Override
-    void prepareRepo(Map helmConfig, String helmChartTempDir, String chartRootDir) {
+    void prepareRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir) {
+        def helmConfig = gitopsConfig.deployments.helm
 
         if (helmConfig.containsKey('credentialsId') && helmConfig.credentialsId) {
             script.withCredentials([
@@ -17,15 +18,16 @@ class HelmRepo extends RepoType {
                     passwordVariable: 'PASSWORD')
             ]) {
                 String credentialArgs = " --username ${script.USERNAME} --password ${script.PASSWORD}"
-                addAndPullRepo(helmConfig, helmChartTempDir, chartRootDir, credentialArgs)
+                addAndPullRepo(gitopsConfig, helmChartTempDir, chartRootDir, credentialArgs)
             }
         } else {
-            addAndPullRepo(helmConfig, helmChartTempDir, chartRootDir)
+            addAndPullRepo(gitopsConfig, helmChartTempDir, chartRootDir)
         }
     }
 
-    private void addAndPullRepo(Map helmConfig, String helmChartTempDir, String chartRootDir, String credentialArgs = "") {
-        withHelm {
+    private void addAndPullRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir, String credentialArgs = "") {
+        def helmConfig = gitopsConfig.deployments.helm
+        withDockerImage(gitopsConfig.buildImages.helm) {
             script.sh "helm repo add chartRepo ${helmConfig.repoUrl}${credentialArgs}"
             script.sh "helm repo update"
             // helm pull also executes helm dependency so we don't need to do it in this step

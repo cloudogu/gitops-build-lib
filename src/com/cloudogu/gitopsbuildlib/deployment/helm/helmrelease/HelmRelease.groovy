@@ -8,7 +8,7 @@ abstract class HelmRelease {
         this.script = script
     }
 
-    abstract String create(Map helmConfig, String application, String namespace, String mergedValuesFile)
+    abstract String create(Map gitopsConfig, String namespace, String mergedValuesFile)
 
     String fileToInlineYaml(String fileContents) {
         String values = ""

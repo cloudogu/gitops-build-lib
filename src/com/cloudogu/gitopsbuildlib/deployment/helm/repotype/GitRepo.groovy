@@ -7,7 +7,8 @@ class GitRepo extends RepoType {
     }
 
     @Override
-    void prepareRepo(Map helmConfig, String helmChartTempDir, String chartRootDir) {
+    void prepareRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir) {
+        def helmConfig = gitopsConfig.deployments.helm
 
         getHelmChartFromGitRepo(helmConfig, helmChartTempDir, chartRootDir)
 
@@ -16,7 +17,7 @@ class GitRepo extends RepoType {
             chartPath = helmConfig.chartPath
         }
 
-        withHelm {
+        withDockerImage(gitopsConfig.buildImages.helm) {
             script.sh "helm dep update ${script.env.WORKSPACE}/.helmChartTempDir/${chartRootDir}/${chartPath}"
         }
     }
