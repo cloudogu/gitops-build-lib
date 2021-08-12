@@ -1,3 +1,7 @@
+# Community
+If you have any questions, remarks or ideas regarding the `gitops-playground`, feel free to visit our [community](https://community.cloudogu.com/t/introducing-the-gitops-build-lib/108).  
+Or if you want to chat with us about gitops in general, visit us [here](https://community.cloudogu.com/c/gitops-by-cloudogu/23)
+
 # gitops-build-lib
 
 Jenkins pipeline shared library for automating deployments via GitOps.   
