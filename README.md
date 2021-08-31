@@ -1,7 +1,3 @@
-# Community
-If you have any questions, remarks or ideas regarding the `gitops-build-lib`, feel free to visit our [community](https://community.cloudogu.com/t/introducing-the-gitops-build-lib/108).  
-Or if you want to chat with us about gitops in general, visit us [here](https://community.cloudogu.com/c/gitops-by-cloudogu/23)
-
 # gitops-build-lib
 
 Jenkins pipeline shared library for automating deployments via GitOps.   
@@ -9,6 +5,9 @@ Take a look at [cloudogu/k8s-gitops-playground](https://github.com/cloudogu/k8s-
 working example bundled with the complete infrastructure for a gitops deep dive.  
 See also our [blog post](https://cloudogu.com/en/blog/ciops-vs-gitops_en) that describes the challenges leading to this
 library and some of the features it offers. 
+
+If you have any questions, remarks or ideas regarding the `gitops-build-lib`, feel free to visit our [community](https://community.cloudogu.com/t/introducing-the-gitops-build-lib/108).  
+Or if you want to chat with us about gitops in general, visit us [here](https://community.cloudogu.com/c/gitops-by-cloudogu/23)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
