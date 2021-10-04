@@ -19,8 +19,8 @@ class DockerWrapper {
     }
 
     private String getRegistryUrlFromImage(String image) {
-        int i = s.lastIndexOf('/')
-        return  s.substring(0, i)        
+        int i = image.lastIndexOf('/')
+        return  image.substring(0, i)
     }
 
     private void runDockerImage(String image, Closure body) {
