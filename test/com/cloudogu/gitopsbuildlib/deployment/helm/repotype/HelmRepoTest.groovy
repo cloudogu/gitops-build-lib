@@ -13,7 +13,9 @@ class HelmRepoTest {
     void 'merges values successfully'() {
         helmRepo.prepareRepo([
             buildImages: [
-                helm: 'helmImage'
+                helm: [ 
+                    image: 'helmImage'
+                ]
             ],
             deployments: [
                 helm: [

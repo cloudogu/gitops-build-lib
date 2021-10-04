@@ -14,7 +14,9 @@ class GitRepoTest {
     void 'merges values successfully'() {
         gitRepo.prepareRepo([
             buildImages: [
-                helm: 'helmImage'
+                helm: [
+                    image: 'helmImage'
+                ]
             ],
             deployments: [
                 helm: [

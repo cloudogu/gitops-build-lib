@@ -24,7 +24,9 @@ class ArgoCDReleaseTest {
                     ]
                 ],
                 buildImages: [
-                    helm: 'helmImg'
+                    helm: [
+                        image: 'helmImg'
+                    ]
                 ]
             ],
             'namespace',
@@ -47,7 +49,9 @@ class ArgoCDReleaseTest {
                     ]
                 ],
                 buildImages: [
-                    helm: 'helmImg'
+                    helm: [
+                        image: 'helmImg'
+                    ]
                 ]
             ],
             'namespace',
@@ -70,7 +74,9 @@ class ArgoCDReleaseTest {
                     ]
                 ],
                 buildImages: [
-                    helm: 'helmImg'
+                    helm: [
+                        image: 'helmImg'
+                    ]
                 ]
             ],
             'namespace',

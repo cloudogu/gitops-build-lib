@@ -4,7 +4,7 @@ import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
 
 abstract class Deployment {
 
-    protected static String getKubectlImage() { 'lachlanevenson/k8s-kubectl:v1.19.3' }
+    protected static Map getKubectlImage() { [ image: 'lachlanevenson/k8s-kubectl:v1.19.3' ] }
     protected String extraResourcesFolder = ""
 
     static String getConfigDir() { '.config' }
@@ -55,7 +55,7 @@ abstract class Deployment {
 
     String createConfigMap(String key, String filePath, String name, String namespace) {
         String configMap = ""
-        withDockerImage(kubectlImage) {
+        withDockerImage(kubectlImage as Map) {
             String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"
@@ -65,8 +65,8 @@ abstract class Deployment {
         return configMap
     }
 
-    void withDockerImage(String image, Closure body) {
-        dockerWrapper.withDockerImage(image, body)
+    void withDockerImage(def imageConfig, Closure body) {
+        dockerWrapper.withDockerImage(imageConfig, body)
     }
 
     // Dummy kubeConfig, so we can use `kubectl --dry-run=client`

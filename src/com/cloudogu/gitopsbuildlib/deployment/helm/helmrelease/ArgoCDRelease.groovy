@@ -40,9 +40,9 @@ class ArgoCDRelease extends HelmRelease {
         return createHelmRelease(gitopsConfig.deployments.helm.chartName, application, gitopsConfig.buildImages.helm, mergedValuesFile)
     }
 
-    private String createHelmRelease(def chartPath, String application, def helmImage, String mergedValuesFile) {
+    private String createHelmRelease(def chartPath, String application, def helmImageConfig, String mergedValuesFile) {
         String helmRelease = ""
-        dockerWrapper.withDockerImage(helmImage) {
+        dockerWrapper.withDockerImage(helmImageConfig) {
             String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }
