@@ -4,7 +4,6 @@ import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
 
 abstract class Deployment {
 
-    protected static Map getKubectlImage() { [ image: 'lachlanevenson/k8s-kubectl:v1.19.3' ] }
     protected String extraResourcesFolder = ""
 
     static String getConfigDir() { '.config' }
@@ -55,7 +54,7 @@ abstract class Deployment {
 
     String createConfigMap(String key, String filePath, String name, String namespace) {
         String configMap = ""
-        withDockerImage(kubectlImage as Map) {
+        withDockerImage(configMap.buildImages.kubectl) {
             String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"
