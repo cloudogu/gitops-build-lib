@@ -10,7 +10,7 @@ class DockerWrapper {
     void withDockerImage(def imageConfig, Closure body) {
         if(imageConfig.containsKey('registryCredentialsId') && imageConfig.registryCredentialsId) {
             def registryUrl = getRegistryUrlFromImage(imageConfig.image)
-            script.docker.withRegistry(registryUrl, imageConfig.registryCredentialsId) {
+            script.docker.withRegistry("https://${registryUrl}", imageConfig.registryCredentialsId) {
                 runDockerImage(imageConfig.image, body)
             }
         } else {
