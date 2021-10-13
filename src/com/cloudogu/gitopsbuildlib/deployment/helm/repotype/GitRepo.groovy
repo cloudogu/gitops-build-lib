@@ -32,9 +32,13 @@ class GitRepo extends RepoType {
             } else {
                 git = script.cesBuildLib.Git.new(script)
             }
-
-            git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
-
+            
+            if (helmConfig.containsKey('mainBranch') && helmConfig.mainBranch) {
+                git url: helmConfig.repoUrl, branch: helmConfig.mainBranch, changelog: false, poll: false
+            } else {
+                git url: helmConfig.repoUrl, branch: 'main', changelog: false, poll: false
+            }
+            
             if(helmConfig.containsKey('version') && helmConfig.version) {
                 git.fetch()
                 git.checkout(helmConfig.version)
