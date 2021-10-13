@@ -54,7 +54,7 @@ abstract class Deployment {
 
     String createConfigMap(String key, String filePath, String name, String namespace) {
         String configMap = ""
-        withDockerImage(configMap.buildImages.kubectl) {
+        withDockerImage(gitopsConfig.buildImages.kubectl) {
             String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"

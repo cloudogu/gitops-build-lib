@@ -23,6 +23,12 @@ class DeploymentTest {
             sourcePath: 'k8s',
             plain: [:]
         ],
+        buildImages: [
+            kubectl: [
+                image: "kubectlImage",
+                credentialsId: "credentials"
+            ]
+        ],
         validators: [
             yamllint: [
                 validator: new Yamllint(scriptMock.mock),
