@@ -24,24 +24,24 @@ Map getDefaultConfig() {
         mainBranch              : 'main',
         buildImages          : [
             helm: [
-                registryCredentialsId: '',
+                credentialsId: '',
                 image: 'ghcr.io/cloudogu/helm:3.5.4-1'
             ],
             kubectl: [
-                registryCredentialsId: '',
+                credentialsId: '',
                 image: 'lachlanevenson/k8s-kubectl:v1.19.3'
             ],
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
             kubeval: [
-                registryCredentialsId: '',
+                credentialsId: '',
                 image: 'ghcr.io/cloudogu/helm:3.5.4-1'
             ],
             helmKubeval: [
-                registryCredentialsId: '',
+                credentialsId: '',
                 image: 'ghcr.io/cloudogu/helm:3.5.4-1'
             ],
             yamllint: [
-                registryCredentialsId: '',
+                credentialsId: '',
                 image: 'cytopia/yamllint:1.25-0.7'
             ]
         ],
