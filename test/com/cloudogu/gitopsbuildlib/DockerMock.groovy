@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when
 class DockerMock {
 
     List<String> actualInsideArgs = new LinkedList<>()
+    List<String> actualRegistryArgs = new LinkedList<>()
     List<String> actualImages = new LinkedList<>()
 
     Docker createMock() {
@@ -24,6 +25,15 @@ class DockerMock {
             }
         })
 
+        when(dockerMock.withRegistry(anyString(), anyString(), any())).thenAnswer(new Answer<Object>() {
+            @Override
+            Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                actualRegistryArgs += invocationOnMock.getArgument(0)
+                actualRegistryArgs += invocationOnMock.getArgument(1)
+                Closure closure = invocationOnMock.getArgument(2)
+                closure.call()
+            }
+        })
         when(imageMock.mountJenkinsUser()).thenReturn(imageMock)
         when(imageMock.mountJenkinsUser(anyBoolean())).thenReturn(imageMock)
         when(imageMock.mountDockerSocket()).thenReturn(imageMock)
