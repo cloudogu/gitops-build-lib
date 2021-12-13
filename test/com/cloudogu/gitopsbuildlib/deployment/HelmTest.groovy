@@ -40,8 +40,12 @@ class HelmTest {
                 ]
             ],
             buildImages: [
-                helm: 'helmImage',
-                kubectl: 'kubectlImage'
+                helm: [
+                    image: 'helmImage',
+                ],
+                kubectl: [
+                    image: 'kubectlImage'
+                ]
             ],
             deployments: deployment,
             validators: [

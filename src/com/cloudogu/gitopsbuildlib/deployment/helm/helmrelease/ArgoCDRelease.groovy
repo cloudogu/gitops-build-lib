@@ -18,14 +18,14 @@ class ArgoCDRelease extends HelmRelease {
 
         String helmRelease = ""
         if (helmConfig.repoType == 'GIT') {
-            helmRelease = createResourcesFromGitRepo(gitopsConfig, application, mergedValuesFile)
+            helmRelease = createResourcesFromGitRepo(gitopsConfig, application, namespace, mergedValuesFile)
         } else if (helmConfig.repoType == 'HELM') {
-            helmRelease = createResourcesFromHelmRepo(gitopsConfig, application, mergedValuesFile)
+            helmRelease = createResourcesFromHelmRepo(gitopsConfig, application, namespace, mergedValuesFile)
         }
         return helmRelease
     }
 
-    private String createResourcesFromGitRepo(Map gitopsConfig, String application, String mergedValuesFile) {
+    private String createResourcesFromGitRepo(Map gitopsConfig, String application, String namespace, String mergedValuesFile) {
         Map helmConfig = gitopsConfig.deployments.helm
 
         def chartPath = ''
@@ -33,17 +33,17 @@ class ArgoCDRelease extends HelmRelease {
             chartPath = helmConfig.chartPath
         }
 
-        return createHelmRelease(chartPath as String, application, gitopsConfig.buildImages.helm, mergedValuesFile)
+        return createHelmRelease(chartPath as String, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
     }
 
-    private String createResourcesFromHelmRepo(Map gitopsConfig, String application, String mergedValuesFile) {
-        return createHelmRelease(gitopsConfig.deployments.helm.chartName, application, gitopsConfig.buildImages.helm, mergedValuesFile)
+    private String createResourcesFromHelmRepo(Map gitopsConfig, String application, String namespace, String mergedValuesFile) {
+        return createHelmRelease(gitopsConfig.deployments.helm.chartName, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
     }
 
-    private String createHelmRelease(def chartPath, String application, def helmImage, String mergedValuesFile) {
+    private String createHelmRelease(def chartPath, String application, String namespace, def helmImageConfig, String mergedValuesFile) {
         String helmRelease = ""
-        dockerWrapper.withDockerImage(helmImage) {
-            String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -f ${mergedValuesFile}"
+        dockerWrapper.withDockerImage(helmImageConfig) {
+            String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -n ${namespace} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }
 

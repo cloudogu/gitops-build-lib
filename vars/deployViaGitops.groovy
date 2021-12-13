@@ -23,12 +23,27 @@ Map getDefaultConfig() {
         cesBuildLibCredentialsId: '',
         mainBranch              : 'main',
         buildImages          : [
-            helm: 'ghcr.io/cloudogu/helm:3.5.4-1',
-            kubectl: 'lachlanevenson/k8s-kubectl:v1.19.3',
+            helm: [
+                credentialsId: '',
+                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+            ],
+            kubectl: [
+                credentialsId: '',
+                image: 'lachlanevenson/k8s-kubectl:v1.19.3'
+            ],
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
-            kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
-            helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
-            yamllint: 'cytopia/yamllint:1.25-0.7'
+            kubeval: [
+                credentialsId: '',
+                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+            ],
+            helmKubeval: [
+                credentialsId: '',
+                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+            ],
+            yamllint: [
+                credentialsId: '',
+                image: 'cytopia/yamllint:1.25-0.7'
+            ]
         ],
         deployments             : [
             sourcePath: 'k8s',

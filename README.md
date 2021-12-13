@@ -330,12 +330,28 @@ All of these have set default images, but you can change them if you wish to.
 def gitopsConfig = [
         buildImages: [
             // These are used to run helm and kubectl commands in the core logic
-            helm: 'ghcr.io/cloudogu/helm:3.5.4-1',
-            kubectl: 'lachlanevenson/k8s-kubectl:v1.19.3',
+            // 
+            helm: [ 
+                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
+                ],
+            kubectl: [ 
+                image: 'lachlanevenson/k8s-kubectl:v1.19.3'
+                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
+                ],
             // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
-            kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
-            helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
-            yamllint: 'cytopia/yamllint:1.25-0.7'
+            kubeval: [ 
+                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
+                ],
+            helmKubeval: [ 
+                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
+                ],
+            yamllint: [
+                image: 'cytopia/yamllint:1.25-0.7'
+                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
+                ]
         ]
 ]
 ```

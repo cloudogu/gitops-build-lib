@@ -24,14 +24,16 @@ class ArgoCDReleaseTest {
                     ]
                 ],
                 buildImages: [
-                    helm: 'helmImg'
+                    helm: [
+                        image: 'helmImg'
+                    ]
                 ]
             ],
             'namespace',
             'this/is/a/valuesfile')
 
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/path -f this/is/a/valuesfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/path -n namespace -f this/is/a/valuesfile]')
     }
 
     @Test
@@ -47,14 +49,16 @@ class ArgoCDReleaseTest {
                     ]
                 ],
                 buildImages: [
-                    helm: 'helmImg'
+                    helm: [
+                        image: 'helmImg'
+                    ]
                 ]
             ],
             'namespace',
             'this/is/a/valuesfile')
 
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/ -f this/is/a/valuesfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/ -n namespace -f this/is/a/valuesfile]')
     }
 
     @Test
@@ -70,13 +74,15 @@ class ArgoCDReleaseTest {
                     ]
                 ],
                 buildImages: [
-                    helm: 'helmImg'
+                    helm: [
+                        image: 'helmImg'
+                    ]
                 ]
             ],
             'namespace',
             'this/is/a/valuesfile')
 
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/chartName -f this/is/a/valuesfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/chartName -n namespace -f this/is/a/valuesfile]')
     }
 }

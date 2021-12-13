@@ -2,3 +2,7 @@
 *.iml
 maven-wrapper.jar
 target/
+.classpath
+.factorypath
+.project
+.settings/
