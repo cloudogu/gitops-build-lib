@@ -21,8 +21,10 @@ class DeploymentTest {
         ],
         deployments: [
             sourcePath: 'k8s',
+            destinationRootPath: '.',
             plain: [:]
         ],
+        folderStructureStrategy: 'GLOBAL_ENV',
         buildImages: [
             kubectl: [
                 image: "http://my-private-registry.com/repo/kubectlImage",
@@ -68,6 +70,20 @@ class DeploymentTest {
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('mkdir -p staging/app/')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('mkdir -p .config/')
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* staging/app/ || true')
+        assertThat(scriptMock.actualShArgs[3]).isEqualTo('cp workspace/*.yamllint.yaml .config/ || true')
+    }
+
+    @Test
+    void 'creating folders for plain deployment with ENV_PER_APP and other destinationRootPath'() {
+        deploymentUnderTest.gitopsConfig['folderStructureStrategy'] = 'ENV_PER_APP'
+        deploymentUnderTest.gitopsConfig['deployments']['destinationRootPath'] = 'apps'
+
+        deploymentUnderTest.createFoldersAndCopyK8sResources('staging',)
+
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Copying k8s payload from application repo to gitOps Repo: \'k8s/staging/*\' to \'apps/app/staging/\'')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('mkdir -p apps/app/staging/')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('mkdir -p .config/')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* apps/app/staging/ || true')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('cp workspace/*.yamllint.yaml .config/ || true')
     }
     

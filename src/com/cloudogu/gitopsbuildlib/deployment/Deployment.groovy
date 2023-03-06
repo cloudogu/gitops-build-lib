@@ -33,21 +33,23 @@ abstract class Deployment {
 
     def createFoldersAndCopyK8sResources(String stage) {
         def sourcePath = gitopsConfig.deployments.sourcePath
-        def application = gitopsConfig.application
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
 
-        script.sh "mkdir -p ${stage}/${application}/${extraResourcesFolder}"
+        script.sh "mkdir -p ${destinationPath}/${extraResourcesFolder}"
         script.sh "mkdir -p ${configDir}/"
         // copy extra resources like sealed secrets
-        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/${extraResourcesFolder}'"
-        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/${extraResourcesFolder} || true"
+        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${destinationPath}/${extraResourcesFolder}'"
+        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${destinationPath}/${extraResourcesFolder} || true"
         script.sh "cp ${script.env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
     }
 
     void createFileConfigmaps(String stage) {
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
+
         gitopsConfig.fileConfigmaps.each {
-            if(stage in it['stage']) {
+            if (stage in it['stage']) {
                 String key = it['sourceFilePath'].split('/').last()
-                script.writeFile file: "${stage}/${gitopsConfig.application}/generatedResources/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${gitopsConfig.deployments.sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
+                script.writeFile file: "${destinationPath}/generatedResources/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${gitopsConfig.deployments.sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
             }
         }
     }
@@ -104,12 +106,45 @@ users:
         return namespace
     }
 
+    String getDestinationFolder(FolderStructureStrategy folderStructureStrategy, String stage) {
+
+        def destinationRootPath = gitopsConfig.deployments.destinationRootPath
+
+        if (destinationRootPath == ".") {
+            destinationRootPath = ""
+        } else {
+            if (!destinationRootPath.endsWith("/")) {
+                destinationRootPath = destinationRootPath + "/"
+            }
+        }
+
+        switch (folderStructureStrategy) {
+            case FolderStructureStrategy.GLOBAL_ENV:
+                return "${destinationRootPath}${stage}/${gitopsConfig.application}"
+            case FolderStructureStrategy.ENV_PER_APP:
+                return "${destinationRootPath}${gitopsConfig.application}/${stage}"
+            default:
+                return null
+        }
+    }
+
     protected GitopsTool getGitopsTool() {
         switch (gitopsConfig.gitopsTool) {
             case 'FLUX':
                 return GitopsTool.FLUX
             case 'ARGO':
                 return GitopsTool.ARGO
+            default:
+                return null
+        }
+    }
+
+    protected FolderStructureStrategy getFolderStructureStrategy() {
+        switch (gitopsConfig.folderStructureStrategy) {
+            case 'GLOBAL_ENV':
+                return FolderStructureStrategy.GLOBAL_ENV
+            case 'ENV_PER_APP':
+                return FolderStructureStrategy.ENV_PER_APP
             default:
                 return null
         }

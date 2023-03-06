@@ -47,6 +47,7 @@ Map createDefaultConfig() {
         ],
         deployments             : [
             sourcePath: 'k8s',
+            destinationRootPath: '.'
         ],
         validators              : [
             kubeval    : [
@@ -80,7 +81,8 @@ Map createDefaultConfig() {
         stages                  : [
             staging   : [deployDirectly: true],
             production: [deployDirectly: false],
-        ]
+        ],
+        folderStructureStrategy: 'GLOBAL_ENV'
     ]
 }
 

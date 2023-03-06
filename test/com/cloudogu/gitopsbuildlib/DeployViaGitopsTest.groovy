@@ -74,12 +74,14 @@ class DeployViaGitopsTest extends BasePipelineTest {
                     ]
                 ]
             ],
-            stages                  : stages
+            stages                  : stages,
+            folderStructureStrategy: 'GLOBAL_ENV'
         ]
     }
 
     def plainDeployment = [
         sourcePath: 'k8s',
+        destinationRootPath: '.',
         plain     : [
             updateImages: [
                 [deploymentFilename: "deployment.yaml",
@@ -458,6 +460,7 @@ spec:
             gitopsTool: 'FLUX_V1',
             deployments: [
                 sourcePath: 'k8s',
+                destinationRootPath: '.',
                 plain: [
                     updateImages: [
                         [filename     : "deployment.yaml",
@@ -496,6 +499,7 @@ spec:
             gitopsTool            : 'FLUX_V1',
             deployments           : [
                 sourcePath: 'k8s',
+                destinationRootPath: '.',
                 plain     : [
                     updateImages: [
                         [filename     : "deployment.yaml",
@@ -558,6 +562,7 @@ spec:
             gitopsTool: 'FLUX_V1',
             deployments: [
                 sourcePath: 'k8s',
+                destinationRootPath: '.',
                 plain: [
                     updateImages: [
                         [filename     : "deployment.yaml",
@@ -595,6 +600,7 @@ spec:
             gitopsTool            : '',
             deployments           : [
                 sourcePath: 'k8s',
+                destinationRootPath: '.',
                 plain     : [
                     updateImages: [
                         [filename     : "deployment.yaml",

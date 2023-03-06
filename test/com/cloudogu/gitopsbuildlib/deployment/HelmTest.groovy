@@ -13,6 +13,7 @@ class HelmTest {
 
     def gitRepo = [
         sourcePath: 'k8s',
+        destinationRootPath: '.',
         helm      : [
             repoType: 'GIT',
             repoUrl: 'repoUrl',
@@ -22,6 +23,7 @@ class HelmTest {
 
     def helmRepo = [
         sourcePath: 'k8s',
+        destinationRootPath: '.',
         helm      : [
             repoType: 'HELM',
             repoUrl: 'repoUrl',
@@ -39,6 +41,7 @@ class HelmTest {
                     namespace: 'fluxv1-staging'
                 ]
             ],
+            folderStructureStrategy: 'GLOBAL_ENV',
             buildImages: [
                 helm: [
                     image: 'helmImage',
@@ -134,6 +137,88 @@ spec:
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('[returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
         assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:workspace/.helmChartTempDir/mergedValues.yaml, text:[helm repo add chartRepo repoUrl, helm repo update, helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/.helmChartTempDir/chart, [returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
         assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:staging/app/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: app
+  namespace: fluxv1-staging
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  releaseName: app
+  chart:
+    repository: repoUrl
+    name: chartName
+    version: 1.0
+  values:
+    ---
+    #this part is only for PlainTest regarding updating the image name
+    spec:
+      template:
+        spec:
+          containers:
+            - name: \'application\'
+              image: \'oldImageName\'
+    #this part is only for HelmTest regarding changing the yaml values
+    to:
+      be:
+        changed: \'oldValue\'
+]''')
+    }
+
+    @Test
+    void 'creating helm release with git repo with ENV_PER_APP and other destinationRootPath'() {
+        helmGit.gitopsConfig['folderStructureStrategy'] = 'ENV_PER_APP'
+        helmGit.gitopsConfig['deployments']['destinationRootPath'] = 'apps'
+
+        helmGit.preValidation('staging')
+
+        assertThat(dockerMock.actualImages[0]).contains('helmImage')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm dep update workspace/.helmChartTempDir/chart/chartPath')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('[returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:workspace/.helmChartTempDir/mergedValues.yaml, text:[helm dep update workspace/.helmChartTempDir/chart/chartPath, [returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartPath -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
+        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:apps/app/staging/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: app
+  namespace: fluxv1-staging
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  releaseName: app
+  chart:
+    git: repoUrl
+    ref: null
+    path: chartPath
+  values:
+    ---
+    #this part is only for PlainTest regarding updating the image name
+    spec:
+      template:
+        spec:
+          containers:
+            - name: \'application\'
+              image: \'oldImageName\'
+    #this part is only for HelmTest regarding changing the yaml values
+    to:
+      be:
+        changed: \'oldValue\'
+]''')
+    }
+
+    @Test
+    void 'creating helm release with helm repo with ENV_PER_APP and other destinationRootPath'() {
+        helmHelm.gitopsConfig['folderStructureStrategy'] = 'ENV_PER_APP'
+        helmHelm.gitopsConfig['deployments']['destinationRootPath'] = 'apps'
+
+        helmHelm.preValidation('staging')
+
+        assertThat(dockerMock.actualImages[0]).contains('helmImage')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('helm repo add chartRepo repoUrl')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('helm repo update')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/.helmChartTempDir/chart')
+        assertThat(scriptMock.actualShArgs[3]).isEqualTo('[returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
+        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('[file:workspace/.helmChartTempDir/mergedValues.yaml, text:[helm repo add chartRepo repoUrl, helm repo update, helm pull chartRepo/chartName --version=1.0 --untar --untardir=workspace/.helmChartTempDir/chart, [returnStdout:true, script:helm values workspace/.helmChartTempDir/chart/chartName -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]]]')
+        assertThat(scriptMock.actualWriteFileArgs[1]).isEqualTo('''[file:apps/app/staging/applicationRelease.yaml, text:apiVersion: helm.fluxcd.io/v1
 kind: HelmRelease
 metadata:
   name: app

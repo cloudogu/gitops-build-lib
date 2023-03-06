@@ -35,6 +35,7 @@ class Helm extends Deployment {
     @Override
     def preValidation(String stage) {
         def sourcePath = gitopsConfig.deployments.sourcePath
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
 
         chartRepo.prepareRepo(gitopsConfig, helmChartTempDir, chartRootDir)
 
@@ -45,7 +46,7 @@ class Helm extends Deployment {
 
         updateYamlValue("${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", gitopsConfig)
 
-        script.writeFile file: "${stage}/${gitopsConfig.application}/applicationRelease.yaml", text: helmRelease.create(gitopsConfig, getNamespace(stage), "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml")
+        script.writeFile file: "${destinationPath}/applicationRelease.yaml", text: helmRelease.create(gitopsConfig, getNamespace(stage), "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml")
     }
 
     @Override
@@ -56,8 +57,10 @@ class Helm extends Deployment {
 
     @Override
     def validate(String stage) {
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
+
         gitopsConfig.validators.each { validator ->
-            validator.value.validator.validate(validator.value.enabled, getGitopsTool(), SourceType.PLAIN, "${stage}/${gitopsConfig.application}", validator.value.config, gitopsConfig)
+            validator.value.validator.validate(validator.value.enabled, getGitopsTool(), SourceType.PLAIN, "${destinationPath}", validator.value.config, gitopsConfig)
             validator.value.validator.validate(validator.value.enabled, getGitopsTool(), SourceType.HELM, "${script.env.WORKSPACE}/${helmChartTempDir}",validator.value.config, gitopsConfig)
         }
     }
