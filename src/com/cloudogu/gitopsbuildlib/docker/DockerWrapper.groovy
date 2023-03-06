@@ -8,7 +8,8 @@ class DockerWrapper {
     }
 
     void withDockerImage(def imageConfig, Closure body) {
-        if(imageConfig.containsKey('credentialsId') && imageConfig.credentialsId) {
+        // First checks if imageconfig is a map. If it is a string, the containsKey method would fail.
+        if(imageConfig instanceof Map && imageConfig.containsKey('credentialsId') && imageConfig.credentialsId) {
             def registryUrl = getRegistryUrlFromImage(imageConfig.image)
             script.docker.withRegistry("https://${registryUrl}", imageConfig.credentialsId) {
                 runDockerImage(imageConfig.image, body)
