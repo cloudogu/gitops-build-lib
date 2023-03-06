@@ -317,7 +317,7 @@ First of all there are some mandatory properties e.g. the information about your
 * `gitopsTool: 'ARGO'` - Name of the gitops tool. Currently supporting `'FLUX'` (for now only fluxV1) and `'ARGO'`.  
 * and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:
    * `cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib'`
-   * `cesBuildLibVersion: '1.45.0'`
+   * `cesBuildLibVersion: '1.62.0'`
    * `mainBranch:         'main'`
 
 ---
@@ -332,11 +332,11 @@ def gitopsConfig = [
             // These are used to run helm and kubectl commands in the core logic
             // 
             helm: [ 
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                image: 'ghcr.io/cloudogu/helm:3.11.1-2'
                 credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
                 ],
             kubectl: [ 
-                image: 'lachlanevenson/k8s-kubectl:v1.19.3'
+                image: 'lachlanevenson/k8s-kubectl:v1.24.8'
                 credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
                 ],
             // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
@@ -349,7 +349,7 @@ def gitopsConfig = [
                 credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
                 ],
             yamllint: [
-                image: 'cytopia/yamllint:1.25-0.7'
+                image: 'cytopia/yamllint:1.25-0.9'
                 credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
                 ]
         ]

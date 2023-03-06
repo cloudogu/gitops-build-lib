@@ -37,7 +37,6 @@ class DeployViaGitopsTest extends BasePipelineTest {
 
     static final String EXPECTED_APPLICATION = 'app'
 
-    String helmImage = 'ghcr.io/cloudogu/helm:3.4.1-1'
 
     Map gitopsConfig(Map stages, Map deployments) {
         return [
@@ -60,7 +59,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
                     enabled  : true,
                     config   : [
                         // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
-                        image           : helmImage,
+                        image           : 'ghcr.io/cloudogu/helm:3.4.1-1',
                         k8sSchemaVersion: '1.18.1'
                     ]
                 ],
@@ -68,7 +67,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
                     validator: new Yamllint(deployViaGitops),
                     enabled  : true,
                     config   : [
-                        image  : 'cytopia/yamllint:1.25-0.7',
+                        image  : 'cytopia/yamllint:1.25-0.9',
                         // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
                         // It still fails on syntax errors.
                         profile: 'relaxed'
@@ -198,7 +197,7 @@ spec:
     void 'default values are set'() {
 
         deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
-            assertGitOpsConfigWithoutInstances(actualGitOpsConfig, deployViaGitops.getDefaultConfig())
+            assertGitOpsConfigWithoutInstances(actualGitOpsConfig, deployViaGitops.createDefaultConfig())
         }
 
         deployViaGitops([:])
@@ -634,6 +633,6 @@ spec:
     void assertGitOpsConfigWithoutInstances(Map actualGitOpsConfig, Map expected) {
         // Remove Instance IDs, e.g. Yamllint@1234567 because they are generate on each getDefaultConfig() call.
         assertThat(actualGitOpsConfig.toString().replaceAll('@.*,', ','))
-            .isEqualTo(deployViaGitops.getDefaultConfig().toString().replaceAll('@.*,', ','))
+            .isEqualTo(deployViaGitops.createDefaultConfig().toString().replaceAll('@.*,', ','))
     }
 }

@@ -15,21 +15,21 @@ List getMandatoryFields() {
     ]
 }
 
-Map getDefaultConfig() {
+Map createDefaultConfig() {
 
     return [
         cesBuildLibRepo         : 'https://github.com/cloudogu/ces-build-lib',
-        cesBuildLibVersion      : '1.46.1',
+        cesBuildLibVersion      : '1.62.0',
         cesBuildLibCredentialsId: '',
         mainBranch              : 'main',
         buildImages          : [
             helm: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                image: 'ghcr.io/cloudogu/helm:3.11.1-2'
             ],
             kubectl: [
                 credentialsId: '',
-                image: 'lachlanevenson/k8s-kubectl:v1.19.3'
+                image: 'lachlanevenson/k8s-kubectl:v1.24.8'
             ],
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
             kubeval: [
@@ -42,7 +42,7 @@ Map getDefaultConfig() {
             ],
             yamllint: [
                 credentialsId: '',
-                image: 'cytopia/yamllint:1.25-0.7'
+                image: 'cytopia/yamllint:1.25-0.9'
             ]
         ],
         deployments             : [
@@ -51,7 +51,7 @@ Map getDefaultConfig() {
         validators              : [
             kubeval    : [
                 validator: new Kubeval(this),
-                enabled  : true,
+                enabled  : false,
                 config   : [
                     // imageRef's are referencing the key in gitopsConfig.buildImages
                     imageRef        : 'kubeval',
@@ -60,7 +60,7 @@ Map getDefaultConfig() {
             ],
             helmKubeval: [
                 validator: new HelmKubeval(this),
-                enabled  : true,
+                enabled  : false,
                 config   : [
                     imageRef        : 'helmKubeval',
                     k8sSchemaVersion: '1.18.1'
@@ -86,7 +86,7 @@ Map getDefaultConfig() {
 
 void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
-    gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
+    gitopsConfig = mergeMaps(createDefaultConfig(), gitopsConfig)
     if (validateConfig(gitopsConfig)) {
         cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
         deploy(gitopsConfig)

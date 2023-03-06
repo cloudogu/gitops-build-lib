@@ -91,7 +91,7 @@
             <groupId>com.github.cloudogu</groupId>
             <artifactId>ces-build-lib</artifactId>
             <!-- Keep this version in sync with the one used in Jenkinsfile -->
-            <version>1.45.0</version>
+            <version>1.62.0</version>
             <!-- Don't ship this dependency with the app -->
             <optional>true</optional>
             <!-- Don't inherit this dependency! -->
