@@ -171,7 +171,7 @@ def validateDeploymentConfig(Map gitopsConfig) {
         return false
     }
 
-    if (gitopsConfig.containsKey('folderStructureStrategy') && (gitopsConfig.folderStructureStrategy != "GLOBAL_ENV" || gitopsConfig.folderStructureStrategy != "ENV_PER_APP")) {
+    if (!(gitopsConfig.containsKey('folderStructureStrategy') && (gitopsConfig.folderStructureStrategy != 'GLOBAL_ENV' || gitopsConfig.folderStructureStrategy != 'ENV_PER_APP'))) {
         error 'The specified \'folderStructureStrategy\' is invalid. Please choose one of the following: \'GLOBAL_ENV\', \'ENV_PER_APP\'.'
     }
 
