@@ -89,6 +89,8 @@ Map createDefaultConfig() {
 void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
     gitopsConfig = mergeMaps(createDefaultConfig(), gitopsConfig)
+    println("GitOps Config:")
+    println(gitopsConfig)
     if (validateConfig(gitopsConfig)) {
         cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
         deploy(gitopsConfig)
