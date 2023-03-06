@@ -1,6 +1,7 @@
 #!groovy
 import com.cloudogu.gitopsbuildlib.*
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
+import com.cloudogu.gitopsbuildlib.deployment.FolderStructureStrategy
 import com.cloudogu.gitopsbuildlib.deployment.helm.Helm
 import com.cloudogu.gitopsbuildlib.deployment.plain.Plain
 import com.cloudogu.gitopsbuildlib.scm.SCMManager
@@ -168,6 +169,10 @@ def validateDeploymentConfig(Map gitopsConfig) {
     } else if (!gitopsConfig.deployments.containsKey('plain') && !gitopsConfig.deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
         return false
+    }
+
+    if (gitopsConfig.containsKey('folderStructureStrategy') && (gitopsConfig.containsKey != "GLOBAL_ENV" || gitopsConfig.containsKey != "ENV_PER_APP")) {
+        error 'The specified \'folderStructureStrategy\' is invalid. Please choose one of the following: \'GLOBAL_ENV\', \'ENV_PER_APP\'.'
     }
 
     if (gitopsConfig.deployments.containsKey('plain')) {
