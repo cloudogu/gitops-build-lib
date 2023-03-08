@@ -57,7 +57,7 @@ abstract class Deployment {
     String createConfigMap(String key, String filePath, String name, String namespace) {
         String configMap = ""
         withDockerImage(gitopsConfig.buildImages.kubectl) {
-            String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
+            String kubeScript = "kubectl create configmap ${name} " +
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"
 
@@ -68,32 +68,6 @@ abstract class Deployment {
 
     void withDockerImage(def imageConfig, Closure body) {
         dockerWrapper.withDockerImage(imageConfig, body)
-    }
-
-    // Dummy kubeConfig, so we can use `kubectl --dry-run=client`
-    String writeKubeConfig() {
-        String kubeConfigPath = "${script.pwd()}/.kube/config"
-        script.echo "Writing $kubeConfigPath"
-        script.writeFile file: kubeConfigPath, text: """apiVersion: v1
-clusters:
-- cluster:
-    certificate-authority-data: DATA+OMITTED
-    server: https://localhost
-  name: self-hosted-cluster
-contexts:
-- context:
-    cluster: self-hosted-cluster
-    user: svcs-acct-dply
-  name: svcs-acct-context
-current-context: svcs-acct-context
-kind: Config
-preferences: {}
-users:
-- name: svcs-acct-dply
-  user:
-    token: DATA+OMITTED"""
-
-        return kubeConfigPath
     }
 
     String getNamespace(String stage) {
