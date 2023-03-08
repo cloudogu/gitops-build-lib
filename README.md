@@ -102,7 +102,21 @@ def gitopsConfig = [
         repositoryUrl:  'gitops'
     ],
     application: 'spring-petclinic',
-    gitopsTool: 'FLUX' /* or 'ARGO' */
+    gitopsTool: 'FLUX' /* or 'ARGO' */,
+    stages: [
+        staging: [
+            namespace: 'staging',
+            deployDirectly: true
+        ],
+        production: [
+            namespace: 'production',
+            deployDirectly: false
+        ]
+    ],
+    deployments: [
+        plain     : []
+        ]
+    ]
 ]
 
 deployViaGitops(gitopsConfig)
@@ -110,7 +124,7 @@ deployViaGitops(gitopsConfig)
 
 ### More options
 
-The following is an example of a small and yet complete **gitops-config** for a helm-deployment of an application. 
+The following is an example shows all options of a **gitops-config** for a helm-deployment of an application. 
 This would lead to a deployment of your staging environment by updating the resources of "staging" folder within your 
 gitops-folder in git. For production it will open a PR with the changes.
 
@@ -361,8 +375,7 @@ def gitopsConfig = [
 
 ## Stages
 The GitOps-build-lib supports builds on multiple stages. A stage is defined by a name and contains a namespace (used to
-generate the resources) and a deployment-flag. If no stages is passed into the gitops-config by the user, the default
-is set to:
+generate the resources) and a deployment-flag:
 
 ```groovy
 def gitopsConfig = [
@@ -379,7 +392,6 @@ def gitopsConfig = [
 ]
 ```
 
-The defaults above can be overwritten by providing an entry for 'stages' within your config.
 If it is set to deploy directly it will commit and push to your desired `gitops-folder` and therefore triggers a deployment. If it is set to false
 it will create a PR on your `gitops-folder`. **Remember** there are important conventions regarding namespaces and the folder structure (see [namespaces](#namespaces)).
 

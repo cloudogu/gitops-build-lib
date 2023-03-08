@@ -1,16 +1,19 @@
 package com.cloudogu.gitopsbuildlib
 
-
 import com.cloudogu.ces.cesbuildlib.Git
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import com.lesfurets.jenkins.unit.BasePipelineTest
 import groovy.mock.interceptor.StubFor
 import groovy.yaml.YamlSlurper
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.mockito.ArgumentCaptor
 
 import static com.lesfurets.jenkins.unit.MethodCall.callArgsToString
+import static groovy.test.GroovyAssert.shouldFail
 import static org.assertj.core.api.Assertions.assertThat
 import static org.mockito.ArgumentMatchers.anyString
 import static org.mockito.ArgumentMatchers.eq
@@ -80,7 +83,6 @@ class DeployViaGitopsTest extends BasePipelineTest {
     }
 
     def plainDeployment = [
-        sourcePath: 'k8s',
         destinationRootPath: '.',
         plain     : [
             updateImages: [
@@ -182,9 +184,9 @@ spec:
             echo "filepath is: ${args.file}, data is: ${args.data}, overwrite is: ${args.overwrite}"
         }
 
-//        deployViaGitops.metaClass.error = { String args ->
-//            echo "${args}"
-//        }
+        deployViaGitops.metaClass.error = { String message ->
+            throw new JenkinsError(message)
+        }
 
         when(git.commitHashShort).thenReturn('1234abcd')
     }
@@ -198,7 +200,7 @@ spec:
     @Test
     void 'default values are set'() {
 
-        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+        deployViaGitops.metaClass.validateConfig = { Map actualGitOpsConfig ->
             assertGitOpsConfigWithoutInstances(actualGitOpsConfig, deployViaGitops.createDefaultConfig())
         }
 
@@ -208,46 +210,26 @@ spec:
     @Test
     void 'default values can be overwritten'() {
 
-        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+        deployViaGitops.metaClass.validateConfig = { Map actualGitOpsConfig ->
             assertThat(actualGitOpsConfig.cesBuildLibRepo).isEqualTo('abc')
             assertThat(actualGitOpsConfig.cesBuildLibCredentialsId).isEqualTo('testuser')
         }
+        deployViaGitops.metaClass.deploy = {Map actualGitOpsConfig ->} // Stop after validation
 
         deployViaGitops([cesBuildLibRepo: 'abc', cesBuildLibCredentialsId: 'testuser'])
     }
 
-    @Test
-    void 'default stages defined as staging and production'() {
-        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
-            assertThat(actualGitOpsConfig.stages.containsKey('staging')).isEqualTo(true)
-            assertThat(actualGitOpsConfig.stages.containsKey('production')).isEqualTo(true)
-            assertThat(actualGitOpsConfig.stages.staging.deployDirectly).isEqualTo(true)
-            assertThat(actualGitOpsConfig.stages.production.deployDirectly).isEqualTo(false)
-        }
-
-        deployViaGitops([:])
-    }
-
-    @Test
-    void 'stages definition gets overwritten rather than merged'() {
-        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
-            assertThat(actualGitOpsConfig.stages.containsKey('staging')).isEqualTo(true)
-            assertThat(actualGitOpsConfig.stages.containsKey('production')).isEqualTo(false)
-            assertThat(actualGitOpsConfig.stages.staging.deployDirectly).isEqualTo(true)
-        }
-
-        deployViaGitops(gitopsConfig(singleStages, plainDeployment))
-    }
 
     @Test
     void 'default validator can be disabled'() {
 
-        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+        deployViaGitops.metaClass.validateConfig = { Map actualGitOpsConfig ->
             assertThat(actualGitOpsConfig.validators.kubeval.enabled).isEqualTo(false)
             assertThat(actualGitOpsConfig.validators.kubeval.validator).isNotNull()
             assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
         }
-
+        deployViaGitops.metaClass.deploy = {Map actualGitOpsConfig ->} // Stop after validation
+        
         deployViaGitops([
             validators: [
                 kubeval: [
@@ -260,12 +242,13 @@ spec:
     @Test
     void 'custom validator can be added'() {
 
-        deployViaGitops.metaClass.deploy = { Map actualGitOpsConfig ->
+        deployViaGitops.metaClass.validateConfig = { Map actualGitOpsConfig ->
             assertThat(actualGitOpsConfig.validators.myVali.config.a).isEqualTo('b')
             assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
             assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
         }
-
+        deployViaGitops.metaClass.deploy = {Map actualGitOpsConfig ->} // Stop after validation
+        
         deployViaGitops([
             validators: [
                 myVali: [
@@ -477,13 +460,11 @@ spec:
         ]
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            String message = shouldFail {
+                deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            }
+            assertThat(message).contains('[scm.provider]')
         }
-
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scm.provider]")
-            }).isTrue()
     }
 
     @Test
@@ -516,13 +497,11 @@ spec:
         ]
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            String message = shouldFail {
+                deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            }
+            assertThat(message).contains('[application]')
         }
-
-        assertThat(
-            helper.callStack.findAll { call -> println(call.methodName); call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[application]")
-            }).isTrue()
     }
 
     @Test
@@ -540,13 +519,11 @@ spec:
         ]
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            String message = shouldFail {
+                deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            }
+            assertThat(message).contains('[scm.provider, scm.repositoryUrl, application, stages]')
         }
-
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[scm.provider, scm.repositoryUrl, application, stages]")
-            }).isTrue()
     }
 
     @Test
@@ -579,13 +556,11 @@ spec:
         ]
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            String message = shouldFail {
+                deployViaGitops.call(gitopsConfigMissingMandatoryField)
+            }
+            assertThat(message).contains('The given scm-provider seems to be invalid. Please choose one of the following: \'SCMManager\'.')
         }
-
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("The given scm-provider seems to be invalid. Please choose one of the following: \'SCMManager\'.")
-            }).isTrue()
     }
 
     @Test
@@ -617,13 +592,11 @@ spec:
         ]
 
         gitRepo.use {
-            deployViaGitops.call(gitopsConfigMissingTooling)
+            String message = shouldFail {
+                deployViaGitops.call(gitopsConfigMissingTooling)
+            }
+            assertThat(message).contains('[gitopsTool]')
         }
-
-        assertThat(
-            helper.callStack.findAll { call -> call.methodName == "error" }.any { call ->
-                callArgsToString(call).contains("[gitopsTool]")
-            }).isTrue()
     }
 
     private static void setupGlobals(Script script) {
@@ -640,5 +613,11 @@ spec:
         // Remove Instance IDs, e.g. Yamllint@1234567 because they are generate on each getDefaultConfig() call.
         assertThat(actualGitOpsConfig.toString().replaceAll('@.*,', ','))
             .isEqualTo(deployViaGitops.createDefaultConfig().toString().replaceAll('@.*,', ','))
+    }
+}
+
+class JenkinsError extends RuntimeException {
+    JenkinsError(String message) {
+        super(message)
     }
 }
