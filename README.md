@@ -129,6 +129,7 @@ def gitopsConfig = [
     mainBranch: 'master' /* Default: 'main' */, 
     deployments: [
         sourcePath: 'k8s' /* Default: 'k8s' */,
+        destinationRootPath: '.' /* Default: '.' */,
         /* See docs for helm or plain k8s deployment options */
         helm : [
             repoType : 'HELM',
@@ -139,6 +140,7 @@ def gitopsConfig = [
             updateValues  : [[fieldPath: "image.name", newValue: imageName]]
         ]
     ],
+    folderStructureStrategy: 'GLOBAL_ENV', /* or ENV_PER_APP */
     stages: [
         staging: [ 
             namespace: 'my-staging',
@@ -262,7 +264,7 @@ See [Example of ArgoCD application in GitOps Playground](https://github.com/clou
 
 ---
 
-## Default Folder Structure 
+## Default Folder Structure in source repository
 
 A default project structure in your application repo could look like the examples below. Make sure you have your k8s 
 and/or helm resources bundled in a folder. This specific resources folder (here `k8s`) will later be specified by the 
@@ -509,6 +511,7 @@ The deployment has to contain the path of your k8s resources within the applicat
 def gitopsConfig = [
         deployments: [
             sourcePath: 'k8s', // path of k8s resources in application repository. Default: 'k8s'
+            destinationRootPath: '.', // Root-Subfolder in the gitops repository, where the following folders for stages and apps shall be created. Default: '.'
             // Either "plain" or "helm" is mandatory
             plain: [], // use plain if you only have, as the name suggests, plain k8s resources
             helm: [] // or if you want to deploy a helm release use `helm`
@@ -601,6 +604,28 @@ We decided to generate plain k8s Resources from Helm applications before we push
 
 ---
 
+## Folder Structure in destination gitops repository
+
+You can customize in which path the final manifests of the application will be created in the gitops repository. For this, you can modify the following parameters:
+```groovy
+def gitopsConfig = [
+    deployments: [
+        destinationRootPath: '.' /* Default: '.' */
+    ],
+    folderStructureStrategy: 'GLOBAL_ENV' /* Default: 'GLOBAL_ENV', or ENV_PER_APP */
+]
+```
+* `destinationRootPath`: Specifies in which subfolder the following folders of `folderStructureStrategy` are created. Defaults to the root of the repository.
+* `folderStructureStrategy`: Possible values: 
+  * `GLOBAL_ENV`: The manifests will be commited into `$DESTINATION_ROOT_PATH/STAGE_NAME/APP_NAME/` in the destination gitops repository
+  * `ENV_PER_APP`: The manifests will be commited into `$DESTINATION_ROOT_PATH/APP_NAME/STAGE_NAME/` in the destination gitops repository
+
+
+Example for **Global Environments** vs **Environment per App** [Source](https://github.com/cloudogu/gitops-patterns#implementing-release-promotion):
+  ![Global Envs](https://github.com/cloudogu/gitops-talks/blob/1744c1d/images/global-environments.svg)
+  ![Env per app](https://github.com/cloudogu/gitops-talks/blob/1744c1d/images/environment-per-app.svg)
+
+---
 
 ## Extra Files
 
