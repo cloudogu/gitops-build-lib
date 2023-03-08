@@ -1,19 +1,9 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 enum GitopsTool {
-    FLUX('flux'), ARGO('argo')
+    FLUX, ARGO
 
-    private final String name
-
-    GitopsTool(String name) {
-        this.name = name
-    }
-
-    String getNameValue() {
-        return name
-    }
-
-    String toString() {
-        return name() + " = " + getNameValue()
+    static boolean isValid(String potentialTool) {
+        return values().any { it.toString().equals(potentialTool) }
     }
 }

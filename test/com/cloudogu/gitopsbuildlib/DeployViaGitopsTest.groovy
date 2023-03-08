@@ -536,7 +536,7 @@ spec:
                 repositoryUrl: 'fluxv1/gitops',
             ],
             application: 'app',
-            gitopsTool: 'FLUX_V1',
+            gitopsTool: 'FLUX',
             deployments: [
                 sourcePath: 'k8s',
                 destinationRootPath: '.',
@@ -560,6 +560,30 @@ spec:
                 deployViaGitops.call(gitopsConfigMissingMandatoryField)
             }
             assertThat(message).contains('The given scm-provider seems to be invalid. Please choose one of the following: \'SCMManager\'.')
+        }
+    }
+
+    @Test
+    void 'error on invalid gitopsTool'() {
+        gitRepo.use {
+            String message = shouldFail {
+                def gitOpsConfig = gitopsConfig(singleStages, plainDeployment)
+                gitOpsConfig.gitopsTool = 'not very valid'
+                deployViaGitops.call(gitOpsConfig)
+            }
+            assertThat(message).contains('The specified \'gitopsTool\' is invalid. Please choose one of the following: [FLUX, ARGO]')
+        }
+    }
+    
+    @Test
+    void 'error on invalid folderStructureStrategy'() {
+        gitRepo.use {
+            String message = shouldFail {
+                def gitOpsConfig = gitopsConfig(singleStages, plainDeployment)
+                gitOpsConfig.folderStructureStrategy = 'not very valid'
+                deployViaGitops.call(gitOpsConfig)
+            }
+            assertThat(message).contains('The specified \'folderStructureStrategy\' is invalid. Please choose one of the following: [GLOBAL_ENV, ENV_PER_APP]')
         }
     }
 

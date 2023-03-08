@@ -15,7 +15,7 @@ enum FolderStructureStrategy {
      *   <li>$ROOTPATH/production/myapp/</li>
      * </ul>
      */
-    GLOBAL_ENV('globalEnv'),
+    GLOBAL_ENV,
 
     /**
      * Uses subfolders for each application at the root path, with all subfolders per stage in each of them.
@@ -27,20 +27,11 @@ enum FolderStructureStrategy {
      *   <li>$ROOTPATH/myapp/production/</li>
      * </ul>
      */
-    ENV_PER_APP('envPerApp')
-
-    private final String name
-
-    FolderStructureStrategy(String name) {
-        this.name = name
-    }
-
-    String getNameValue() {
-        return name
-    }
-
-
-    String toString() {
-        return name() + " = " + getNameValue()
+    ENV_PER_APP
+    
+    static boolean isValid(String potentialStrategy) {
+        return values().any { it.toString().equals(potentialStrategy) }
     }
 }
+
+    

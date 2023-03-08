@@ -103,24 +103,12 @@ abstract class Deployment {
     }
 
     protected GitopsTool getGitopsTool() {
-        switch (gitopsConfig.gitopsTool) {
-            case 'FLUX':
-                return GitopsTool.FLUX
-            case 'ARGO':
-                return GitopsTool.ARGO
-            default:
-                return null
-        }
+        // Already asserted in deployViaGitOps
+        GitopsTool.valueOf(gitopsConfig.gitopsTool)
     }
 
     protected FolderStructureStrategy getFolderStructureStrategy() {
-        switch (gitopsConfig.folderStructureStrategy) {
-            case 'GLOBAL_ENV':
-                return FolderStructureStrategy.GLOBAL_ENV
-            case 'ENV_PER_APP':
-                return FolderStructureStrategy.ENV_PER_APP
-            default:
-                return null
-        }
+        // Already asserted in deployViaGitOps
+        FolderStructureStrategy.valueOf(gitopsConfig.folderStructureStrategy)
     }
 }

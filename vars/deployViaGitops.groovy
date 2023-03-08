@@ -1,14 +1,16 @@
 #!groovy
-import com.cloudogu.gitopsbuildlib.*
+
+import com.cloudogu.gitopsbuildlib.GitRepo
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
 import com.cloudogu.gitopsbuildlib.deployment.FolderStructureStrategy
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
 import com.cloudogu.gitopsbuildlib.deployment.helm.Helm
 import com.cloudogu.gitopsbuildlib.deployment.plain.Plain
 import com.cloudogu.gitopsbuildlib.scm.SCMManager
 import com.cloudogu.gitopsbuildlib.scm.SCMProvider
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
-import com.cloudogu.gitopsbuildlib.validation.Yamllint
+import com.cloudogu.gitopsbuildlib.validation.Yamllint 
 
 List getMandatoryFields() {
     return [
@@ -168,9 +170,13 @@ def validateDeploymentConfig(Map gitopsConfig) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
         return false
     }
-
-    if (gitopsConfig.containsKey('folderStructureStrategy') && !["GLOBAL_ENV", "ENV_PER_APP"].contains(gitopsConfig.folderStructureStrategy)) {
-        error 'The specified \'folderStructureStrategy\' is invalid. Please choose one of the following: \'GLOBAL_ENV\', \'ENV_PER_APP\'.'
+    
+    if (!GitopsTool.isValid(gitopsConfig.gitopsTool)) {
+        error "The specified 'gitopsTool' is invalid. Please choose one of the following: ${GitopsTool.values()}"
+    }
+    
+    if (gitopsConfig.containsKey('folderStructureStrategy') && !FolderStructureStrategy.isValid(gitopsConfig.folderStructureStrategy)) {
+        error "The specified 'folderStructureStrategy' is invalid. Please choose one of the following: ${FolderStructureStrategy.values()}"
     }
 
     if (gitopsConfig.deployments.containsKey('plain')) {
