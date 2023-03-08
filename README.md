@@ -622,7 +622,8 @@ def gitopsConfig = [
   * `ENV_PER_APP`: The manifests will be commited into `$DESTINATION_ROOT_PATH/APP_NAME/STAGE_NAME/` in the destination gitops repository
 
 
-Example for **Global Environments** vs **Environment per App** [Source](https://github.com/cloudogu/gitops-patterns#implementing-release-promotion):
+Example for **Global Environments** vs **Environment per App** ([Source](https://github.com/cloudogu/gitops-patterns#implementing-release-promotion)):
+
   ![Global Envs](https://github.com/cloudogu/gitops-talks/blob/1744c1d/images/global-environments.svg)
   ![Env per app](https://github.com/cloudogu/gitops-talks/blob/1744c1d/images/environment-per-app.svg)
 
