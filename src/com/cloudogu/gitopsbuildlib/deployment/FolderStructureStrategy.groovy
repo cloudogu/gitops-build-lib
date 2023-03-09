@@ -28,9 +28,14 @@ enum FolderStructureStrategy {
      * </ul>
      */
     ENV_PER_APP
+
+    // Creating enums without constructor results in Exception on Jenkins:
+    // "RejectedAccessException: Scripts not permitted to use new java.util.LinkedHashMap" 🙄
+    FolderStructureStrategy() {}
     
-    static boolean isValid(String potentialStrategy) {
-        return values().any { it.toString().equals(potentialStrategy) }
+    // valueOf() does not work on Jenkins, so create our own
+    static FolderStructureStrategy get(String potentialStrategy) {
+        return values().find { it.name() == potentialStrategy }
     }
 }
 

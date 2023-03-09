@@ -104,11 +104,11 @@ abstract class Deployment {
 
     protected GitopsTool getGitopsTool() {
         // Already asserted in deployViaGitOps
-        GitopsTool.valueOf(gitopsConfig.gitopsTool)
+        GitopsTool.get(gitopsConfig.gitopsTool)
     }
 
     protected FolderStructureStrategy getFolderStructureStrategy() {
         // Already asserted in deployViaGitOps
-        FolderStructureStrategy.valueOf(gitopsConfig.folderStructureStrategy)
+        FolderStructureStrategy.get(gitopsConfig.folderStructureStrategy)
     }
 }

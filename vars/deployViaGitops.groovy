@@ -171,11 +171,11 @@ def validateDeploymentConfig(Map gitopsConfig) {
         return false
     }
     
-    if (!GitopsTool.isValid(gitopsConfig.gitopsTool)) {
+    if (!GitopsTool.get(gitopsConfig.gitopsTool)) {
         error "The specified 'gitopsTool' is invalid. Please choose one of the following: ${GitopsTool.values()}"
     }
     
-    if (gitopsConfig.containsKey('folderStructureStrategy') && !FolderStructureStrategy.isValid(gitopsConfig.folderStructureStrategy)) {
+    if (gitopsConfig.containsKey('folderStructureStrategy') && !FolderStructureStrategy.get(gitopsConfig.folderStructureStrategy)) {
         error "The specified 'folderStructureStrategy' is invalid. Please choose one of the following: ${FolderStructureStrategy.values()}"
     }
 
