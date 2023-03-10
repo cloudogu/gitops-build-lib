@@ -1,11 +1,14 @@
 package com.cloudogu.gitopsbuildlib
 
+import com.cloudogu.ces.cesbuildlib.Git
 import groovy.yaml.YamlSlurper
+
+import static org.mockito.Mockito.mock
 
 class ScriptMock {
 
     DockerMock dockerMock = new DockerMock()
-    GitMock gitMock = new GitMock()
+    Git gitMock = mock(Git.class)
 
     List<String> actualShArgs = new LinkedList<>()
     List<String> actualEchoArgs = new LinkedList<>()
@@ -37,9 +40,7 @@ to:
                     new: { args -> return dockerMock.createMock() }
                     ],
                 Git: [
-                    new: { args -> return gitMock.createMock() },
-                    fetch: { gitMock.setFetch() },
-                    checkout: { args -> gitMock.actualCheckoutArgs(args) }
+                    new: { args -> return gitMock },
                     ],
                 ],
             docker: dockerMock.createMock(),

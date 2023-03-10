@@ -149,6 +149,7 @@ def gitopsConfig = [
         helm : [
             repoType : 'HELM',
             credentialsId : 'creds',
+            mainBranch : 'main', /* Default: 'main' */, 
             repoUrl  : <helmChartRepository>,
             chartName: <helmChartName>,
             version  : <helmChartVersion>,
