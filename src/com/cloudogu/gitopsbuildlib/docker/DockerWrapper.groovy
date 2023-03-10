@@ -10,13 +10,15 @@ class DockerWrapper {
     void withDockerImage(def imageConfig, Closure body) {
         // imageConfig can either be a Map or a String, depending on the old or the new format if this field
         // The old format was a String containing an image url. The new one is a map with an image url and optional credentials
-        if(imageConfig instanceof Map && imageConfig.containsKey('credentialsId') && imageConfig.credentialsId) {
-            def registryUrl = getRegistryUrlFromImage(imageConfig.image)
-            script.docker.withRegistry("https://${registryUrl}", imageConfig.credentialsId) {
+        if (imageConfig instanceof Map) {
+            if (imageConfig.containsKey('credentialsId') && imageConfig.credentialsId) {
+                def registryUrl = getRegistryUrlFromImage(imageConfig.image)
+                script.docker.withRegistry("https://${registryUrl}", imageConfig.credentialsId) {
+                    runDockerImage(imageConfig.image, body)
+                }
+            } else {
                 runDockerImage(imageConfig.image, body)
             }
-        } else if (imageConfig instanceof Map && imageConfig.containsKey('image')){
-            runDockerImage(imageConfig.image, body)
         } else {
             // When imageConfig is a String
             runDockerImage(imageConfig, body)
