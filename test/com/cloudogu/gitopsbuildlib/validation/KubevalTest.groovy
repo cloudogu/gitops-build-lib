@@ -20,6 +20,7 @@ class KubevalTest {
             ],
             [
                 sourcePath: 'k8s',
+                destinationRootPath: '.',
                 plain: []
             ]
         )

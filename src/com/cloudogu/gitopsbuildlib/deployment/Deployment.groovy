@@ -33,21 +33,23 @@ abstract class Deployment {
 
     def createFoldersAndCopyK8sResources(String stage) {
         def sourcePath = gitopsConfig.deployments.sourcePath
-        def application = gitopsConfig.application
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
 
-        script.sh "mkdir -p ${stage}/${application}/${extraResourcesFolder}"
+        script.sh "mkdir -p ${destinationPath}/${extraResourcesFolder}"
         script.sh "mkdir -p ${configDir}/"
         // copy extra resources like sealed secrets
-        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${stage}/${application}/${extraResourcesFolder}'"
-        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${stage}/${application}/${extraResourcesFolder} || true"
+        script.echo "Copying k8s payload from application repo to gitOps Repo: '${sourcePath}/${stage}/*' to '${destinationPath}/${extraResourcesFolder}'"
+        script.sh "cp -r ${script.env.WORKSPACE}/${sourcePath}/${stage}/* ${destinationPath}/${extraResourcesFolder} || true"
         script.sh "cp ${script.env.WORKSPACE}/*.yamllint.yaml ${configDir}/ || true"
     }
 
     void createFileConfigmaps(String stage) {
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
+
         gitopsConfig.fileConfigmaps.each {
-            if(stage in it['stage']) {
+            if (stage in it['stage']) {
                 String key = it['sourceFilePath'].split('/').last()
-                script.writeFile file: "${stage}/${gitopsConfig.application}/generatedResources/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${gitopsConfig.deployments.sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
+                script.writeFile file: "${destinationPath}/generatedResources/${it['name']}.yaml", text: createConfigMap(key, "${script.env.WORKSPACE}/${gitopsConfig.deployments.sourcePath}/${it['sourceFilePath']}", it['name'], getNamespace(stage))
             }
         }
     }
@@ -55,7 +57,7 @@ abstract class Deployment {
     String createConfigMap(String key, String filePath, String name, String namespace) {
         String configMap = ""
         withDockerImage(gitopsConfig.buildImages.kubectl) {
-            String kubeScript = "KUBECONFIG=${writeKubeConfig()} kubectl create configmap ${name} " +
+            String kubeScript = "kubectl create configmap ${name} " +
                 "--from-file=${key}=${filePath} " +
                 "--dry-run=client -o yaml -n ${namespace}"
 
@@ -68,32 +70,6 @@ abstract class Deployment {
         dockerWrapper.withDockerImage(imageConfig, body)
     }
 
-    // Dummy kubeConfig, so we can use `kubectl --dry-run=client`
-    String writeKubeConfig() {
-        String kubeConfigPath = "${script.pwd()}/.kube/config"
-        script.echo "Writing $kubeConfigPath"
-        script.writeFile file: kubeConfigPath, text: """apiVersion: v1
-clusters:
-- cluster:
-    certificate-authority-data: DATA+OMITTED
-    server: https://localhost
-  name: self-hosted-cluster
-contexts:
-- context:
-    cluster: self-hosted-cluster
-    user: svcs-acct-dply
-  name: svcs-acct-context
-current-context: svcs-acct-context
-kind: Config
-preferences: {}
-users:
-- name: svcs-acct-dply
-  user:
-    token: DATA+OMITTED"""
-
-        return kubeConfigPath
-    }
-
     String getNamespace(String stage) {
         def namespace
         if (gitopsConfig.stages."${stage}".containsKey('namespace')) {
@@ -104,14 +80,35 @@ users:
         return namespace
     }
 
-    protected GitopsTool getGitopsTool() {
-        switch (gitopsConfig.gitopsTool) {
-            case 'FLUX':
-                return GitopsTool.FLUX
-            case 'ARGO':
-                return GitopsTool.ARGO
+    String getDestinationFolder(FolderStructureStrategy folderStructureStrategy, String stage) {
+
+        def destinationRootPath = gitopsConfig.deployments.destinationRootPath
+
+        if (destinationRootPath == ".") {
+            destinationRootPath = ""
+        } else {
+            if (!destinationRootPath.endsWith("/")) {
+                destinationRootPath = destinationRootPath + "/"
+            }
+        }
+
+        switch (folderStructureStrategy) {
+            case FolderStructureStrategy.GLOBAL_ENV:
+                return "${destinationRootPath}${stage}/${gitopsConfig.application}"
+            case FolderStructureStrategy.ENV_PER_APP:
+                return "${destinationRootPath}${gitopsConfig.application}/${stage}"
             default:
                 return null
         }
+    }
+
+    protected GitopsTool getGitopsTool() {
+        // Already asserted in deployViaGitOps
+        GitopsTool.get(gitopsConfig.gitopsTool)
+    }
+
+    protected FolderStructureStrategy getFolderStructureStrategy() {
+        // Already asserted in deployViaGitOps
+        FolderStructureStrategy.get(gitopsConfig.folderStructureStrategy)
     }
 }

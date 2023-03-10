@@ -21,8 +21,10 @@ class DeploymentTest {
         ],
         deployments: [
             sourcePath: 'k8s',
+            destinationRootPath: '.',
             plain: [:]
         ],
+        folderStructureStrategy: 'GLOBAL_ENV',
         buildImages: [
             kubectl: [
                 image: "http://my-private-registry.com/repo/kubectlImage",
@@ -70,6 +72,20 @@ class DeploymentTest {
         assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* staging/app/ || true')
         assertThat(scriptMock.actualShArgs[3]).isEqualTo('cp workspace/*.yamllint.yaml .config/ || true')
     }
+
+    @Test
+    void 'creating folders for plain deployment with ENV_PER_APP and other destinationRootPath'() {
+        deploymentUnderTest.gitopsConfig['folderStructureStrategy'] = 'ENV_PER_APP'
+        deploymentUnderTest.gitopsConfig['deployments']['destinationRootPath'] = 'apps'
+
+        deploymentUnderTest.createFoldersAndCopyK8sResources('staging',)
+
+        assertThat(scriptMock.actualEchoArgs[0]).isEqualTo('Copying k8s payload from application repo to gitOps Repo: \'k8s/staging/*\' to \'apps/app/staging/\'')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('mkdir -p apps/app/staging/')
+        assertThat(scriptMock.actualShArgs[1]).isEqualTo('mkdir -p .config/')
+        assertThat(scriptMock.actualShArgs[2]).isEqualTo('cp -r workspace/k8s/staging/* apps/app/staging/ || true')
+        assertThat(scriptMock.actualShArgs[3]).isEqualTo('cp workspace/*.yamllint.yaml .config/ || true')
+    }
     
     @Test
     void 'create configmaps from files'() {
@@ -79,27 +95,9 @@ class DeploymentTest {
         assertThat(scriptMock.dockerMock.actualRegistryArgs[0]).isEqualTo('https://http://my-private-registry.com/repo')
         assertThat(scriptMock.dockerMock.actualRegistryArgs[1]).isEqualTo('credentials')
 
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:KUBECONFIG=pwd/.kube/config kubectl create configmap index --from-file=index.html=workspace/k8s/../index.html --dry-run=client -o yaml -n fluxv1-staging]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:kubectl create configmap index --from-file=index.html=workspace/k8s/../index.html --dry-run=client -o yaml -n fluxv1-staging]')
 
-        assertThat(scriptMock.actualWriteFileArgs[0]).isEqualTo('''[file:pwd/.kube/config, text:apiVersion: v1
-clusters:
-- cluster:
-    certificate-authority-data: DATA+OMITTED
-    server: https://localhost
-  name: self-hosted-cluster
-contexts:
-- context:
-    cluster: self-hosted-cluster
-    user: svcs-acct-dply
-  name: svcs-acct-context
-current-context: svcs-acct-context
-kind: Config
-preferences: {}
-users:
-- name: svcs-acct-dply
-  user:
-    token: DATA+OMITTED]''')
-        assertThat(scriptMock.actualWriteFileArgs[1]).contains('[file:staging/app/generatedResources/index.yaml')
+        assertThat(scriptMock.actualWriteFileArgs[0]).contains('[file:staging/app/generatedResources/index.yaml')
     }
 
     class DeploymentUnderTest extends Deployment {

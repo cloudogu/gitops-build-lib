@@ -17,6 +17,7 @@ class PlainTest {
         gitopsTool: 'FLUX',
         deployments: [
             sourcePath: 'k8s',
+            destinationRootPath: '.',
             plain: [
                 updateImages: [
                     [filename     : "deployment.yaml", // relative to deployments.path
@@ -25,6 +26,7 @@ class PlainTest {
                 ]
             ]
         ],
+        folderStructureStrategy: 'GLOBAL_ENV',
         validators: [
             yamllint: [
                 validator: new Yamllint(scriptMock.mock),
@@ -56,6 +58,16 @@ class PlainTest {
         plain.preValidation('staging')
         assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml]')
         assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml, data:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]], to:[be:[changed:oldValue]]], overwrite:true]')
+    }
+
+    @Test
+    void 'successful update with ENV_PER_APP and other destinationRootPath '() {
+        plain.gitopsConfig['folderStructureStrategy'] = 'ENV_PER_APP'
+        plain.gitopsConfig['deployments']['destinationRootPath'] = 'apps'
+
+        plain.preValidation('staging')
+        assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:apps/app/staging/deployment.yaml]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:apps/app/staging/deployment.yaml, data:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]], to:[be:[changed:oldValue]]], overwrite:true]')
     }
 
     @Test

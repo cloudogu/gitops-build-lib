@@ -20,14 +20,18 @@ class Plain extends Deployment{
 
     @Override
     def validate(String stage) {
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
+
         gitopsConfig.validators.each { validator ->
-            validator.value.validator.validate(validator.value.enabled, getGitopsTool(), SourceType.PLAIN, "${stage}/${gitopsConfig.application}", validator.value.config, gitopsConfig)
+            validator.value.validator.validate(validator.value.enabled, getGitopsTool(), SourceType.PLAIN, "${destinationPath}", validator.value.config, gitopsConfig)
         }
     }
 
     private updateImage(String stage) {
+        def destinationPath = getDestinationFolder(getFolderStructureStrategy(), stage)
+
         gitopsConfig.deployments.plain.updateImages.each {
-            def deploymentFilePath = "${stage}/${gitopsConfig.application}/${it['filename']}"
+            def deploymentFilePath = "${destinationPath}/${it['filename']}"
             def data = script.readYaml file: deploymentFilePath
             def containers = data.spec.template.spec.containers
             def containerName = it['containerName']

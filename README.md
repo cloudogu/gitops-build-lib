@@ -23,7 +23,7 @@ Or if you want to chat with us about gitops in general, visit us [here](https://
   - [GitOps tool](#gitops-tool)
     - [Flux v1](#flux-v1)
     - [ArgoCD](#argocd)
-- [Default Folder Structure](#default-folder-structure)
+- [Default Folder Structure in source repository](#default-folder-structure-in-source-repository)
   - [Plain-k8s](#plain-k8s)
   - [Helm](#helm)
 - [GitOps-Config](#gitops-config)
@@ -35,6 +35,7 @@ Or if you want to chat with us about gitops in general, visit us [here](https://
   - [Helm deployment](#helm-deployment)
     - [Conventions for helm deployment](#conventions-for-helm-deployment)
     - [`helm template` with ArgoCD application](#helm-template-with-argocd-application)
+- [Folder Structure in destination gitops repository](#folder-structure-in-destination-gitops-repository)
 - [Extra Files](#extra-files)
 - [SCM-Provider](#scm-provider)
 - [Validators](#validators)
@@ -101,7 +102,21 @@ def gitopsConfig = [
         repositoryUrl:  'gitops'
     ],
     application: 'spring-petclinic',
-    gitopsTool: 'FLUX' /* or 'ARGO' */
+    gitopsTool: 'FLUX' /* or 'ARGO' */,
+    stages: [
+        staging: [
+            namespace: 'staging',
+            deployDirectly: true
+        ],
+        production: [
+            namespace: 'production',
+            deployDirectly: false
+        ]
+    ],
+    deployments: [
+        plain     : []
+        ]
+    ]
 ]
 
 deployViaGitops(gitopsConfig)
@@ -109,7 +124,7 @@ deployViaGitops(gitopsConfig)
 
 ### More options
 
-The following is an example of a small and yet complete **gitops-config** for a helm-deployment of an application. 
+The following is an example shows all options of a **gitops-config** for a helm-deployment of an application. 
 This would lead to a deployment of your staging environment by updating the resources of "staging" folder within your 
 gitops-folder in git. For production it will open a PR with the changes.
 
@@ -129,16 +144,19 @@ def gitopsConfig = [
     mainBranch: 'master' /* Default: 'main' */, 
     deployments: [
         sourcePath: 'k8s' /* Default: 'k8s' */,
+        destinationRootPath: '.' /* Default: '.' */,
         /* See docs for helm or plain k8s deployment options */
         helm : [
             repoType : 'HELM',
             credentialsId : 'creds',
+            mainBranch : 'main', /* Default: 'main' */, 
             repoUrl  : <helmChartRepository>,
             chartName: <helmChartName>,
             version  : <helmChartVersion>,
             updateValues  : [[fieldPath: "image.name", newValue: imageName]]
         ]
     ],
+    folderStructureStrategy: 'GLOBAL_ENV', /* or ENV_PER_APP */
     stages: [
         staging: [ 
             namespace: 'my-staging',
@@ -262,7 +280,7 @@ See [Example of ArgoCD application in GitOps Playground](https://github.com/clou
 
 ---
 
-## Default Folder Structure 
+## Default Folder Structure in source repository
 
 A default project structure in your application repo could look like the examples below. Make sure you have your k8s 
 and/or helm resources bundled in a folder. This specific resources folder (here `k8s`) will later be specified by the 
@@ -317,7 +335,7 @@ First of all there are some mandatory properties e.g. the information about your
 * `gitopsTool: 'ARGO'` - Name of the gitops tool. Currently supporting `'FLUX'` (for now only fluxV1) and `'ARGO'`.  
 * and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:
    * `cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib'`
-   * `cesBuildLibVersion: '1.45.0'`
+   * `cesBuildLibVersion: '1.62.0'`
    * `mainBranch:         'main'`
 
 ---
@@ -328,38 +346,35 @@ All of these have set default images, but you can change them if you wish to.
 
 ```groovy
 def gitopsConfig = [
+    buildImages: [
+        // These are used to run helm and kubectl commands in the core logic
+        helm: 'ghcr.io/cloudogu/helm:3.5.4-1',
+        kubectl: 'lachlanevenson/k8s-kubectl:v1.19.3',
+        // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
+        kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
+        helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
+        yamllint: 'cytopia/yamllint:1.25-0.7'
+    ]
+]
+```
+
+Optional - if image is in a private repository, you can pass a `credentialsId` for pulling images.
+
+```groovy
+def gitopsConfig = [
         buildImages: [
-            // These are used to run helm and kubectl commands in the core logic
-            // 
             helm: [ 
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
-                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
+                image: 'ghcr.io/cloudogu/helm:3.11.1-2',
+                credentialsId: 'myCredentials'
                 ],
-            kubectl: [ 
-                image: 'lachlanevenson/k8s-kubectl:v1.19.3'
-                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
-                ],
-            // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
-            kubeval: [ 
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
-                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
-                ],
-            helmKubeval: [ 
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
-                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
-                ],
-            yamllint: [
-                image: 'cytopia/yamllint:1.25-0.7'
-                credentialsId: 'myCredentials' (optional - only needed if image is in a private repository. CredentialsId is getting pulled from Jenkins credentials)
-                ]
+            // ...
         ]
 ]
 ```
 
 ## Stages
 The GitOps-build-lib supports builds on multiple stages. A stage is defined by a name and contains a namespace (used to
-generate the resources) and a deployment-flag. If no stages is passed into the gitops-config by the user, the default
-is set to:
+generate the resources) and a deployment-flag:
 
 ```groovy
 def gitopsConfig = [
@@ -376,7 +391,6 @@ def gitopsConfig = [
 ]
 ```
 
-The defaults above can be overwritten by providing an entry for 'stages' within your config.
 If it is set to deploy directly it will commit and push to your desired `gitops-folder` and therefore triggers a deployment. If it is set to false
 it will create a PR on your `gitops-folder`. **Remember** there are important conventions regarding namespaces and the folder structure (see [namespaces](#namespaces)).
 
@@ -509,6 +523,7 @@ The deployment has to contain the path of your k8s resources within the applicat
 def gitopsConfig = [
         deployments: [
             sourcePath: 'k8s', // path of k8s resources in application repository. Default: 'k8s'
+            destinationRootPath: '.', // Root-Subfolder in the gitops repository, where the following folders for stages and apps shall be created. Default: '.'
             // Either "plain" or "helm" is mandatory
             plain: [], // use plain if you only have, as the name suggests, plain k8s resources
             helm: [] // or if you want to deploy a helm release use `helm`
@@ -601,6 +616,29 @@ We decided to generate plain k8s Resources from Helm applications before we push
 
 ---
 
+## Folder Structure in destination gitops repository
+
+You can customize in which path the final manifests of the application will be created in the gitops repository. For this, you can modify the following parameters:
+```groovy
+def gitopsConfig = [
+    deployments: [
+        destinationRootPath: '.' /* Default: '.' */
+    ],
+    folderStructureStrategy: 'GLOBAL_ENV' /* Default: 'GLOBAL_ENV', or ENV_PER_APP */
+]
+```
+* `destinationRootPath`: Specifies in which subfolder the following folders of `folderStructureStrategy` are created. Defaults to the root of the repository.
+* `folderStructureStrategy`: Possible values: 
+  * `GLOBAL_ENV`: The manifests will be commited into `$DESTINATION_ROOT_PATH/STAGE_NAME/APP_NAME/` in the destination gitops repository
+  * `ENV_PER_APP`: The manifests will be commited into `$DESTINATION_ROOT_PATH/APP_NAME/STAGE_NAME/` in the destination gitops repository
+
+
+Example for **Global Environments** vs **Environment per App** ([Source](https://github.com/cloudogu/gitops-patterns#implementing-release-promotion)):
+
+  ![Global Envs](https://github.com/cloudogu/gitops-talks/blob/1744c1d/images/global-environments.svg)
+  ![Env per app](https://github.com/cloudogu/gitops-talks/blob/1744c1d/images/environment-per-app.svg)
+
+---
 
 ## Extra Files
 

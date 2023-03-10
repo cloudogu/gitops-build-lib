@@ -1,13 +1,16 @@
 #!groovy
-import com.cloudogu.gitopsbuildlib.*
+
+import com.cloudogu.gitopsbuildlib.GitRepo
 import com.cloudogu.gitopsbuildlib.deployment.Deployment
+import com.cloudogu.gitopsbuildlib.deployment.FolderStructureStrategy
+import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
 import com.cloudogu.gitopsbuildlib.deployment.helm.Helm
 import com.cloudogu.gitopsbuildlib.deployment.plain.Plain
 import com.cloudogu.gitopsbuildlib.scm.SCMManager
 import com.cloudogu.gitopsbuildlib.scm.SCMProvider
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
-import com.cloudogu.gitopsbuildlib.validation.Yamllint
+import com.cloudogu.gitopsbuildlib.validation.Yamllint 
 
 List getMandatoryFields() {
     return [
@@ -15,21 +18,21 @@ List getMandatoryFields() {
     ]
 }
 
-Map getDefaultConfig() {
+Map createDefaultConfig() {
 
     return [
         cesBuildLibRepo         : 'https://github.com/cloudogu/ces-build-lib',
-        cesBuildLibVersion      : '1.46.1',
+        cesBuildLibVersion      : '1.62.0',
         cesBuildLibCredentialsId: '',
         mainBranch              : 'main',
         buildImages          : [
             helm: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                image: 'ghcr.io/cloudogu/helm:3.11.1-2'
             ],
             kubectl: [
                 credentialsId: '',
-                image: 'lachlanevenson/k8s-kubectl:v1.19.3'
+                image: 'lachlanevenson/k8s-kubectl:v1.24.8'
             ],
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
             kubeval: [
@@ -42,16 +45,17 @@ Map getDefaultConfig() {
             ],
             yamllint: [
                 credentialsId: '',
-                image: 'cytopia/yamllint:1.25-0.7'
+                image: 'cytopia/yamllint:1.25-0.9'
             ]
         ],
         deployments             : [
             sourcePath: 'k8s',
+            destinationRootPath: '.'
         ],
         validators              : [
             kubeval    : [
                 validator: new Kubeval(this),
-                enabled  : true,
+                enabled  : false,
                 config   : [
                     // imageRef's are referencing the key in gitopsConfig.buildImages
                     imageRef        : 'kubeval',
@@ -60,7 +64,7 @@ Map getDefaultConfig() {
             ],
             helmKubeval: [
                 validator: new HelmKubeval(this),
-                enabled  : true,
+                enabled  : false,
                 config   : [
                     imageRef        : 'helmKubeval',
                     k8sSchemaVersion: '1.18.1'
@@ -80,13 +84,14 @@ Map getDefaultConfig() {
         stages                  : [
             staging   : [deployDirectly: true],
             production: [deployDirectly: false],
-        ]
+        ],
+        folderStructureStrategy: 'GLOBAL_ENV'
     ]
 }
 
 void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
-    gitopsConfig = mergeMaps(defaultConfig, gitopsConfig)
+    gitopsConfig = mergeMaps(createDefaultConfig(), gitopsConfig)
     if (validateConfig(gitopsConfig)) {
         cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
         deploy(gitopsConfig)
@@ -164,6 +169,14 @@ def validateDeploymentConfig(Map gitopsConfig) {
     } else if (!gitopsConfig.deployments.containsKey('plain') && !gitopsConfig.deployments.containsKey('helm')) {
         error 'One of \'deployments.plain\' or \'deployments.helm\' must be set!'
         return false
+    }
+    
+    if (!GitopsTool.get(gitopsConfig.gitopsTool)) {
+        error "The specified 'gitopsTool' is invalid. Please choose one of the following: ${GitopsTool.values()}"
+    }
+    
+    if (gitopsConfig.containsKey('folderStructureStrategy') && !FolderStructureStrategy.get(gitopsConfig.folderStructureStrategy)) {
+        error "The specified 'folderStructureStrategy' is invalid. Please choose one of the following: ${FolderStructureStrategy.values()}"
     }
 
     if (gitopsConfig.deployments.containsKey('plain')) {

@@ -1,5 +1,5 @@
 #!groovy
-@Library('github.com/cloudogu/ces-build-lib@1.45.0')
+@Library('github.com/cloudogu/ces-build-lib@1.62.0')
 import com.cloudogu.ces.cesbuildlib.*
 
 node('docker') {

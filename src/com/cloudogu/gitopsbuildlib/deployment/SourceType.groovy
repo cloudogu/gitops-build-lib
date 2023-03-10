@@ -1,19 +1,9 @@
 package com.cloudogu.gitopsbuildlib.deployment
 
 enum SourceType {
-    HELM('helm'), PLAIN('plain')
+    HELM, PLAIN
 
-    private final String name
-
-    SourceType(String name) {
-        this.name = name
-    }
-
-    String getNameValue() {
-        return name
-    }
-
-    String toString() {
-        return name() + " = " + getNameValue()
-    }
+    // Creating enums without constructor results in Exception on Jenkins:
+    // "RejectedAccessException: Scripts not permitted to use new java.util.LinkedHashMap" 🙄
+    SourceType() {}
 }
