@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.2.0) - 2023-03-10
+
 ### Added
 - Support different base path in destination gitops repository with `destinationRootPath` #26
 - Support different folder strategies with `folderStructureStrategy` #26
