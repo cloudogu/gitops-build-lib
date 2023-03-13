@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+## [0.3.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.3.0) - 2023-XX-YY
+
+### Added
+- Specify version for `helm template` through the `k8sVersion` parameter
+
 ## [0.2.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.2.0) - 2023-03-10
 
 ### Added
