@@ -32,6 +32,7 @@ to:
     List<String> actualWriteYamlArgs = new LinkedList<>()
     List<String> actualReadFileArgs = new LinkedList<>()
     List<String> actualWriteFileArgs = new LinkedList<>()
+    List<String> actualFileExistsArgs = new LinkedList<>()
 
     def mock =
         [
@@ -52,6 +53,7 @@ to:
             writeYaml: { args -> actualWriteYamlArgs += args.toString() },
             readFile : { args -> actualReadFileArgs += args.toString(); return configYaml},
             writeFile: { args -> actualWriteFileArgs += args.toString() },
+            fileExists: { args -> actualFileExistsArgs += args.toString(); return true },
             env   : [
                 WORKSPACE: 'workspace'
             ],
