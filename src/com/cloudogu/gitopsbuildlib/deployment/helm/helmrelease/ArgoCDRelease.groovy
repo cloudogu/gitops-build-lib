@@ -33,17 +33,17 @@ class ArgoCDRelease extends HelmRelease {
             chartPath = helmConfig.chartPath
         }
 
-        return createHelmRelease(chartPath as String, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
+        return createHelmRelease(gitopsConfig, chartPath as String, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
     }
 
     private String createResourcesFromHelmRepo(Map gitopsConfig, String application, String namespace, String mergedValuesFile) {
-        return createHelmRelease(gitopsConfig.deployments.helm.chartName, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
+        return createHelmRelease(gitopsConfig, gitopsConfig.deployments.helm.chartName, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
     }
 
-    private String createHelmRelease(def chartPath, String application, String namespace, def helmImageConfig, String mergedValuesFile) {
+    private String createHelmRelease(Map gitopsConfig, def chartPath, String application, String namespace, def helmImageConfig, String mergedValuesFile) {
         String helmRelease = ""
         dockerWrapper.withDockerImage(helmImageConfig) {
-            String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -n ${namespace} -f ${mergedValuesFile}"
+            String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -n ${namespace} --kube-version ${gitopsConfig.k8sVersion} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }
 

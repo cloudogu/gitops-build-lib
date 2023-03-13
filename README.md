@@ -130,6 +130,7 @@ gitops-folder in git. For production it will open a PR with the changes.
 
 ```groovy
 def gitopsConfig = [
+    k8sVersion: '1.24.8', /* Default: '1.24.8' if env-Variable GITOPS_BUILD_LIB_K8S_VERSION not specified */
     scm: [
         provider:       'SCMManager',
         credentialsId:  'scmm-user',
@@ -613,6 +614,9 @@ We decided to generate plain k8s Resources from Helm applications before we push
 
 - With ArgoCD you can only set one source for your application. In case of helm it is common to have a source Repository for your chart and a scource Repository for your configuration files (values.yaml). In order to use two different sources for your helm application you will need some sort of workaround (e.g. Helm dependencies in `Chart.yaml`).  
 - ArgoCD itself uses `helm template` to apply plain k8s Resources to the cluster. By templating the helm application before pushing to the gitops repository, we have the same resources in our repository as in our cluster. Which leads to increased transparency.
+
+The parameter `k8sVersion` from the gitops config is used as a parameter with `--kube-version` in order to template version-specific manifests such as changed api versions.
+`k8sVersion` can also be specified through an env-variable called `GITOPS_BUILD_LIB_K8S_VERSION`.
 
 ---
 

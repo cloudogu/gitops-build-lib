@@ -20,7 +20,15 @@ List getMandatoryFields() {
 
 Map createDefaultConfig() {
 
+    def k8sVersion = ""
+    if (env.GITOPS_BUILD_LIB_K8S_VERSION){
+        k8sVersion = env.GITOPS_BUILD_LIB_K8S_VERSION
+    } else{
+        k8sVersion = "1.24.8"
+    }
+
     return [
+        k8sVersion             : "${k8sVersion}",
         cesBuildLibRepo         : 'https://github.com/cloudogu/ces-build-lib',
         cesBuildLibVersion      : '1.62.0',
         cesBuildLibCredentialsId: '',

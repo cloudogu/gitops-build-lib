@@ -13,6 +13,7 @@ class ArgoCDReleaseTest {
     @Test
     void 'correct helm release with git repo and chartPath'() {
         argoCdReleaseTest.create([
+            k8sVersion: '1.24.8',
             application: 'app',
             deployments: [
                 helm: [
@@ -33,12 +34,13 @@ class ArgoCDReleaseTest {
             'this/is/a/valuesfile')
 
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/path -n namespace -f this/is/a/valuesfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/path -n namespace --kube-version 1.24.8 -f this/is/a/valuesfile]')
     }
 
     @Test
     void 'correct helm release with git repo without chartPath'() {
         argoCdReleaseTest.create([
+            k8sVersion: '1.24.8',
             application: 'app',
             deployments: [
                 helm: [
@@ -58,12 +60,13 @@ class ArgoCDReleaseTest {
             'this/is/a/valuesfile')
 
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/ -n namespace -f this/is/a/valuesfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/ -n namespace --kube-version 1.24.8 -f this/is/a/valuesfile]')
     }
 
     @Test
     void 'correct helm release with helm repo'() {
         argoCdReleaseTest.create([
+            k8sVersion: '1.24.8',
             application: 'app',
             deployments: [
                 helm: [
@@ -83,6 +86,6 @@ class ArgoCDReleaseTest {
             'this/is/a/valuesfile')
 
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/chartName -n namespace -f this/is/a/valuesfile]')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/chartName -n namespace --kube-version 1.24.8 -f this/is/a/valuesfile]')
     }
 }
