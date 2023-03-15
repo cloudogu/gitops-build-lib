@@ -37,7 +37,7 @@ Map createDefaultConfig(String k8sVersion) {
             ],
             kubectl: [
                 credentialsId: '',
-                image: "rancher/kubectl:v${k8sVersion}"
+                image: "bitnami/kubectl:${k8sVersion}"
             ],
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
             kubeval: [

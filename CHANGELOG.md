@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Specify version for `helm template` and kubectl image through the `k8sVersion` parameter
 
 ### Changed
-- Changed kubectl image from `lachlanevenson/k8s-kubectl` to `rancher/kubectl`, because it is available for every k8s version out there
+- Changed kubectl image from `lachlanevenson/k8s-kubectl` to `bitnami/kubectl`, because it is available for every k8s version out there
 
 ### Fixed
 - Don't fail when no `values-shared.yaml` is provided

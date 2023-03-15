@@ -352,8 +352,8 @@ def gitopsConfig = [
     buildImages: [
         // These are used to run helm and kubectl commands in the core logic
         helm: 'ghcr.io/cloudogu/helm:3.11.1-2',
-        // if you specify k8sVersion parameter, then by default rancher/kubectl:v${k8sVersion} will be used
-        kubectl: 'rancher/kubectl:v1.24.8',
+        // if you specify k8sVersion parameter, then by default bitnami/kubectl:${k8sVersion} will be used
+        kubectl: 'bitnami/kubectl:1.24.8',
         // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
         kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
         helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
