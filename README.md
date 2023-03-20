@@ -130,6 +130,7 @@ gitops-folder in git. For production it will open a PR with the changes.
 
 ```groovy
 def gitopsConfig = [
+    k8sVersion: '1.24.8', /* Default: '1.24.8' */
     scm: [
         provider:       'SCMManager',
         credentialsId:  'scmm-user',
@@ -337,6 +338,13 @@ First of all there are some mandatory properties e.g. the information about your
    * `cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib'`
    * `cesBuildLibVersion: '1.62.0'`
    * `mainBranch:         'main'`
+* Optional: `k8sVersion: '1.24.8'` Is used for target k8s version in helm template in Argo CD deployments with helm. Is also used to determine the kubectl version, when no specific buildImage is specified.  
+  It is recommended to use a Jenkins environment variable to specify the version, so that you don't have to bump every pipeline after a k8s version upgrade in your cluster, e.g.
+```
+def gitopsConfig = [  
+    k8sVersion: env.K8S_VERSION_TEAM_A  
+]
+```
 
 ---
 
@@ -348,12 +356,13 @@ All of these have set default images, but you can change them if you wish to.
 def gitopsConfig = [
     buildImages: [
         // These are used to run helm and kubectl commands in the core logic
-        helm: 'ghcr.io/cloudogu/helm:3.5.4-1',
-        kubectl: 'lachlanevenson/k8s-kubectl:v1.19.3',
+        helm: 'ghcr.io/cloudogu/helm:3.11.1-2',
+        // if you specify k8sVersion parameter, then by default bitnami/kubectl:${k8sVersion} will be used
+        kubectl: 'bitnami/kubectl:1.24.8',
         // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
-        kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
-        helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
-        yamllint: 'cytopia/yamllint:1.25-0.7'
+        kubeval: 'ghcr.io/cloudogu/helm:3.11.1-2',
+        helmKubeval: 'ghcr.io/cloudogu/helm:3.11.1-2',
+        yamllint: 'cytopia/yamllint:1.25-0.9'
     ]
 ]
 ```
@@ -613,6 +622,7 @@ We decided to generate plain k8s Resources from Helm applications before we push
 
 - With ArgoCD you can only set one source for your application. In case of helm it is common to have a source Repository for your chart and a scource Repository for your configuration files (values.yaml). In order to use two different sources for your helm application you will need some sort of workaround (e.g. Helm dependencies in `Chart.yaml`).  
 - ArgoCD itself uses `helm template` to apply plain k8s Resources to the cluster. By templating the helm application before pushing to the gitops repository, we have the same resources in our repository as in our cluster. Which leads to increased transparency.
+The parameter `k8sVersion` from the gitops config is used as a parameter with `--kube-version` in order to template version-specific manifests such as changed api versions.
 
 ---
 

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Specify `--kube-version ` for `helm template` and kubectl image through the `k8sVersion` parameter.  
+  ⚠️ `k8sVersion` has a default value, so this is no breaking change per se. However, depending on the helm chart used, 
+  the rendered result might look different from before where no `--kube-version` parameter was used.  
+  We recommend setting the `k8sVersion`. Double-check the commits in your GitOps repo. 
+
+### Changed
+- Changed kubectl image from `lachlanevenson/k8s-kubectl` to `bitnami/kubectl`, because it is available for every k8s version out there
+
+### Fixed
+- Don't fail when no `values-shared.yaml` is provided
+
 ## [0.2.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.2.0) - 2023-03-10
 
 ### Added

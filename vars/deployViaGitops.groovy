@@ -18,9 +18,14 @@ List getMandatoryFields() {
     ]
 }
 
-Map createDefaultConfig() {
+Map createDefaultConfig(String k8sVersion) {
+
+    if (k8sVersion == null || k8sVersion == ""){
+        k8sVersion = "1.24.8"
+    }
 
     return [
+        k8sVersion             : "${k8sVersion}",
         cesBuildLibRepo         : 'https://github.com/cloudogu/ces-build-lib',
         cesBuildLibVersion      : '1.62.0',
         cesBuildLibCredentialsId: '',
@@ -32,7 +37,7 @@ Map createDefaultConfig() {
             ],
             kubectl: [
                 credentialsId: '',
-                image: 'lachlanevenson/k8s-kubectl:v1.24.8'
+                image: "bitnami/kubectl:${k8sVersion}"
             ],
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
             kubeval: [
@@ -91,7 +96,7 @@ Map createDefaultConfig() {
 
 void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
-    gitopsConfig = mergeMaps(createDefaultConfig(), gitopsConfig)
+    gitopsConfig = mergeMaps(createDefaultConfig(gitopsConfig.k8sVersion as String), gitopsConfig)
     if (validateConfig(gitopsConfig)) {
         cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
         deploy(gitopsConfig)

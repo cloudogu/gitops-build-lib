@@ -42,7 +42,13 @@ class Helm extends Deployment {
         // writing the merged-values.yaml via writeYaml into a file has the advantage, that it gets formatted as valid yaml
         // This makes it easier to read in and indent for the inline use in the helmRelease.
         // It enables us to reuse the `fileToInlineYaml` function, without writing a complex formatting logic.
-        script.writeFile file: "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", text: mergeValuesFiles(gitopsConfig, ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml", "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml"] as String[])
+
+        def valueFiles = ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml"]
+        // only add values-shared.yaml, if it exists
+        if (script.fileExists("${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml")) {
+            valueFiles.add("${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml")
+        }
+        script.writeFile file: "${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", text: mergeValuesFiles(gitopsConfig, valueFiles as String[])
 
         updateYamlValue("${script.env.WORKSPACE}/${helmChartTempDir}/mergedValues.yaml", gitopsConfig)
 
