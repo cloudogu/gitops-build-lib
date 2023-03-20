@@ -338,8 +338,13 @@ First of all there are some mandatory properties e.g. the information about your
    * `cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib'`
    * `cesBuildLibVersion: '1.62.0'`
    * `mainBranch:         'main'`
-* Optional: `k8sVersion: '1.24.8'` Is used for target k8s version in helm template in Argo CD deployments with helm. Is also used to determine the kubectl version, when no specific buildImage is specified.
-It is recommended to use an Jenkins environment variable to specify the version, so that you don't have to bump every pipeline after a k8s version upgrade in your cluster.
+* Optional: `k8sVersion: '1.24.8'` Is used for target k8s version in helm template in Argo CD deployments with helm. Is also used to determine the kubectl version, when no specific buildImage is specified.  
+  It is recommended to use a Jenkins environment variable to specify the version, so that you don't have to bump every pipeline after a k8s version upgrade in your cluster, e.g.
+```
+def gitopsConfig = [  
+    k8sVersion: env.K8S_VERSION_TEAM_A  
+]
+```
 
 ---
 
@@ -355,8 +360,8 @@ def gitopsConfig = [
         // if you specify k8sVersion parameter, then by default bitnami/kubectl:${k8sVersion} will be used
         kubectl: 'bitnami/kubectl:1.24.8',
         // These are used for each specific validator via an imageRef property inside the validators config. See [Validators] for examples.
-        kubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
-        helmKubeval: 'ghcr.io/cloudogu/helm:3.5.4-1',
+        kubeval: 'ghcr.io/cloudogu/helm:3.11.1-2',
+        helmKubeval: 'ghcr.io/cloudogu/helm:3.11.1-2',
         yamllint: 'cytopia/yamllint:1.25-0.9'
     ]
 ]
