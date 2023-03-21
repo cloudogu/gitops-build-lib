@@ -13,8 +13,21 @@ abstract class RepoType {
     }
 
     abstract void prepareRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir)
-
+    abstract String getChartPath(Map gitopsConfig, String helmChartTempDir, String chartRootDir)
+    
     void withDockerImage(def imageConfig, Closure body) {
         dockerWrapper.withDockerImage(imageConfig, body)
+    }
+    
+    static RepoType create(String potentialRepoType, def script) {
+        RepoType repoType = null
+        if (potentialRepoType == 'GIT') {
+            repoType = new GitRepo(script)
+        } else if (potentialRepoType == 'HELM') {
+            repoType = new HelmRepo(script)
+        } else if (potentialRepoType == 'LOCAL') {
+            repoType =  new LocalRepo(script)
+        }
+        return repoType
     }
 }

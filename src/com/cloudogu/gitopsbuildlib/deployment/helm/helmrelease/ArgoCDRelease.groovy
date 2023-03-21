@@ -1,5 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease
 
+import com.cloudogu.gitopsbuildlib.deployment.helm.Helm
+import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.RepoType
 import com.cloudogu.gitopsbuildlib.docker.DockerWrapper
 
 class ArgoCDRelease extends HelmRelease {
@@ -16,34 +18,33 @@ class ArgoCDRelease extends HelmRelease {
         Map helmConfig = gitopsConfig.deployments.helm
         String application = gitopsConfig.application
 
-        String helmRelease = ""
         if (helmConfig.repoType == 'GIT') {
-            helmRelease = createResourcesFromGitRepo(gitopsConfig, application, namespace, mergedValuesFile)
+            return createResourcesFromGitRepo(gitopsConfig, application, namespace, mergedValuesFile)
         } else if (helmConfig.repoType == 'HELM') {
-            helmRelease = createResourcesFromHelmRepo(gitopsConfig, application, namespace, mergedValuesFile)
+            return createResourcesFromHelmRepo(gitopsConfig, application, namespace, mergedValuesFile)
+        } else if (helmConfig.repoType == 'LOCAL') {
+            return createResourcesFromLocalRepo(gitopsConfig, application, namespace, mergedValuesFile)
         }
-        return helmRelease
+        return null // Validated in deployViaGitOps.groovy
     }
 
     private String createResourcesFromGitRepo(Map gitopsConfig, String application, String namespace, String mergedValuesFile) {
-        Map helmConfig = gitopsConfig.deployments.helm
-
-        def chartPath = ''
-        if (helmConfig.containsKey('chartPath')) {
-            chartPath = helmConfig.chartPath
-        }
-
-        return createHelmRelease(gitopsConfig, chartPath as String, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
+        return createHelmRelease(gitopsConfig, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
     }
 
     private String createResourcesFromHelmRepo(Map gitopsConfig, String application, String namespace, String mergedValuesFile) {
-        return createHelmRelease(gitopsConfig, gitopsConfig.deployments.helm.chartName, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
+        return createHelmRelease(gitopsConfig, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
+    }
+    
+    private String createResourcesFromLocalRepo(Map gitopsConfig, String application, String namespace, String mergedValuesFile) {
+        return createHelmRelease(gitopsConfig, application, namespace, gitopsConfig.buildImages.helm, mergedValuesFile)
     }
 
-    private String createHelmRelease(Map gitopsConfig, def chartPath, String application, String namespace, def helmImageConfig, String mergedValuesFile) {
+    private String createHelmRelease(Map gitopsConfig, String application, String namespace, def helmImageConfig, String mergedValuesFile) {
         String helmRelease = ""
+        def chartPath = RepoType.create(gitopsConfig.deployments.helm.repoType, script).getChartPath(gitopsConfig, Helm.HELM_CHART_TEMP_DIR, Helm.CHART_ROOT_DIR)
         dockerWrapper.withDockerImage(helmImageConfig) {
-            String templateScript = "helm template ${application} ${script.env.WORKSPACE}/.helmChartTempDir/chart/${chartPath} -n ${namespace} --kube-version ${gitopsConfig.k8sVersion} -f ${mergedValuesFile}"
+            String templateScript = "helm template ${application} ${chartPath} -n ${namespace} --kube-version ${gitopsConfig.k8sVersion} -f ${mergedValuesFile}"
             helmRelease = script.sh returnStdout: true, script: templateScript
         }
 

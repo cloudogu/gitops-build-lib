@@ -5,6 +5,7 @@ import com.cloudogu.gitopsbuildlib.deployment.Deployment
 import com.cloudogu.gitopsbuildlib.deployment.FolderStructureStrategy
 import com.cloudogu.gitopsbuildlib.deployment.GitopsTool
 import com.cloudogu.gitopsbuildlib.deployment.helm.Helm
+import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.RepoType
 import com.cloudogu.gitopsbuildlib.deployment.plain.Plain
 import com.cloudogu.gitopsbuildlib.scm.SCMManager
 import com.cloudogu.gitopsbuildlib.scm.SCMProvider
@@ -187,6 +188,9 @@ def validateDeploymentConfig(Map gitopsConfig) {
     if (gitopsConfig.deployments.containsKey('plain')) {
         deployment = new Plain(this, gitopsConfig)
     } else if (gitopsConfig.deployments.containsKey('helm')) {
+        if (!RepoType.create(gitopsConfig.deployments.helm.repoType, this)) {
+            error("Unknown helm repo type: ${gitopsConfig.deployments.helm.repoType}")
+        }
         deployment = new Helm(this, gitopsConfig)
     }
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.4.0) - 2023-03-21
+
+### Added
+
+- Helm Repo Type `LOCAL`
+
 ## [0.3.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.3.0) - 2023-03-21
 
 ### Added

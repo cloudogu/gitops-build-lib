@@ -7,6 +7,17 @@ class GitRepo extends RepoType {
     }
 
     @Override
+    String getChartPath(Map gitopsConfig, String helmChartTempDir, String chartRootDir) {
+        def helmConfig = gitopsConfig.deployments.helm
+        def chartPath = ''
+        if (helmConfig.containsKey('chartPath') && helmConfig.chartPath) {
+            chartPath = helmConfig.chartPath
+        }
+            
+        return "${script.env.WORKSPACE}/${helmChartTempDir}/${chartRootDir}/${chartPath}"
+    }
+    
+    @Override
     void prepareRepo(Map gitopsConfig, String helmChartTempDir, String chartRootDir) {
         def helmConfig = gitopsConfig.deployments.helm
 

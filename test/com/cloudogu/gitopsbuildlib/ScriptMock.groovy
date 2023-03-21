@@ -12,6 +12,7 @@ class ScriptMock {
 
     List<String> actualShArgs = new LinkedList<>()
     List<String> actualEchoArgs = new LinkedList<>()
+    List<String> actualErrorArgs = new LinkedList<>()
     List<String> actualReadYamlArgs = new LinkedList<>()
     List<String> actualGitArgs = new LinkedList<>()
     List<String> actualDir = new LinkedList<>()
@@ -49,6 +50,7 @@ to:
             pwd   : { 'pwd' },
             sh    : { args -> actualShArgs += args.toString() },
             echo  : { args -> actualEchoArgs += args.toString() },
+            error  : { args -> actualErrorArgs += args.toString() },
             readYaml: { args -> actualReadYamlArgs += args.toString(); return new YamlSlurper().parseText(configYaml) },
             writeYaml: { args -> actualWriteYamlArgs += args.toString() },
             readFile : { args -> actualReadFileArgs += args.toString(); return configYaml},
