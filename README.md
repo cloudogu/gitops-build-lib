@@ -33,6 +33,9 @@ Or if you want to chat with us about gitops in general, visit us [here](https://
 - [Deployment](#deployment)
   - [Plain k8s deployment](#plain-k8s-deployment)
   - [Helm deployment](#helm-deployment)
+    - [Helm Chart from Helm Repository](#helm-chart-from-helm-repository)
+    - [Helm Chart from Git Repository](#helm-chart-from-git-repository)
+    - [Local Helm Chart ](#local-helm-chart)
     - [Conventions for helm deployment](#conventions-for-helm-deployment)
     - [`helm template` with ArgoCD application](#helm-template-with-argocd-application)
 - [Folder Structure in destination gitops repository](#folder-structure-in-destination-gitops-repository)
@@ -615,8 +618,8 @@ git client checkout the default branch given within the HEADs meta information. 
 it checks out the given version as expected. 
 
 #### Local Helm Chart 
-The `repoType: LOCAL` can be used if you store the helm repository locally, i.e. in your Git Repository. A common 
-pattern used in this context would be the "Umbrella pattern".
+The `repoType: LOCAL` can be used if you store the helm repository locally, i.e. in the same Git Repository where your Jenkins Job runs from.
+A common pattern used in this context would be the "Umbrella pattern".
 
 ```groovy
 def gitopsConfig = [
