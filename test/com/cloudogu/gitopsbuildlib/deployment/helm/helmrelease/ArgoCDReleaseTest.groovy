@@ -97,7 +97,7 @@ class ArgoCDReleaseTest {
             deployments: [
                 helm: [
                     repoType : 'LOCAL',
-                    chartPath: '/my/path',
+                    chartPath: 'my/path',
                     version  : '1.0'
                     ]
                 ],
@@ -112,8 +112,6 @@ class ArgoCDReleaseTest {
 
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, ' +
-            'script:helm template app /my/path -n namespace --kube-version 1.24.8 -f this/is/a/valuesfile]')
+            'script:helm template app workspace/my/path -n namespace --kube-version 1.24.8 -f this/is/a/valuesfile]')
     }
-    
-    
 }

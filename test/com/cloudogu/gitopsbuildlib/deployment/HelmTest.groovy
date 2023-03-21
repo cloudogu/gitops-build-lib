@@ -31,11 +31,20 @@ class HelmTest {
             version: '1.0'
         ]
     ]
+    
+    def localRepo = [
+        sourcePath: 'k8s',
+        destinationRootPath: '.',
+        helm      : [
+            repoType: 'LOCAL',
+            chartPath: 'chart/path'
+        ]
+    ]
 
-    private Map getGitopsConfig(Map deployment) {
+    private Map getGitopsConfig(Map deployment, String tool = 'FLUX') {
         return [
             application: 'app',
-            gitopsTool: 'FLUX',
+            gitopsTool: tool,
             stages: [
                 staging: [
                     namespace: 'fluxv1-staging'
@@ -88,6 +97,7 @@ class HelmTest {
     def dockerMock = scriptMock.dockerMock
     def helmGit = new Helm(scriptMock.mock, getGitopsConfig(gitRepo))
     def helmHelm = new Helm(scriptMock.mock, getGitopsConfig(helmRepo))
+    def helmLocal = new Helm(scriptMock.mock, getGitopsConfig(localRepo, 'ARGO'))
 
     @Test
     void 'creating helm release with git repo'() {
@@ -289,6 +299,13 @@ spec:
 
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('yamllint -f standard staging/app')
         assertThat(scriptMock.actualShArgs[1]).isEqualTo('kubeval -d staging/app -v null --strict --ignore-missing-schemas')
+    }
 
+    @Test
+    void 'creating helm release with local repo'() {
+        helmLocal.preValidation('staging')
+
+        assertThat(dockerMock.actualImages[0]).contains('helmImage')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm values workspace/chart/path -f workspace/k8s/values-staging.yaml -f workspace/k8s/values-shared.yaml ]')
     }
 }

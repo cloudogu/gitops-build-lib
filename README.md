@@ -615,7 +615,7 @@ git client checkout the default branch given within the HEADs meta information. 
 it checks out the given version as expected. 
 
 #### Local Helm Chart 
-The `repoType: LOCAL` can be used if you store the helm repository locally, e.g. in your Git Repository. A common 
+The `repoType: LOCAL` can be used if you store the helm repository locally, i.e. in your Git Repository. A common 
 pattern used in this context would be the "Umbrella pattern".
 
 ```groovy
@@ -623,7 +623,7 @@ def gitopsConfig = [
         deployments: [
             helm : [
                 repoType : 'LOCAL',
-                chartPath: 'helm/chart',
+                chartPath: 'helm/chart' /* Must be relative to jenkins WORKSPACE */,
                 updateValues: [[fieldPath: "image.name", newValue: imageName]]
             ]
         ]
