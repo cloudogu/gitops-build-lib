@@ -88,4 +88,32 @@ class ArgoCDReleaseTest {
         assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
         assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:helm template app workspace/.helmChartTempDir/chart/chartName -n namespace --kube-version 1.24.8 -f this/is/a/valuesfile]')
     }
+    
+    @Test
+    void 'correct helm release with local repo'() {
+        argoCdReleaseTest.create([
+            k8sVersion: '1.24.8',
+            application: 'app',
+            deployments: [
+                helm: [
+                    repoType : 'LOCAL',
+                    chartPath: '/my/path',
+                    version  : '1.0'
+                    ]
+                ],
+                buildImages: [
+                    helm: [
+                        image: 'helmImg'
+                    ]
+                ]
+            ],
+            'namespace',
+            'this/is/a/valuesfile')
+
+        assertThat(scriptMock.dockerMock.actualImages[0]).isEqualTo('helmImg')
+        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, ' +
+            'script:helm template app /my/path -n namespace --kube-version 1.24.8 -f this/is/a/valuesfile]')
+    }
+    
+    
 }

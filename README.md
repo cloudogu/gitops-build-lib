@@ -563,8 +563,16 @@ In plain pipelines, the library creates the deployment resources by updating the
 ---
 
 ### Helm deployment
-Besides plain k8s resources you can also use helm charts to generate the resources. You can choose between two types of
-helm-repository-types. First of all there is the `repoType: HELM`, which is used to load tgz from helm-repositories.
+Besides plain k8s resources you can also use helm charts to generate the resources. You can choose between these types 
+of helm-repository-types:
+
+* Helm Repository
+* Git Repository
+* Local
+
+
+#### Helm Chart from Helm Repository
+The `repoType: HELM`, which is used to load tgz from helm-repositories.
 
 ```groovy
 def gitopsConfig = [
@@ -581,7 +589,8 @@ def gitopsConfig = [
 ]
 ```
 
-Then there is `repoType: GIT` - which can be used to load charts from a specific Git-Repository.
+#### Helm Chart from Git Repository
+The `repoType: GIT` can be used to load charts from a specific Git-Repository.
 
 ```groovy
 def gitopsConfig = [
@@ -604,6 +613,23 @@ Due to limitations in the git-step of Jenkins, we have to clone from a specific 
 git client checkout the default branch given within the HEADs meta information. This specific branch is the
 `main` branch. Make sure the git-repository has a main-branch, else the deployment step will fail. After a successful clone 
 it checks out the given version as expected. 
+
+#### Local Helm Chart 
+The `repoType: LOCAL` can be used if you store the helm repository locally, e.g. in your Git Repository. A common 
+pattern used in this context would be the "Umbrella pattern".
+
+```groovy
+def gitopsConfig = [
+        deployments: [
+            helm : [
+                repoType : 'LOCAL',
+                chartPath: 'helm/chart',
+                updateValues: [[fieldPath: "image.name", newValue: imageName]]
+            ]
+        ]
+]
+```
+
 
 #### Conventions for helm deployment
 - Application name is used as the release-name in Flux (not for argo, argo creates plain resources using `helm template`)

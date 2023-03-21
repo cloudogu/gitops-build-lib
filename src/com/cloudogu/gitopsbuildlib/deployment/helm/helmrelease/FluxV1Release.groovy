@@ -52,6 +52,9 @@ ${values}
             return gitRepoChart(helmConfig)
         } else if (helmConfig.repoType == 'HELM') {
             return helmRepoChart(helmConfig)
+        } else if (helmConfig.repoType == 'LOCAL') {
+            return script.error("Helm repoType LOCAL not supported for fluxv1")
         }
+        return null // Validated in base class Helm
     }
 }

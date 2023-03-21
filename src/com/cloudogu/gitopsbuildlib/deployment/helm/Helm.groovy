@@ -7,7 +7,8 @@ import com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease.FluxV1Release
 import com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease.HelmRelease
 import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.GitRepo
 import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.HelmRepo
-import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.RepoType
+import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.LocalRepo
+import com.cloudogu.gitopsbuildlib.deployment.helm.repotype.RepoType 
 
 class Helm extends Deployment {
 
@@ -20,17 +21,24 @@ class Helm extends Deployment {
     Helm(def script, def gitopsConfig) {
         super(script, gitopsConfig)
         this.extraResourcesFolder = "extraResources"
+        
         if (gitopsConfig.deployments.helm.repoType == 'GIT') {
             chartRepo = new GitRepo(script)
         } else if (gitopsConfig.deployments.helm.repoType == 'HELM') {
             chartRepo = new HelmRepo(script)
+        } else if (gitopsConfig.deployments.helm.repoType == 'LOCAL') {
+            chartRepo = new LocalRepo(script)
+        } else {
+            script.error("Unknown helm repo type: ${gitopsConfig.deployments.helm.repoType}")
         }
+
         if(gitopsConfig.gitopsTool == 'FLUX') {
             helmRelease = new FluxV1Release(script)
         } else if(gitopsConfig.gitopsTool == 'ARGO') {
             helmRelease = new ArgoCDRelease(script)
         }
     }
+
 
     @Override
     def preValidation(String stage) {
