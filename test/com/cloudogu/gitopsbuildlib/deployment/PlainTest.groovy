@@ -5,9 +5,10 @@ import com.cloudogu.gitopsbuildlib.deployment.plain.Plain
 import com.cloudogu.gitopsbuildlib.validation.HelmKubeval
 import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
-import org.junit.jupiter.api.*
-import static org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
+import static org.assertj.core.api.Assertions.assertThat 
 
 class PlainTest {
 
@@ -52,14 +53,69 @@ class PlainTest {
         ],
     ])
 
+    String deploymentYaml = '''
+kind: Deployment
+spec:
+  template:
+    spec:
+      containers:
+        - name: 'application'
+          image: 'oldImageName'
+'''
+
+    String cronJobYaml = '''
+kind: CronJob
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: 'application'
+              image: 'oldImageName'
+            - name: 'other'
+              image: 'otherImageName'
+'''
+
+    @BeforeEach
+    void init () {
+        scriptMock.configYaml = deploymentYaml
+    }
+    
     @Test
     void 'successful update'() {
 
         plain.preValidation('staging')
         assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml]')
-        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml, data:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]], to:[be:[changed:oldValue]]], overwrite:true]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml, data:[kind:Deployment, spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]]], overwrite:true]')
     }
 
+    @Test
+    void 'successful update with statefulSet'() {
+        scriptMock.configYaml = scriptMock.configYaml.replace('kind: Deployment', 'kind: StatefulSet')
+        plain.preValidation('staging')
+        assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml, data:[kind:StatefulSet, spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]]], overwrite:true]')
+    }
+    
+    @Test
+    void 'successful update with cronjob'() {
+        scriptMock.configYaml = cronJobYaml
+
+        plain.preValidation('staging')
+        assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml, data:[kind:CronJob, spec:[jobTemplate:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application], [image:otherImageName, name:other]]]]]]]], overwrite:true]')
+    }
+
+    @Test
+    void 'successful update with other resource'() {
+        scriptMock.configYaml = scriptMock.configYaml.replace('kind: Deployment', 'kind: SomethingElse')
+        plain.preValidation('staging')
+        assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml, data:[kind:SomethingElse, spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]]], overwrite:true]')
+        assertThat(scriptMock.actualEchoArgs).contains('Warning: Kind \'SomethingElse\' is unknown, using best effort to find \'containers\' in YAML')
+    }
+    
     @Test
     void 'successful update with ENV_PER_APP and other destinationRootPath '() {
         plain.gitopsConfig['folderStructureStrategy'] = 'ENV_PER_APP'
@@ -67,7 +123,7 @@ class PlainTest {
 
         plain.preValidation('staging')
         assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:apps/app/staging/deployment.yaml]')
-        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:apps/app/staging/deployment.yaml, data:[spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]], to:[be:[changed:oldValue]]], overwrite:true]')
+        assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:apps/app/staging/deployment.yaml, data:[kind:Deployment, spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]]], overwrite:true]')
     }
 
     @Test

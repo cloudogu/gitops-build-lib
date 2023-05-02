@@ -1,6 +1,7 @@
 package com.cloudogu.gitopsbuildlib.deployment.helm.helmrelease
 
 import com.cloudogu.gitopsbuildlib.ScriptMock
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 import static org.assertj.core.api.Assertions.assertThat
@@ -9,6 +10,11 @@ class FluxV1ReleaseTest {
 
     def scriptMock = new ScriptMock()
     def fluxV1Release = new FluxV1Release(scriptMock.mock)
+
+    @BeforeEach
+    void init () {
+        scriptMock.configYaml = 'a: b'
+    }
 
     @Test
     void 'correct helm release with git repo'() {
@@ -39,18 +45,7 @@ spec:
     ref: 1.0
     path: .
   values:
-    ---
-    #this part is only for PlainTest regarding updating the image name
-    spec:
-      template:
-        spec:
-          containers:
-            - name: 'application'
-              image: 'oldImageName'
-    #this part is only for HelmTest regarding changing the yaml values
-    to:
-      be:
-        changed: 'oldValue'
+    a: b
 """)
     }
 
@@ -84,18 +79,7 @@ spec:
     name: chartName
     version: 1.0
   values:
-    ---
-    #this part is only for PlainTest regarding updating the image name
-    spec:
-      template:
-        spec:
-          containers:
-            - name: 'application'
-              image: 'oldImageName'
-    #this part is only for HelmTest regarding changing the yaml values
-    to:
-      be:
-        changed: 'oldValue'
+    a: b
 """)
     }
 }
