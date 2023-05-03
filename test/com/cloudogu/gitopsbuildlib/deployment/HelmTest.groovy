@@ -99,6 +99,15 @@ class HelmTest {
     def helmHelm = new Helm(scriptMock.mock, getGitopsConfig(helmRepo))
     def helmLocal = new Helm(scriptMock.mock, getGitopsConfig(localRepo, 'ARGO'))
 
+    @BeforeEach
+    void init () {
+        scriptMock.configYaml = '''
+to:
+  be:
+    changed: 'oldValue'
+'''
+    }
+    
     @Test
     void 'creating helm release with git repo'() {
         helmGit.preValidation('staging')
@@ -121,15 +130,7 @@ spec:
     ref: null
     path: chartPath
   values:
-    ---
-    #this part is only for PlainTest regarding updating the image name
-    spec:
-      template:
-        spec:
-          containers:
-            - name: \'application\'
-              image: \'oldImageName\'
-    #this part is only for HelmTest regarding changing the yaml values
+
     to:
       be:
         changed: \'oldValue\'
@@ -160,15 +161,7 @@ spec:
     name: chartName
     version: 1.0
   values:
-    ---
-    #this part is only for PlainTest regarding updating the image name
-    spec:
-      template:
-        spec:
-          containers:
-            - name: \'application\'
-              image: \'oldImageName\'
-    #this part is only for HelmTest regarding changing the yaml values
+
     to:
       be:
         changed: \'oldValue\'
@@ -200,15 +193,7 @@ spec:
     ref: null
     path: chartPath
   values:
-    ---
-    #this part is only for PlainTest regarding updating the image name
-    spec:
-      template:
-        spec:
-          containers:
-            - name: \'application\'
-              image: \'oldImageName\'
-    #this part is only for HelmTest regarding changing the yaml values
+
     to:
       be:
         changed: \'oldValue\'
@@ -242,15 +227,7 @@ spec:
     name: chartName
     version: 1.0
   values:
-    ---
-    #this part is only for PlainTest regarding updating the image name
-    spec:
-      template:
-        spec:
-          containers:
-            - name: \'application\'
-              image: \'oldImageName\'
-    #this part is only for HelmTest regarding changing the yaml values
+
     to:
       be:
         changed: \'oldValue\'

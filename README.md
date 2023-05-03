@@ -563,7 +563,10 @@ def gitopsConfig = [
 
 In plain pipelines, the library creates the deployment resources by updating the image tag within the deployment.
 
----
+Note that this works with Kubernetes `Deployment`s, `StatefulSet`s and `CronJob`s. For all other kinds of resources the
+library tries to find the `containers` at the following YAML path: `spec.template.spec.containers`. This might fail, of course. If you encounter a case 
+like this, please create an issue. Eventually, we're planning to provide a `fieldPath` option just like in helm releases. 
+
 
 ### Helm deployment
 Besides plain k8s resources you can also use helm charts to generate the resources. You can choose between these types 
