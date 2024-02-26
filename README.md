@@ -1,6 +1,6 @@
 # gitops-build-lib
 
-Jenkins pipeline shared library for automating deployments via GitOps.   
+Jenkins® pipeline shared library for automating deployments via GitOps.   
 Take a look at [cloudogu/k8s-gitops-playground](https://github.com/cloudogu/k8s-gitops-playground) to see a fully 
 working example bundled with the complete infrastructure for a gitops deep dive.  
 See also our [blog post](https://cloudogu.com/en/blog/ciops-vs-gitops_en) that describes the challenges leading to this
@@ -21,11 +21,11 @@ Or if you want to chat with us about gitops in general, visit us [here](https://
 - [Usage](#usage)
   - [Jenkins](#jenkins)
   - [GitOps tool](#gitops-tool)
-    - [Flux v1](#flux-v1)
-    - [ArgoCD](#argocd)
+    - [Flux™ v1](#flux-v1)
+    - [ArgoCD™](#argocd)
 - [Default Folder Structure in source repository](#default-folder-structure-in-source-repository)
   - [Plain-k8s](#plain-k8s)
-  - [Helm](#helm)
+  - [Helm®](#helm)
 - [GitOps-Config](#gitops-config)
 - [Stages](#stages)
   - [Namespaces](#namespaces)
