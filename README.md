@@ -60,7 +60,7 @@ Use Case realised by this library:
 
 ## Features
 
-* Write Kubernetes resources to a git repo (for a GitOps operator to pick them up) and creates PRs.
+* Write Kubernetes resources to a git™ repo (for a GitOps operator to pick them up) and creates PRs.
 * Opinionated conventions for [folder structures](#default-folder-structure) and workflows.
 * Support for [multiple stages](#stages) within the same gitOps Repo
     * Push to application branch and create PR (production) or
