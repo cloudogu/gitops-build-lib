@@ -50,7 +50,7 @@ Or if you want to chat with us about gitops in general, visit us [here](https://
 
 Use Case realised by this library:
 
-![](https://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/cloudogu/k8s-diagrams/master/diagrams/gitops-with-app-repo.puml&fmt=svg)
+![](gitops-build-lib-use-case.drawio.svg)
 
 * Separation of app repo and GitOps repo
 * Infrastructure as Code is maintained  in app repo,
