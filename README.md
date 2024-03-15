@@ -1,13 +1,13 @@
-# gitops-build-lib
+# GitOps-build-lib
 
 Jenkins pipeline shared library for automating deployments via GitOps.   
 Take a look at [cloudogu/k8s-gitops-playground](https://github.com/cloudogu/k8s-gitops-playground) to see a fully 
-working example bundled with the complete infrastructure for a gitops deep dive.  
+working example bundled with the complete infrastructure for a GitOps deep dive.  
 See also our [blog post](https://cloudogu.com/en/blog/ciops-vs-gitops_en) that describes the challenges leading to this
 library and some of the features it offers. 
 
 If you have any questions, remarks or ideas regarding the `gitops-build-lib`, feel free to visit our [community](https://community.cloudogu.com/t/introducing-the-gitops-build-lib/108).  
-Or if you want to chat with us about gitops in general, visit us [here](https://community.cloudogu.com/c/gitops-by-cloudogu/23)
+Or if you want to chat with us about GitOps in general, visit us [here](https://community.cloudogu.com/c/gitops-by-cloudogu/23)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -38,7 +38,7 @@ Or if you want to chat with us about gitops in general, visit us [here](https://
     - [Local Helm Chart ](#local-helm-chart)
     - [Conventions for helm deployment](#conventions-for-helm-deployment)
     - [`helm template` with ArgoCD application](#helm-template-with-argocd-application)
-- [Folder Structure in destination gitops repository](#folder-structure-in-destination-gitops-repository)
+- [Folder Structure in destination GitOps repository](#folder-structure-in-destination-gitops-repository)
 - [Extra Files](#extra-files)
 - [SCM-Provider](#scm-provider)
 - [Validators](#validators)
@@ -62,7 +62,7 @@ Use Case realised by this library:
 
 * Write Kubernetes resources to a git repo (for a GitOps operator to pick them up) and creates PRs.
 * Opinionated conventions for [folder structures](#default-folder-structure) and workflows.
-* Support for [multiple stages](#stages) within the same gitOps Repo
+* Support for [multiple stages](#stages) within the same GitOps Repo
     * Push to application branch and create PR (production) or
     * Push to main branch (e.g. "main") directly for staging deployment
 * Support for different [GitOps tools/operators/vendors](#gitops-tool)
@@ -93,7 +93,7 @@ Detailed instructions about the attributes can be found [here](#gitops-config).
 ### Minimal
 
 This will simply [validate](#validators) and deploy the resources from the source repo's `k8s` folder (see 
-[folder structure](#default-folder-structure) into the `gitops` repo, implementing two stages (see [stages](#stages)) 
+[folder structure](#default-folder-structure) into the `GitOps` repo, implementing two stages (see [stages](#stages)) 
 using SCM-Manager (see [SCM provider](#scm-provider)).
 
 ```groovy
@@ -127,9 +127,9 @@ deployViaGitops(gitopsConfig)
 
 ### More options
 
-The following is an example shows all options of a **gitops-config** for a helm-deployment of an application. 
+The following is an example shows all options of a **GitOps-config** for a helm-deployment of an application. 
 This would lead to a deployment of your staging environment by updating the resources of "staging" folder within your 
-gitops-folder in git. For production it will open a PR with the changes.
+GitOps-folder in git. For production it will open a PR with the changes.
 
 ```groovy
 def gitopsConfig = [
@@ -199,8 +199,8 @@ deployViaGitops(gitopsConfig)
 ## Usage
 
 Two parts need completion in order to get up and running with the library:
-* Trigger the library in your build, which writes infrastructure code into your GitOps repo.
-* Set up the GitOps tool, so it deploys the infrastructure code from your GitOps repo.
+* Trigger the library in your build, which writes infrastructure code into your GitOps-repo.
+* Set up the GitOps-tool, so it deploys the infrastructure code from your GitOps-repo.
 
 ### Jenkins
 
@@ -225,17 +225,17 @@ import com.cloudogu.gitops.gitopsbuildlib.*
 
 To utilize the library itself, there is little to do:
 - Setup a [`gitopsConfig`](#examples) containing the following sections
-    - properties (e.g. remote urls to scm, application, GitOps tool, etc.)
+    - properties (e.g. remote urls to scm, application, GitOps-tool, etc.)
     - stages
     - deployments
     - validators
     - fileConfigMaps
 - Call `deployViaGitops(gitopsConfig)`
 
-### GitOps tool
+### GitOps-tool
 
-Having the library write the configuration into your GitOps repository is the first part.
-Next, make your GitOps tool deploy it. Obviously this setup depends on the GitOps tool used.
+Having the library write the configuration into your GitOps-repository is the first part.
+Next, make your GitOps-tool deploy it. Obviously this setup depends on the GitOps-tool used.
 
 The library hides some implementation specifics of the individual tools. For example, for Flux, it creates `HelmRelease` CRs, for argo it calls `helm template`, see [Helm](#helm-deployment).
 
@@ -288,7 +288,7 @@ See [Example of ArgoCD application in GitOps Playground](https://github.com/clou
 
 A default project structure in your application repo could look like the examples below. Make sure you have your k8s 
 and/or helm resources bundled in a folder. This specific resources folder (here `k8s`) will later be specified by the 
-`sourcePath` within the deployments section of your `gitopsConfig`.
+`sourcePath` within the deployments section of your `GitOpsConfig`.
 
 ### Plain-k8s
 ```
@@ -328,15 +328,15 @@ and/or helm resources bundled in a folder. This specific resources folder (here 
 ---
 
 ## GitOps-Config
-The gitops config is basically a groovy map following conventions to have a descriptive way of defining deployments. 
+The GitOps-config is basically a groovy map following conventions to have a descriptive way of defining deployments. 
 You can find a complete yet simple example [here](#examples).
 
 **Properties**
 
-First of all there are some mandatory properties e.g. the information about your gitops repository, the application repository and the gitops tool to be used.
+First of all there are some mandatory properties e.g. the information about your GitOps-repository, the application repository and the GitOps-tool to be used.
 
-* `application: 'spring-petclinic'` - Name of the application. Used as a folder in GitOps repo
-* `gitopsTool: 'ARGO'` - Name of the gitops tool. Currently supporting `'FLUX'` (for now only fluxV1) and `'ARGO'`.  
+* `application: 'spring-petclinic'` - Name of the application. Used as a folder in GitOps-repo
+* `gitopsTool: 'ARGO'` - Name of the GitOps tool. Currently supporting `'FLUX'` (for now only fluxV1) and `'ARGO'`.  
 * and some optional parameters (below are the defaults) for the configuration of the dependency to the ces-build-lib or the default name for the git branch:
    * `cesBuildLibRepo:    'https://github.com/cloudogu/ces-build-lib'`
    * `cesBuildLibVersion: '1.62.0'`
@@ -403,8 +403,8 @@ def gitopsConfig = [
 ]
 ```
 
-If it is set to deploy directly it will commit and push to your desired `gitops-folder` and therefore triggers a deployment. If it is set to false
-it will create a PR on your `gitops-folder`. **Remember** there are important conventions regarding namespaces and the folder structure (see [namespaces](#namespaces)).
+If it is set to deploy directly it will commit and push to your desired `GitOps-folder` and therefore triggers a deployment. If it is set to false
+it will create a PR on your `GitOps-folder`. **Remember** there are important conventions regarding namespaces and the folder structure (see [namespaces](#namespaces)).
 
 ### Namespaces
 
@@ -641,26 +641,26 @@ def gitopsConfig = [
 - Application name is used as the release-name in Flux (not for argo, argo creates plain resources using `helm template`)
   > Helm Release name = `${application}`
 - Extra k8s resources can also be deployed if you choose to have a Helm deployment
-  > extraResources get copied into the gitops folder without being changed - can be used e.g. sealed-secrets
+  > extraResources get copied into the GitOps-folder without being changed - can be used e.g. sealed-secrets
   > extraResources are always relative to the `${gitopsConfig.deployments.sourcePath}/${stage}`, you can specify files or directories
 
   e.g. in stage production =>
 
-  > copies '/k8s/production/configMap.yaml' and '/k8s/production/secrets' to the gitops folder where every k8s resource in ./secrets will be copied to the gitops folder
+  > copies '/k8s/production/configMap.yaml' and '/k8s/production/secrets' to the GitOps-folder where every k8s resource in ./secrets will be copied to the GitOps-folder
 
 #### `helm template` with ArgoCD application
 
-We decided to generate plain k8s Resources from Helm applications before we push it to the gitops Repository for the following reasons:
+We decided to generate plain k8s Resources from Helm applications before we push it to the GitOps-Repository for the following reasons:
 
 - With ArgoCD you can only set one source for your application. In case of helm it is common to have a source Repository for your chart and a scource Repository for your configuration files (values.yaml). In order to use two different sources for your helm application you will need some sort of workaround (e.g. Helm dependencies in `Chart.yaml`).  
-- ArgoCD itself uses `helm template` to apply plain k8s Resources to the cluster. By templating the helm application before pushing to the gitops repository, we have the same resources in our repository as in our cluster. Which leads to increased transparency.
-The parameter `k8sVersion` from the gitops config is used as a parameter with `--kube-version` in order to template version-specific manifests such as changed api versions.
+- ArgoCD itself uses `helm template` to apply plain k8s Resources to the cluster. By templating the helm application before pushing to the GitOps-repository, we have the same resources in our repository as in our cluster. Which leads to increased transparency.
+The parameter `k8sVersion` from the GitOps-config is used as a parameter with `--kube-version` in order to template version-specific manifests such as changed api versions.
 
 ---
 
-## Folder Structure in destination gitops repository
+## Folder Structure in destination GitOps-repository
 
-You can customize in which path the final manifests of the application will be created in the gitops repository. For this, you can modify the following parameters:
+You can customize in which path the final manifests of the application will be created in the GitOps-repository. For this, you can modify the following parameters:
 ```groovy
 def gitopsConfig = [
     deployments: [
@@ -671,8 +671,8 @@ def gitopsConfig = [
 ```
 * `destinationRootPath`: Specifies in which subfolder the following folders of `folderStructureStrategy` are created. Defaults to the root of the repository.
 * `folderStructureStrategy`: Possible values: 
-  * `GLOBAL_ENV`: The manifests will be commited into `$DESTINATION_ROOT_PATH/STAGE_NAME/APP_NAME/` in the destination gitops repository
-  * `ENV_PER_APP`: The manifests will be commited into `$DESTINATION_ROOT_PATH/APP_NAME/STAGE_NAME/` in the destination gitops repository
+  * `GLOBAL_ENV`: The manifests will be commited into `$DESTINATION_ROOT_PATH/STAGE_NAME/APP_NAME/` in the destination GitOps-repository
+  * `ENV_PER_APP`: The manifests will be commited into `$DESTINATION_ROOT_PATH/APP_NAME/STAGE_NAME/` in the destination GitOps-repository
 
 
 Example for **Global Environments** vs **Environment per App** ([Source](https://github.com/cloudogu/gitops-patterns#implementing-release-promotion)):
@@ -722,7 +722,7 @@ index.html:
 
 ## SCM-Provider
 
-The scm-section defines where your 'gitops-repository' resides (url, provider) and how to access it (credentials):
+The scm-section defines where your 'GitOps-repository' resides (url, provider) and how to access it (credentials):
 
 ```groovy
 def gitopsConfig = [
@@ -915,7 +915,7 @@ This location is only temporary and is being used for the helm chart to be downl
 Only Validators which support Helm schemas should operate on this folder
 
 **Plain k8s resources** - `.configRepoTempDir`:  
-This location is for your plain k8s resources. This folder is also the gitops folder which will be pushed to the scm.
+This location is for your plain k8s resources. This folder is also the GitOps-folder which will be pushed to the scm.
 It contains your k8s resources in the root and two extra folders for additional k8s resources:
 `extraResources`: Only needed for a Helm deployment if you whish to deploy plain k8s resources in addition to the helm deployment. See: [Important note in Namespaces](#namespaces)  
 `generatedResources`: If you have files which need to be deployed as a configMap. See: [Extra Files](#extra-files)
