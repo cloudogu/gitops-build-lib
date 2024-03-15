@@ -1,6 +1,6 @@
 # GitOps-build-lib
 
-Jenkins pipeline shared library for automating deployments via GitOps.   
+Jenkins® pipeline shared library for automating deployments via GitOps.   
 Take a look at [cloudogu/k8s-gitops-playground](https://github.com/cloudogu/k8s-gitops-playground) to see a fully 
 working example bundled with the complete infrastructure for a GitOps deep dive.  
 See also our [blog post](https://cloudogu.com/en/blog/ciops-vs-gitops_en) that describes the challenges leading to this
@@ -21,11 +21,11 @@ Or if you want to chat with us about GitOps in general, visit us [here](https://
 - [Usage](#usage)
   - [Jenkins](#jenkins)
   - [GitOps tool](#gitops-tool)
-    - [Flux v1](#flux-v1)
-    - [ArgoCD](#argocd)
+    - [Flux™ v1](#flux-v1)
+    - [ArgoCD™](#argocd)
 - [Default Folder Structure in source repository](#default-folder-structure-in-source-repository)
   - [Plain-k8s](#plain-k8s)
-  - [Helm](#helm)
+  - [Helm®](#helm)
 - [GitOps-Config](#gitops-config)
 - [Stages](#stages)
   - [Namespaces](#namespaces)
@@ -50,7 +50,7 @@ Or if you want to chat with us about GitOps in general, visit us [here](https://
 
 Use Case realised by this library:
 
-![](https://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/cloudogu/k8s-diagrams/master/diagrams/gitops-with-app-repo.puml&fmt=svg)
+![](gitops-build-lib-use-case.drawio.svg)
 
 * Separation of app repo and GitOps repo
 * Infrastructure as Code is maintained  in app repo,
@@ -60,7 +60,7 @@ Use Case realised by this library:
 
 ## Features
 
-* Write Kubernetes resources to a git repo (for a GitOps operator to pick them up) and creates PRs.
+* Write Kubernetes resources to a git™ repo (for a GitOps operator to pick them up) and creates PRs.
 * Opinionated conventions for [folder structures](#default-folder-structure) and workflows.
 * Support for [multiple stages](#stages) within the same GitOps Repo
     * Push to application branch and create PR (production) or
