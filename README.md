@@ -40,6 +40,7 @@ library and some of the features it offers.
 - [SCM-Provider](#scm-provider)
 - [Validators](#validators)
   - [Custom validators](#custom-validators)
+- [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -920,3 +921,12 @@ It contains your k8s resources in the root and two extra folders for additional 
 `GitopsTool[] getSupportedGitopsTools()`  
 This determins on which GitopsTool the validator will run. We implemented this feature since Argo already uses `helm template` and `kubeval` internally so we don't need `helm kubeval` since it does exactly the same.
 So we defined `HelmKubeval` as only needed to be executed on a `FLUX` operator.
+
+## License
+Copyright &copy; 2021 - present Cloudogu GmbH
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see https://www.gnu.org/licenses/.
