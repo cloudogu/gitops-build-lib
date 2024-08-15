@@ -930,3 +930,14 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License along with this program. If not, see https://www.gnu.org/licenses/.
+
+See [LICENSE](LICENSE) for details.
+
+GitOps build-lib© for use with Git™, Argo™, Jenkins® and Kubernetes®
+
+Git™ is an unregistered trademark of Software Freedom Conservancy Inc.   
+Argo™ is an unregistered trademark of The Linux Foundation®   
+Jenkins® is a registered trademark of LF Charities Inc.  
+Kubernetes® and the Kubernetes logo® are registered trademarks of The Linux Foundation®  
+K8s® is a registered trademark of The Linux Foundation®  
+  
