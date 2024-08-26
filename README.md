@@ -924,7 +924,7 @@ This determins on which GitopsTool the validator will run. We implemented this f
 So we defined `HelmKubeval` as only needed to be executed on a `FLUX` operator.
 
 ## License
-Copyright &copy; 2021 - present Cloudogu GmbH
+Copyright © 2021 - present Cloudogu GmbH
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, version 3.
 
@@ -946,15 +946,15 @@ K8s® is a registered trademark of The Linux Foundation®
 Written Offer for Source Code:  
 
 Information on the license conditions and - if required by the license - on the source code is available free of charge on request.  
-However, some licenses require the provision of physical copies of the source or object code. If this is the case, you can request a copy of the source code. A small fee is charged for these services to cover the cost of physical distribution.  
+However, some licenses require providing physical copies of the source or object code. If this is the case, you can request a copy of the source code. A small fee is charged for these services to cover the cost of physical distribution.  
 
-To receive a copy of the source code you can either submit a written request to  
+To receive a copy of the source code, you can either submit a written request to  
 
 Cloudogu GmbH  
 Garküche 1  
 38100 Braunschweig  
 
-or you may send an email to hello@cloudogu.com.  
+or you may email hello@cloudogu.com.  
 
 Your request must be sent within three years from the date you received the software from Cloudogu that is the subject of your request or, in the case of source code licensed under the AGPL/GPL/LGPL v3, for as long as Cloudogu offers spare parts or customer support 
 for the product, including the components or binaries that are the subject of your request.
