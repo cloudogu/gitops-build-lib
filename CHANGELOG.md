@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.6.0) - 2024-08-26
+
+### Changed
+- Change License to agpl3.0
+
 ## [0.5.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.5.0) - 2023-05-03
 
 ### Added
