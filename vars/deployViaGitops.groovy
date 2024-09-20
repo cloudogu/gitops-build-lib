@@ -22,7 +22,7 @@ List getMandatoryFields() {
 Map createDefaultConfig(String k8sVersion) {
 
     if (k8sVersion == null || k8sVersion == ""){
-        k8sVersion = "1.24.8"
+        k8sVersion = "1.29.8"
     }
 
     return [
@@ -34,7 +34,7 @@ Map createDefaultConfig(String k8sVersion) {
         buildImages          : [
             helm: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.11.1-2'
+                image: 'ghcr.io/cloudogu/helm:3.15.4-1'
             ],
             kubectl: [
                 credentialsId: '',
@@ -43,11 +43,11 @@ Map createDefaultConfig(String k8sVersion) {
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
             kubeval: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                image: 'ghcr.io/cloudogu/helm:3.15.4-1'
             ],
             helmKubeval: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                image: 'ghcr.io/cloudogu/helm:3.15.4-1'
             ],
             yamllint: [
                 credentialsId: '',
@@ -65,7 +65,7 @@ Map createDefaultConfig(String k8sVersion) {
                 config   : [
                     // imageRef's are referencing the key in gitopsConfig.buildImages
                     imageRef        : 'kubeval',
-                    k8sSchemaVersion: '1.18.1'
+                    k8sSchemaVersion: '1.29.8'
                 ]
             ],
             helmKubeval: [
@@ -73,7 +73,7 @@ Map createDefaultConfig(String k8sVersion) {
                 enabled  : false,
                 config   : [
                     imageRef        : 'helmKubeval',
-                    k8sSchemaVersion: '1.18.1'
+                    k8sSchemaVersion: '1.29.8'
                 ]
             ],
             yamllint   : [

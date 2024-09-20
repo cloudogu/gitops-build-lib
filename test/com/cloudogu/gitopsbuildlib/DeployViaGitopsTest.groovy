@@ -62,8 +62,8 @@ class DeployViaGitopsTest extends BasePipelineTest {
                     enabled  : true,
                     config   : [
                         // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
-                        image           : 'ghcr.io/cloudogu/helm:3.4.1-1',
-                        k8sSchemaVersion: '1.18.1'
+                        image           : 'ghcr.io/cloudogu/helm:3.15.4-1',
+                        k8sSchemaVersion: '1.29.8'
                     ]
                 ],
                 yamllint: [
