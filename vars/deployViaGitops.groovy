@@ -22,8 +22,9 @@ List getMandatoryFields() {
 Map createDefaultConfig(String k8sVersion) {
 
     if (k8sVersion == null || k8sVersion == ""){
-        k8sVersion = "1.24.8"
+        k8sVersion = "1.29.8"
     }
+    String helmVersion = '3.16.1-1'
 
     return [
         k8sVersion             : "${k8sVersion}",
@@ -34,7 +35,7 @@ Map createDefaultConfig(String k8sVersion) {
         buildImages          : [
             helm: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.11.1-2'
+                image: "ghcr.io/cloudogu/helm:${helmVersion}"
             ],
             kubectl: [
                 credentialsId: '',
@@ -43,15 +44,15 @@ Map createDefaultConfig(String k8sVersion) {
             // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
             kubeval: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                image: "ghcr.io/cloudogu/helm:${helmVersion}"
             ],
             helmKubeval: [
                 credentialsId: '',
-                image: 'ghcr.io/cloudogu/helm:3.5.4-1'
+                image: "ghcr.io/cloudogu/helm:${helmVersion}"
             ],
             yamllint: [
                 credentialsId: '',
-                image: 'cytopia/yamllint:1.25-0.9'
+                image: 'cytopia/yamllint:1.26-0.9'
             ]
         ],
         deployments             : [
