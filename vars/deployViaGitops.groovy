@@ -78,7 +78,7 @@ Map createDefaultConfig(String k8sVersion) {
             ],
             yamllint   : [
                 validator: new Yamllint(this),
-                enabled  : true,
+                enabled  : false,
                 config   : [
                     imageRef  : 'yamllint',
                     // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
