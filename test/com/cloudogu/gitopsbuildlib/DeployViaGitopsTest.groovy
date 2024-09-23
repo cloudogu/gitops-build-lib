@@ -59,7 +59,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
             validators              : [
                 kubeval : [
                     validator: new Kubeval(deployViaGitops),
-                    enabled  : true,
+                    enabled  : false,
                     config   : [
                         // We use the helm image (that also contains kubeval plugin) to speed up builds by allowing to reuse image
                         image           : 'ghcr.io/cloudogu/helm:3.15.4-1',
@@ -68,7 +68,7 @@ class DeployViaGitopsTest extends BasePipelineTest {
                 ],
                 yamllint: [
                     validator: new Yamllint(deployViaGitops),
-                    enabled  : true,
+                    enabled  : false,
                     config   : [
                         image  : 'cytopia/yamllint:1.25-0.9',
                         // Default to relaxed profile because it's feasible for mere mortalYAML programmers.
@@ -221,10 +221,10 @@ spec:
 
 
     @Test
-    void 'default validator can be disabled'() {
+    void 'default validator can be enabled'() {
 
         deployViaGitops.metaClass.validateConfig = { Map actualGitOpsConfig ->
-            assertThat(actualGitOpsConfig.validators.kubeval.enabled).isEqualTo(false)
+            assertThat(actualGitOpsConfig.validators.kubeval.enabled).isEqualTo(true)
             assertThat(actualGitOpsConfig.validators.kubeval.validator).isNotNull()
             assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
         }
@@ -233,7 +233,10 @@ spec:
         deployViaGitops([
             validators: [
                 kubeval: [
-                    enabled: false
+                    enabled: true
+                ],
+                yamllint: [
+                    enabled: true
                 ]
             ]
         ])
@@ -244,8 +247,7 @@ spec:
 
         deployViaGitops.metaClass.validateConfig = { Map actualGitOpsConfig ->
             assertThat(actualGitOpsConfig.validators.myVali.config.a).isEqualTo('b')
-            assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
-            assertThat(actualGitOpsConfig.validators.yamllint.enabled).isEqualTo(true)
+            assertThat(actualGitOpsConfig.validators.myVali.enabled).isEqualTo(true)
         }
         deployViaGitops.metaClass.deploy = {Map actualGitOpsConfig ->} // Stop after validation
         
