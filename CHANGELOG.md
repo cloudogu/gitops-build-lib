@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### Changed
+- Added welcome message and printing configs
+- Updated image version 
+- Adding additional docker run args 
+- Disabled yamllint due to image is no longer maintained
+
 ## [Unreleased]
 
 ## [0.6.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.6.0) - 2024-08-26
