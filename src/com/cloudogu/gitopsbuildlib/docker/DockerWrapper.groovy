@@ -34,6 +34,7 @@ class DockerWrapper {
         script.docker.image(image).inside(
             // Allow accessing WORKSPACE even when we are in a child dir (using "dir() {}")
             "${script.pwd().equals(script.env.WORKSPACE) ? '' : "-v ${script.env.WORKSPACE}:${script.env.WORKSPACE} "}" +
+            "${script.env.ADDITIONAL_DOCKER_RUN_ARGS ? " ${script.env.ADDITIONAL_DOCKER_RUN_ARGS} " : ''}" +
                 // Avoid: "ERROR: The container started but didn't run the expected command"
                 '--entrypoint=""'
         ) {

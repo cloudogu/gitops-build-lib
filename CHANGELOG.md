@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add additional docker runs args support
 - Add welcome message and print configs at application start
 
 ### Changed

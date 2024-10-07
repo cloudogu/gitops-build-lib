@@ -383,6 +383,10 @@ def gitopsConfig = [
 ]
 ```
 
+If you should need to add addition arguments to `docker run` you can do so globally by setting
+`ADDITIONAL_DOCKER_RUN_ARGS` as global properties at `https://your-jenkins/manage/configure#global-properties`.  
+This can be used to globally fix certain bugs in Jenkins agents or their docker config.
+
 ## Stages
 The GitOps-build-lib supports builds on multiple stages. A stage is defined by a name and contains a namespace (used to
 generate the resources) and a deployment-flag:
