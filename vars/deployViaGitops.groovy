@@ -100,6 +100,7 @@ void call(Map gitopsConfig) {
     // Merge default config with the one passed as parameter
     gitopsConfig = mergeMaps(createDefaultConfig(gitopsConfig.k8sVersion as String), gitopsConfig)
     if (validateConfig(gitopsConfig)) {
+        printWelcomeAndConfigs(gitopsConfig)
         cesBuildLib = initCesBuildLib(gitopsConfig.cesBuildLibRepo, gitopsConfig.cesBuildLibVersion, gitopsConfig.cesBuildLibCredentialsId)
         deploy(gitopsConfig)
     }
@@ -341,6 +342,27 @@ protected String createBuildDescription(String pushedChanges) {
         description += 'No changes'
     }
     return description
+}
+
+private printWelcomeAndConfigs(Map gitopsConfig){
+
+    print("""
+################################################################################################################
+
+           _ _                         _           _ _     _        _ _ _     
+          (_) |                       | |         (_) |   | |      | (_) |    
+      __ _ _| |_ ___  _ __  ___ ______| |__  _   _ _| | __| |______| |_| |__  
+     / _` | | __/ _ \\| '_ \\/ __|______| '_ \\| | | | | |/ _` |______| | | '_ \\ 
+    | (_| | | || (_) | |_) \\__ \\      | |_) | |_| | | | (_| |      | | | |_) |
+     \\__, |_|\\__\\___/| .__/|___/      |_.__/ \\__,_|_|_|\\__,_|      |_|_|_.__/ 
+      __/ |          | |                                                      
+     |___/           |_|                                                      
+  
+    config:
+${gitopsConfig.collect { key, value -> "        $key: $value" }.join("\n")}
+     
+################################################################################################################
+""")
 }
 
 def cesBuildLib

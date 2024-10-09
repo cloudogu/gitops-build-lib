@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add welcome message and print configs at application start
+
 ### Changed
 - Disable yamllint image due to image is not longer maintained 
 
