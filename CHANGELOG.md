@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Disable yamllint image due to image is not longer maintained 
+- Update k8s, helm and yamllint
 
 ## [0.6.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.6.0) - 2024-08-26
 
