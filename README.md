@@ -774,10 +774,10 @@ class GitHub extends SCMProvider {
 ## Validators
 
 The library itself provides three validators `yamllint`, `kubeval` and `helmKubeval` to validate the generated resources.
-You can disable the built-in operators and/or add your own.
+You can enable the built-in operators and/or add your own.
 The operators are processed sequentially in no particular order.
 
-Example: Disable all built-ins and add a custom validator.
+Example: Enable `yamllint`, `kubeval` and add a custom validator.
 
 ```groovy
 node {
@@ -787,10 +787,10 @@ node {
             // ...
             validators        : [
                 yamllint: [
-                    enabled  : false,
+                    enabled  : enable,
                 ],
                 kubeval: [ 
-                    enabled  : false,
+                    enabled  : enable,
                 ],
                 myVali: [
                     validator: new MyValidator(this),
