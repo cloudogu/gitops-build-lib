@@ -29,7 +29,7 @@ Map createDefaultConfig(String k8sVersion) {
     return [
         k8sVersion             : "${k8sVersion}",
         cesBuildLibRepo         : 'https://github.com/cloudogu/ces-build-lib',
-        cesBuildLibVersion      : '1.62.0',
+        cesBuildLibVersion      : '2.5.0',
         cesBuildLibCredentialsId: '',
         mainBranch              : 'main',
         buildImages          : [
