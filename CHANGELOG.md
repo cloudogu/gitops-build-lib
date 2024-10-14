@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.7.0) - 2024-10-14
+
 ### Added
 - Add additional docker runs args support
 - Add welcome message and print configs at application start
