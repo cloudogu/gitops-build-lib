@@ -54,16 +54,22 @@ abstract class Deployment {
         }
     }
 
-    String createConfigMap(String key, String filePath, String name, String namespace) {
-        String configMap = ""
-        withDockerImage(gitopsConfig.buildImages.kubectl) {
-            String kubeScript = "kubectl create configmap ${name} " +
-                "--from-file=${key}=${filePath} " +
-                "--dry-run=client -o yaml -n ${namespace}"
+    String createConfigMap(String key, String filePath, String metadataName, String namespace) {
+        def fileContent = script.readFile(file: filePath)
 
-            configMap = script.sh returnStdout: true, script: kubeScript
-        }
-        return configMap
+        def configMap = [
+            'apiVersion': 'v1',
+            'kind': 'ConfigMap',
+            'metadata': [
+                'name': metadataName,
+                'namespace' : namespace
+            ],
+            'data': [
+                (key): fileContent
+            ]
+        ]
+
+        return script.writeYaml(data: configMap, returnText: true)
     }
 
     void withDockerImage(def imageConfig, Closure body) {
