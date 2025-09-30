@@ -40,7 +40,7 @@ class Helm extends Deployment {
         def valueFiles = ["${script.env.WORKSPACE}/${sourcePath}/values-${stage}.yaml"]
         // only add values-shared.yaml, if it exists
         if (script.fileExists("${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml")) {
-            valueFiles.add("${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml")
+            valueFiles.add(0, "${script.env.WORKSPACE}/${sourcePath}/values-shared.yaml")
         }
         script.writeFile file: "${script.env.WORKSPACE}/${HELM_CHART_TEMP_DIR}/mergedValues.yaml", text: mergeValuesFiles(gitopsConfig, valueFiles as String[], repoType)
 
