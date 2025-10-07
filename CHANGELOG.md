@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.8.0) - 2025-10-07
+- Fix issue wrong order with values-shared.yaml #45
+- Removing kubectl dependency for configmap generation #29
+
 ## [0.7.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.7.0) - 2024-10-14
 
 ### Added
