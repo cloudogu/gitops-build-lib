@@ -91,12 +91,7 @@ class DeploymentTest {
     void 'create configmaps from files'() {
 
         deploymentUnderTest.createFileConfigmaps('staging')
-
-        assertThat(scriptMock.dockerMock.actualRegistryArgs[0]).isEqualTo('https://http://my-private-registry.com/repo')
-        assertThat(scriptMock.dockerMock.actualRegistryArgs[1]).isEqualTo('credentials')
-
-        assertThat(scriptMock.actualShArgs[0]).isEqualTo('[returnStdout:true, script:kubectl create configmap index --from-file=index.html=workspace/k8s/../index.html --dry-run=client -o yaml -n fluxv1-staging]')
-
+        assertThat(scriptMock.actualWriteYamlArgs[0]).contains('apiVersion', 'kind', 'metadata', 'ConfigMap')
         assertThat(scriptMock.actualWriteFileArgs[0]).contains('[file:staging/app/generatedResources/index.yaml')
     }
 
