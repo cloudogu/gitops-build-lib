@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Reduce the test dependency footprint by removing unused Spock and Mockito JUnit Jupiter integration and disabling Mockito agent-based mocking.
+
 ## [0.8.0](https://github.com/cloudogu/gitops-build-lib/releases/tag/0.8.0) - 2025-10-07
 
 ### Changed
