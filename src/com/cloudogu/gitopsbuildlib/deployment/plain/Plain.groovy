@@ -47,18 +47,22 @@ class Plain extends Deployment {
     }
 
     def findContainers(def data, String kind) {
+        def podSpec
         //noinspection GroovyFallthrough
         switch (kind) {
             case 'Deployment':
                 // Falling through because Deployment and StatefulSet's paths are the same
             case 'StatefulSet':
-                return data.spec.template.spec.containers
+                podSpec = data.spec.template.spec
+                break
             case 'CronJob':
-                return data.spec.jobTemplate.spec.template.spec.containers
+                podSpec = data.spec.jobTemplate.spec.template.spec
+                break
             default:
                 script.echo  "Warning: Kind '$kind' is unknown, using best effort to find 'containers' in YAML"
                 // Best effort: Try the same as for Deployment and StatefulSet
-                return data.spec.template.spec.containers
+                podSpec = data.spec.template.spec
         }
+        return (podSpec.containers ?: []) + (podSpec.initContainers ?: [])
     }
 }

@@ -565,9 +565,10 @@ def gitopsConfig = [
 ```
 
 In plain pipelines, the library creates the deployment resources by updating the image tag within the deployment.
+`containerName` can refer to a container in either `containers` or `initContainers`.
 
 Note that this works with Kubernetes `Deployment`s, `StatefulSet`s and `CronJob`s. For all other kinds of resources the
-library tries to find the `containers` at the following YAML path: `spec.template.spec.containers`. This might fail, of course. If you encounter a case 
+library tries to find `containers` and `initContainers` under `spec.template.spec`. This might fail, of course. If you encounter a case
 like this, please create an issue. Eventually, we're planning to provide a `fieldPath` option just like in helm releases. 
 
 

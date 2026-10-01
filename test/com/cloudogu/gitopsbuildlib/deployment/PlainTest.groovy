@@ -7,6 +7,8 @@ import com.cloudogu.gitopsbuildlib.validation.Kubeval
 import com.cloudogu.gitopsbuildlib.validation.Yamllint
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 import static org.assertj.core.api.Assertions.assertThat 
 
@@ -114,6 +116,48 @@ spec:
         assertThat(scriptMock.actualReadYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml]')
         assertThat(scriptMock.actualWriteYamlArgs[0]).isEqualTo('[file:staging/app/deployment.yaml, data:[kind:SomethingElse, spec:[template:[spec:[containers:[[image:imageNameReplacedTest, name:application]]]]]], overwrite:true]')
         assertThat(scriptMock.actualEchoArgs).contains('Warning: Kind \'SomethingElse\' is unknown, using best effort to find \'containers\' in YAML')
+    }
+
+    @ParameterizedTest
+    @CsvSource([
+        'Deployment, application',
+        'Deployment, initialize',
+        'StatefulSet, application',
+        'StatefulSet, initialize',
+        'CronJob, application',
+        'CronJob, initialize',
+        'SomethingElse, application',
+        'SomethingElse, initialize'
+    ])
+    void 'updates the named container when init containers are present'(String kind, String containerName) {
+        String yaml = kind == 'CronJob' ? cronJobYaml : deploymentYaml.replace('kind: Deployment', "kind: ${kind}")
+        String indent = kind == 'CronJob' ? '          ' : '      '
+        scriptMock.configYaml = yaml + """
+${indent}initContainers:
+${indent}  - name: 'initialize'
+${indent}    image: 'oldInitImageName'
+${indent}  - name: 'other-init'
+${indent}    image: 'otherInitImageName'
+"""
+        plain.gitopsConfig.deployments.plain.updateImages[0].containerName = containerName
+        def writtenYaml
+        scriptMock.mock.writeYaml = { args -> writtenYaml = args }
+
+        plain.preValidation('staging')
+
+        assertThat(writtenYaml.file.toString()).isEqualTo('staging/app/deployment.yaml')
+        assertThat(writtenYaml.overwrite).isTrue()
+        def podSpec = kind == 'CronJob' ? writtenYaml.data.spec.jobTemplate.spec.template.spec : writtenYaml.data.spec.template.spec
+        assertThat(podSpec.containers.find { it.name == 'application' }.image)
+            .isEqualTo(containerName == 'application' ? 'imageNameReplacedTest' : 'oldImageName')
+        assertThat(podSpec.initContainers.find { it.name == 'initialize' }.image)
+            .isEqualTo(containerName == 'initialize' ? 'imageNameReplacedTest' : 'oldInitImageName')
+        assertThat(podSpec.initContainers.find { it.name == 'other-init' }.image).isEqualTo('otherInitImageName')
+        assertThat(podSpec.containers).hasSize(kind == 'CronJob' ? 2 : 1)
+        assertThat(podSpec.initContainers).hasSize(2)
+        if (kind == 'CronJob') {
+            assertThat(podSpec.containers.find { it.name == 'other' }.image).isEqualTo('otherImageName')
+        }
     }
     
     @Test

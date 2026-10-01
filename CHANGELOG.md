@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support updating init container images in plain Kubernetes deployments with `deployments.plain.updateImages`.
+
 ### Changed
 - Reduce the test dependency footprint by removing unused Spock and Mockito JUnit Jupiter integration and disabling Mockito agent-based mocking.
 
